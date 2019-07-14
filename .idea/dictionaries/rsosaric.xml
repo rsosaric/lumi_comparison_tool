@@ -3,11 +3,13 @@
     <words>
       <w>dataframes</w>
       <w>datasets</w>
+      <w>indir</w>
       <w>ltools</w>
       <w>lumi</w>
       <w>luminometer</w>
       <w>maxval</w>
       <w>minval</w>
+      <w>outdir</w>
       <w>sbil</w>
       <w>stdv</w>
       <w>vals</w>

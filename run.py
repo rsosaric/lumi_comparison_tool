@@ -1,49 +1,57 @@
 from tools.luminometer import Luminometer as L
 from tools.detectorsratio import DetectorsRatio as Ratios
 from tools.detectorsratio import MultipleDetectorsRatio as MRatios
+import optparse
+import settings as setts
+import tools.lumi_tools as ltools
 from tools.linearityanalysis import LinearityAnalysis
 
 # TODO: develop a proper input option interface here
-year = 2015
-# detc1 = L("hfoc", "csv_input_files/" + str(year) + "/hfoc.csv")
-detc1 = L("dt", "csv_input_files/" + str(year) + "/dt.csv")
-detc2 = L("ram", "csv_input_files/" + str(year) + "/ram.csv")
-detc3 = L("pcc", "csv_input_files/" + str(year) + "/pcc.csv")
+p = optparse.OptionParser()
+usage = "usage: %prog [options] arg1 arg2 ..."
+# p.add_option("-o", "--outdir", type="string",help="Path to output Dir", dest="outDir", default=".")
+p.add_option("-i", "--indir", type="string",help="Path to input Dir", dest="inDir", default=None)
+p.add_option("-f", "--plot_format", type="string", help="output format for plots",
+             dest="plot_format", default="")
 
-detc2all = L("ram", "csv_input_files/" + str(year) + "/ram"+'_all'+".csv")
-detc1all = L("hfoc", "csv_input_files/" + str(year) + "/hfoc"+'_all'+".csv")
-detc3all = L("pcc", "csv_input_files/" + str(year) + "/pcc"+'_all'+".csv")
-
-ratios13 = Ratios(detc1, detc3)
-
-
-#print(detc1.data)
-#print(detc2.data)
-#print(ratios12.common_data)
-#print(ratios12.data_exclusion_percent)
-
-# data analysis
-# ratios12.plot_nls_ratio_hist()
-# # ratios12.plot_ratio_hist()
-# # # ratios12.plot_ratio_hist_weighted()
-# ratios12.plot_nls_ratio_hist_weighted()
-# # ratios12.plot_nls_ratio_vs_date()
-# ratios12.plot_nls_ratio_vs_lumi2()
-# #
-# ratios12.save_plots()
+p.add_option("-y", "--year", type="string", help="Year", dest="year", default=None)
 
 
 
-# Linearity
-# lin_analysis = LinearityAnalysis(ratios13)
-# lin_analysis.plot_hist_sbil()
-# lin_analysis.plot_ratio_vs_all_data_sbil()
-# lin_analysis.save_plots()
+(options, args) = p.parse_args()
 
-ratios123 = MRatios(detc1, detc2, detc3, full_data=[detc1all, detc2all, detc3all])
-ratios123.plot_nls_ratios_vs_date()
-ratios123.plot_ratios_vs_date()
-ratios123.plot_ratios_vs_lumi3()
-ratios123.plot_nls_ratios_vs_lumi3()
-#
-ratios123.save_plots()
+n_files=len(args)
+plot_format = options.plot_format
+if plot_format == "":
+    plot_format = setts.plots_formats
+
+if n_files == 2:
+    print("******** 2 detector comparison choose!! ******")
+    det1_label = args[0]
+    det2_label = args[1]
+    if options.inDir:
+        base_input_path = options.inDir
+    elif options.year:
+        base_input_path = setts.csv_input_base_dir + options.year + '/'
+        try:
+            detc1 = L(det1_label, base_input_path + det1_label + ".csv")
+            detc2 = L(det2_label, base_input_path + det2_label + ".csv")
+        except IOError as errIO:
+            print(errIO)
+            print('Please check if default input folder is correctly created: ' + setts.csv_input_base_dir)
+            print('Also check that your .csv file is in the correct year folder: ' + base_input_path)
+            raise
+    else:
+        raise IOError('Please specify input folder or year for the input .csv files')
+
+    ratios12 = Ratios(detc1, detc2)
+
+    # Fill plots
+    ratios12.plot_nls_ratio_hist()
+
+    # Save plots
+    ratios12.save_plots()
+
+
+else:
+    raise IOError('No detectors names entered')

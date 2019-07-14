@@ -2,6 +2,7 @@
 work_status = 'Preliminary'
 # work_status = 'Work in Progress'
 experiment = 'CMS'
+csv_input_base_dir = 'csv_input_files/'
 
 # -*-*-*-*-*-*-*-*-*-*-*- > > > Plotting settings < < < -*-*-*-*-*-*-*-*-*-*-*-
 
