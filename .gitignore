@@ -1,0 +1,6 @@
+*.csv
+._*
+plots/
+*.pdf
+*.png
+*.pyc
