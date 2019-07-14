@@ -9,7 +9,7 @@ import tools.plotting_tools as plotting
 class DetectorsRatio(L):
 
     def __init__(self, det1: L, det2: L, year: str = None, energy: str = None,
-                 fill_nls_data: bool = True, fill_stats=True) -> None:
+                 fill_nls_data: bool = True, fill_stats=True, load_all_data = False) -> None:
 
         if fill_stats:
             fill_nls_data = True
@@ -38,21 +38,21 @@ class DetectorsRatio(L):
             self.__nls = setts.nls_default
 
         # column labels for dataframes
-        self.__label_ratio = det1.name + '/' + det2.name
-        self.__by_nls_label_ratio = 'by_nls_' + self.__label_ratio
-        self.__by_nls_label_ratio_err = self.__by_nls_label_ratio + '_err'
         self.output_dir = setts.default_output_dir + str(self.year) + '/' + det1.name + '-' + det2.name + '/'
         self.__year_energy_label = str(self.energy) + 'TeV(' + str(self.year) + ')'
+        self.__label_ratio = det1.name + '/' + det2.name
+        self.__by_nls_label_ratio = 'by_nls_' + self.__label_ratio
         self.__lumi_unit = det2.lumi_unit
         self.__det1 = det1
         self.__det2 = det2
         self.__by_nls_lumi_rec_label1 = det1.lumi_rec_label + '_by_nls'
         self.__by_nls_lumi_rec_label2 = det2.lumi_rec_label + '_by_nls'
+        self.__by_nls_label_ratio_err = self.__by_nls_label_ratio + '_err'
         self.__by_nls_lumi_label = 'by_nls_lumi_' + self.__label_ratio
         self.__accumulated_rec_lumi1_label = det1.lumi_rec_label + '_accumulated'
         self.__accumulated_rec_lumi2_label = det2.lumi_rec_label + '_accumulated'
-        self.__by_nls_accumulated_rec_lumi1_label = det1.lumi_rec_label + '_accumulated'
-        self.__by_nls_accumulated_rec_lumi2_label = det2.lumi_rec_label + '_accumulated'
+        self.__by_nls_accumulated_rec_lumi1_label = self.__by_nls_lumi_rec_label1 + '_accumulated'
+        self.__by_nls_accumulated_rec_lumi2_label = self.__by_nls_lumi_rec_label2 + '_accumulated'
 
         det2.data = det2.data.sort_values(by="time", ascending=True)
         det1.data = det1.data.sort_values(by="time", ascending=True)
@@ -567,14 +567,14 @@ class MultipleDetectorsRatio:
         merge_tmp = merge_tmp.reset_index(drop=True)
         ltools.check_and_clean_after_merging(merge_tmp)
 
-        self.__all_data = merge_tmp
+        self.__combined_data = merge_tmp
 
         self.__plt_plots = []
         self.__sns_plots = []
 
     def plot_ratios_vs_date(self):
         print('creating ratios_vs_date plot ...')
-        ratios_vs_date = plotting.scatter_plot_from_pandas_frame(data_frame=self.all_data,
+        ratios_vs_date = plotting.scatter_plot_from_pandas_frame(data_frame=self.combined_data,
                                                                  y_data_label=self.__ratio_col_names,
                                                                  x_data_label='date',
                                                                  ylabel="ratios in " + str(self.__nls) + ' LS',
@@ -586,7 +586,7 @@ class MultipleDetectorsRatio:
 
     def plot_ratios_vs_lumi3(self):
         print("creating ratios_vs_lumi3 plot ...")
-        ratios_vs_lumi3 = plotting.scatter_plot_from_pandas_frame(data_frame=self.all_data,
+        ratios_vs_lumi3 = plotting.scatter_plot_from_pandas_frame(data_frame=self.combined_data,
                                                                   y_data_label=self.__ratio_col_names,
                                                                   x_data_label=self.__lumi3_col_name,
                                                                   ylabel="ratios in " + str(self.__nls) + ' LS',
@@ -598,7 +598,7 @@ class MultipleDetectorsRatio:
 
     def plot_nls_ratios_vs_date(self):
         print('creating by_nls_ratios_vs_date plot ...')
-        ratios_vs_date = plotting.scatter_plot_from_pandas_frame(data_frame=self.all_data,
+        ratios_vs_date = plotting.scatter_plot_from_pandas_frame(data_frame=self.combined_data,
                                                                  y_data_label=self.__nls_ratio_col_names,
                                                                  x_data_label='date',
                                                                  ylabel="ratios in " + str(self.__nls) + ' LS',
@@ -609,7 +609,7 @@ class MultipleDetectorsRatio:
 
     def plot_nls_ratios_vs_lumi3(self):
         print('creating nls_ratios_vs_lumi3 plot ...')
-        nls_ratios_vs_lumi3 = plotting.scatter_plot_from_pandas_frame(data_frame=self.all_data,
+        nls_ratios_vs_lumi3 = plotting.scatter_plot_from_pandas_frame(data_frame=self.combined_data,
                                                                       y_data_label=self.__nls_ratio_col_names,
                                                                       x_data_label=self.__lumi3_col_name,
                                                                       ylabel="ratios in " + str(self.__nls) + ' LS',
@@ -623,8 +623,8 @@ class MultipleDetectorsRatio:
     # TODO: create combined hists plot
 
     @property
-    def all_data(self):
-        return self.__all_data
+    def combined_data(self):
+        return self.__combined_data
 
     def save_plots(self):
         print('\n\n Saving plots:')
