@@ -1,4 +1,5 @@
 *********************** INSTALLATION ***********************
+
 Suggested: install miniconda or anaconda. Then use the provided file for create a working conda environment: 
 
 conda env create -f conda_env.yml
