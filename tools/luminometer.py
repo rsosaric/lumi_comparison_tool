@@ -14,8 +14,11 @@ class Luminometer:
 
     # _lumi_unit_label = "r'$"+ __lumi_unit +"^{-1}$'"
 
-    def __init__(self, name: str, data_file_name: str, all_data: bool = False) -> None:
+    def __init__(self, name: str, data_file_name: str, all_data: bool = False,
+                 mixed_data=False) -> None:
+        # name contains detector name+possible calibration tag. Example:pcc18v3
         self.name = name
+        self.__mixed_data = mixed_data
         if all_data:
             self.__name = name
         self.__lumi_unit = Luminometer.__lumi_unit
@@ -51,8 +54,30 @@ class Luminometer:
         # ltools.add_date_column(data_file_pd)
 
         self.__data = data_file_pd
+        self.__check_detector_type()
 
         print('Initialized detector from file: ' + data_file_name)
+
+    # Check detector type consistency between file_name, csv file label and allowed detectors
+    def __check_detector_type(self):
+        detector_label = None
+        for allowed_file_label in Luminometer.__allowed_detectors_file_labels:
+            if allowed_file_label in self.name:
+                detector_label = allowed_file_label
+                break
+        if detector_label:
+            # check detector consistency:
+            label_from_csv_list = np.unique(self.__data[self.detector_name_label])
+            if len(label_from_csv_list) > 1:
+                raise AssertionError('More than one detector in .csv file. Detectors in csv: ' + str(label_from_csv_list))
+            elif len(label_from_csv_list) == 1:
+                label_from_csv = label_from_csv_list[0]
+                if label_from_csv not in Luminometer.__allowed_detectors:
+                    raise AssertionError('detector not allowed. Allowed detectors: ' +
+                                         str(Luminometer.__allowed_detectors))
+        else:
+            raise IOError(self.name + ' not allowed. File name needs to be consistent with the detector names: '
+                          + str(Luminometer.__allowed_detectors_file_labels))
 
     @property
     def name(self):
@@ -92,10 +117,7 @@ class Luminometer:
 
     @name.setter
     def name(self, name):
-        if name in Luminometer.__allowed_detectors_file_labels:
-            self.__name = name
-        else:
-            raise ValueError("Luminometer not implemented")
+        self.__name = name
 
     @data.setter
     def data(self, data):

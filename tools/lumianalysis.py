@@ -6,13 +6,13 @@ import settings as setts
 
 class LAnalysis:
     def __init__(self, dets_file_labels: list, input_dir: str, vs_all_analysis = False,
-                 run_linearity_analysis=False) -> None:
+                 run_linearity_analysis=False, mixed_data=False) -> None:
 
         n_files = len(dets_file_labels)
         detcs = []
         for det in dets_file_labels:
             try:
-                detcs.append(L(det, input_dir + det + ".csv"))
+                detcs.append(L(det, input_dir + det + ".csv", mixed_data=mixed_data))
             except IOError as errIO:
                 print(errIO)
                 print('Please check if default input folder is correctly created: ' + setts.csv_input_base_dir)

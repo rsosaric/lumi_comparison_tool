@@ -41,7 +41,7 @@ axis_case_size = 12
 
 ratio_min = 0.94
 ratio_max = 1.06
-nbins = 200
+nbins = 150
 
 date_format = "%Y-%m-%d %H:%M"
 

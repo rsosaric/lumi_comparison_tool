@@ -31,17 +31,22 @@ def save_plots(names_and_plots, output_name):
 
 # TODO: set histo range for same binning
 def hist_from_pandas_frame(data_frame, col_label, nbins, title='', xlabel='', ylabel='', xmin=0.0, xmax=0.0,
+                           x_data_range=None,
                            weight_label=None,
                            mean=None, stdv=None, err_mean=None, color='#86bf91',
                            label_cms_status=True, energy_year_label='',
                            fig_size_shape='sq'):
     fig_size = get_fig_size(fig_size_shape)
+    if x_data_range is None:
+        x_data_range = (xmin, xmax)
     if weight_label:
         ratio_hist = data_frame.hist(bins=nbins, column=col_label, grid=False, weights=data_frame[weight_label],
-                                     figsize=fig_size, sharex=True, color=color, zorder=2, rwidth=0.9)
+                                     figsize=fig_size, sharex=True, color=color,
+                                     range=x_data_range)
     else:
         ratio_hist = data_frame.hist(bins=nbins, column=col_label, grid=False,
-                                     figsize=fig_size, sharex=True, color=color, zorder=2, rwidth=0.9)
+                                     figsize=fig_size, sharex=True, color=color,
+                                     range=x_data_range)
 
     ratio_hist_ax = ratio_hist[0][0]
 

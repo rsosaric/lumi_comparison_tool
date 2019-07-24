@@ -9,7 +9,8 @@ import tools.plotting_tools as plotting
 class DetectorsRatio(L):
 
     def __init__(self, det1: L, det2: L, year: str = None, energy: str = None,
-                 fill_nls_data: bool = True, fill_stats=True, load_all_data = False) -> None:
+                 fill_nls_data: bool = True, fill_stats=True, load_all_data = False,
+                 nls = None) -> None:
 
         if fill_stats:
             fill_nls_data = True
@@ -30,12 +31,15 @@ class DetectorsRatio(L):
         else:
             self.energy = energy
 
-        try:
-            self.__nls = setts.nls_year[int(self.year), int(self.energy)]
-        except Warning:
-            print("** Warning: no Nls configuration found for " + str(self.year) + " [" + str(self.energy) + "tev]")
-            print("Using default value from settings: " + str(setts.nls_default) + "nls")
-            self.__nls = setts.nls_default
+        if nls:
+            self.__nls = nls
+        else:
+            try:
+                self.__nls = setts.nls_year[int(self.year), int(self.energy)]
+            except Warning:
+                print("** Warning: no Nls configuration found for " + str(self.year) + " [" + str(self.energy) + "tev]")
+                print("Using default value from settings: " + str(setts.nls_default) + "nls")
+                self.__nls = setts.nls_default
 
         # column labels for dataframes
         self.output_dir = setts.default_output_dir + str(self.year) + '/' + det1.name + '-' + det2.name + '/'
@@ -542,7 +546,7 @@ class MultipleDetectorsRatio:
             i_ratio.fill_nls_data()
             self.__nls_ratio_col_names.append(i_ratio.by_nls_label_ratio)
             self.__ratio_plotting_labels.append(i_ratio.label_ratio)
-        self.__lumi3_col_name = self.__ref_ratio.by_nls_accumulated_rec_lumi2_label
+        self.__lumi3_col_name = self.__ref_ratio.accumulated_rec_lumi2_label
         self.__ratio_col_names = self.__ratio_plotting_labels
 
         keys_for_merging = ['fill', 'run', 'ls', 'time', 'date']
@@ -568,6 +572,7 @@ class MultipleDetectorsRatio:
         ltools.check_and_clean_after_merging(merge_tmp)
 
         self.__combined_data = merge_tmp
+        print(list(merge_tmp))
 
         self.__plt_plots = []
         self.__sns_plots = []
