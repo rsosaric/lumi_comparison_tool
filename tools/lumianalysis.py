@@ -24,14 +24,19 @@ class LAnalysis:
             ratios12 = Ratios(detcs[0], detcs[1])
 
             # Fill stability plots
-            ratios12.plot_nls_ratio_hist()
-            ratios12.plot_ratio_hist()
-            ratios12.plot_ratio_hist_weighted()
-            ratios12.plot_nls_ratio_hist_weighted()
-            ratios12.plot_nls_ratio_vs_date()
+            ratios12.plot_ratio_vs_date()
+            ratios12.plot_ratio_vs_lumi2()
             ratios12.plot_nls_ratio_vs_lumi2()
+            ratios12.plot_ratio_hist()
+            ratios12.plot_nls_ratio_hist()
+            ratios12.plot_ratio_hist_weighted()
 
-            # Save stability plots
+            # Mine
+            ratios12.plot_nls_ratio_vs_run()
+            ratios12.plot_nls_ratio_vs_fill()
+            ratios12.plot_ratio_vs_run()
+            ratios12.plot_ratio_vs_fill()
+
             ratios12.save_plots()
 
             if run_linearity_analysis:
@@ -49,8 +54,15 @@ class LAnalysis:
             # Fill plots
             ratios123.plot_nls_ratios_vs_date()
             ratios123.plot_ratios_vs_date()
+
             ratios123.plot_ratios_vs_lumi3()
             ratios123.plot_nls_ratios_vs_lumi3()
+
+            # Mine
+            # ratios123.plot_nls_ratios_vs_run()
+            # ratios123.plot_nls_ratios_vs_fill()
+            ratios123.plot_ratios_vs_run()
+            # ratios123.plot_ratios_vs_fill()
 
             # Save plots
             ratios123.save_plots()
