@@ -346,6 +346,52 @@ class DetectorsRatio(L):
                                                                 energy_year_label=self.__year_energy_label)
         self.__plt_plots.append(['by_nls_ratio_vs_lumi2', ratio_vs_lumi.get_figure()])
 
+    # Things I added
+
+    def plot_nls_ratio_vs_run(self):
+        ratio_vs_run = plotting.scatter_plot_from_pandas_frame(data_frame=self.common_data_filtered,
+                                                               y_data_label=self.by_nls_label_ratio,
+                                                               x_data_label='run',
+                                                               xlabel="Run Number",
+                                                               ylabel=self.__label_ratio + " ratios in " +
+                                                                      str(self.__nls) + ' LS',
+                                                               ymin=setts.ratio_min, ymax=setts.ratio_max,
+                                                               energy_year_label=self.__year_energy_label)
+        self.__plt_plots.append(['by_nls_ratio_vs_run', ratio_vs_run.get_figure()])
+
+    def plot_nls_ratio_vs_fill(self):
+        ratio_vs_fill = plotting.scatter_plot_from_pandas_frame(data_frame=self.common_data_filtered,
+                                                                y_data_label=self.by_nls_label_ratio,
+                                                                x_data_label='fill',
+                                                                xlabel="Fill Number",
+                                                                ylabel=self.__label_ratio + " ratios in " +
+                                                                       str(self.__nls) + ' LS',
+                                                                ymin=setts.ratio_min, ymax=setts.ratio_max,
+                                                                energy_year_label=self.__year_energy_label)
+        self.__plt_plots.append(['by_nls_ratio_vs_fill', ratio_vs_fill.get_figure()])
+
+    def plot_ratio_vs_run(self):
+        ratio_vs_run = plotting.scatter_plot_from_pandas_frame(data_frame=self.common_data_filtered,
+                                                               y_data_label=self.label_ratio,
+                                                               x_data_label='run',
+                                                               xlabel="Run Number",
+                                                               ylabel=self.__label_ratio + " ratios",
+                                                               ymin=setts.ratio_min, ymax=setts.ratio_max,
+                                                               energy_year_label=self.__year_energy_label)
+        self.__plt_plots.append(['by_ratio_vs_run', ratio_vs_run.get_figure()])
+
+    def plot_ratio_vs_fill(self):
+        ratio_vs_fill = plotting.scatter_plot_from_pandas_frame(data_frame=self.common_data_filtered,
+                                                                y_data_label=self.label_ratio,
+                                                                x_data_label='fill',
+                                                                xlabel="Fill Number",
+                                                                ylabel=self.__label_ratio + " ratios",
+                                                                ymin=setts.ratio_min, ymax=setts.ratio_max,
+                                                                energy_year_label=self.__year_energy_label)
+        self.__plt_plots.append(['by_ratio_vs_fill', ratio_vs_fill.get_figure()])
+
+    # End of things I added
+
     def save_plots(self):
         print('\n\n Saving plots:')
         plotting.save_plots(self.plt_plots, self.output_dir)
@@ -624,6 +670,23 @@ class MultipleDetectorsRatio:
                                                                       energy_year_label=self.__year_energy_label,
                                                                       legend_labels=self.__ratio_plotting_labels)
         self.__plt_plots.append(['nls_ratios_vs_lumi3', nls_ratios_vs_lumi3.get_figure()])
+
+    # Things I added
+
+    def plot_ratios_vs_run(self):
+        print('creating ratios_vs_run plot ...')
+        ratios_vs_run = plotting.scatter_plot_from_pandas_frame(data_frame=self.combined_data,
+                                                                y_data_label=self.__ratio_col_names,
+                                                                x_data_label='run',
+                                                                xlabel="run",
+                                                                ylabel="ratios in " + str(self.__nls) + ' LS',
+                                                                ymin=setts.ratio_min, ymax=setts.ratio_max,
+                                                                energy_year_label=self.__year_energy_label,
+                                                                # legend_labels=self.__nls_ratio_plotting_labels
+                                                                )
+        self.__plt_plots.append(['ratios_vs_run', ratios_vs_run.get_figure()])
+
+    # End of things I added
 
     # TODO: create combined hists plot
 
