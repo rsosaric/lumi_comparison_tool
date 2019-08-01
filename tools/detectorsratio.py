@@ -624,7 +624,7 @@ class MultipleDetectorsRatio:
         self.__combined_data = merge_tmp
         print(list(merge_tmp))
 
-        self.__plt_plots = []
+        self.__plt_plots = {}
         self.__sns_plots = []
 
     def plot_ratios_vs_date(self):
@@ -637,7 +637,7 @@ class MultipleDetectorsRatio:
                                                                  energy_year_label=self.__year_energy_label,
                                                                  # legend_labels=self.__nls_ratio_plotting_labels
                                                                  )
-        self.__plt_plots.append(['ratios_vs_date', ratios_vs_date.get_figure()])
+        self.__plt_plots['ratios_vs_date'] = ratios_vs_date.get_figure()
 
     def plot_ratios_vs_lumi3(self):
         print("creating ratios_vs_lumi3 plot ...")
@@ -649,7 +649,7 @@ class MultipleDetectorsRatio:
                                                                   energy_year_label=self.__year_energy_label,
                                                                   # legend_labels=self.__nls_ratio_plotting_labels
                                                                   )
-        self.__plt_plots.append(['ratios_vs_lumi3', ratios_vs_lumi3.get_figure()])
+        self.__plt_plots['ratios_vs_lumi3'] = ratios_vs_lumi3.get_figure()
 
     def plot_nls_ratios_vs_date(self):
         print('creating by_nls_ratios_vs_date plot ...')
@@ -660,7 +660,7 @@ class MultipleDetectorsRatio:
                                                                  ymin=setts.ratio_min, ymax=setts.ratio_max,
                                                                  energy_year_label=self.__year_energy_label,
                                                                  legend_labels=self.__ratio_plotting_labels)
-        self.__plt_plots.append(['by_nls_ratios_vs_date', ratios_vs_date.get_figure()])
+        self.__plt_plots['by_nls_ratios_vs_date'] = ratios_vs_date.get_figure()
 
     def plot_nls_ratios_vs_lumi3(self):
         print('creating nls_ratios_vs_lumi3 plot ...')
@@ -673,7 +673,7 @@ class MultipleDetectorsRatio:
                                                                       ymin=setts.ratio_min, ymax=setts.ratio_max,
                                                                       energy_year_label=self.__year_energy_label,
                                                                       legend_labels=self.__ratio_plotting_labels)
-        self.__plt_plots.append(['nls_ratios_vs_lumi3', nls_ratios_vs_lumi3.get_figure()])
+        self.__plt_plots['nls_ratios_vs_lumi3'] = nls_ratios_vs_lumi3.get_figure()
 
     # Things I added
 
@@ -688,7 +688,7 @@ class MultipleDetectorsRatio:
                                                                 energy_year_label=self.__year_energy_label,
                                                                 # legend_labels=self.__nls_ratio_plotting_labels
                                                                 )
-        self.__plt_plots.append(['ratios_vs_run', ratios_vs_run.get_figure()])
+        self.__plt_plots['ratios_vs_run'] = ratios_vs_run.get_figure()
 
     # End of things I added
 
