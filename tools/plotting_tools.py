@@ -4,6 +4,7 @@ import tools.lumi_tools as ltools
 from statsmodels.graphics.api import abline_plot
 import seaborn as sns
 import numpy as np
+import pandas as pd
 
 __cms_label_pos_sq = setts.cms_label_pos_sq
 __cms_label_pos_nsq = setts.cms_label_pos_nsq
@@ -20,9 +21,9 @@ def save_py_fig_to_file(fig, output_name):
 
 def save_plots(names_and_plots, output_name):
     ltools.check_and_create_folder(output_name)
-    for plot in names_and_plots:
-        plot_name = plot[0]
-        plot_object = plot[1]
+    plot_names = list(names_and_plots)
+    for plot_name in plot_names:
+        plot_object = names_and_plots[plot_name]
         for plot_format in setts.plots_formats:
             plot_full_path = output_name + plot_name + '.' + plot_format
             save_py_fig_to_file(plot_object, plot_full_path)
@@ -136,7 +137,9 @@ def scatter_plot_from_pandas_frame(data_frame, x_data_label, y_data_label, title
                                    ymin=0.0, ymax=0.0, color='#86bf91', label_cms_status=True,
                                    energy_year_label='', legend_labels=None, legend_position=setts.leg_vs_plots_pos,
                                    leg_marker_sc=setts.leg_vs_plots_marker_scale,
+                                   marker_size=0.7,
                                    leg_text_s=setts.leg_vs_plots_text_s,
+                                   plot_style='o',
                                    fig_size_shape='nsq'):
     fig_size = get_fig_size(fig_size_shape)
     if xlabel == '':
@@ -146,7 +149,7 @@ def scatter_plot_from_pandas_frame(data_frame, x_data_label, y_data_label, title
     fig, ax = plt.subplots()
     if type(y_data_label) == list:
         plot = data_frame.plot(x=x_data_label, y=y_data_label, style='o', figsize=fig_size,
-                               markersize=0.5, ax=ax)
+                               markersize=marker_size, ax=ax)
         if legend_labels is None:
             legend_labels = y_data_label
         else:
@@ -154,8 +157,8 @@ def scatter_plot_from_pandas_frame(data_frame, x_data_label, y_data_label, title
         ax.legend(legend_labels, ncol=len(legend_labels),
                   markerscale=leg_marker_sc, fontsize=leg_text_s, loc=legend_position)
     else:
-        plot = data_frame.plot(x=x_data_label, y=y_data_label, style='o', figsize=fig_size,
-                               markersize=0.5, legend=None, ax=ax)
+        plot = data_frame.plot(x=x_data_label, y=y_data_label, style=plot_style, figsize=fig_size,
+                               markersize=marker_size, legend=None, ax=ax)
     plot.set_title(title)
     plot.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size)
     plot.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size)
@@ -248,3 +251,57 @@ def sns_regresion_plot(data, x_data_label, y_data_label):
 
 def get_fig_size(shape: str) -> tuple:
     return setts.fig_sizes[shape]
+
+
+def hist_list_from_pandas_frame(list_nls_data, nbins, title='', xlabel='', ylabel='', xmin=0.0, xmax=0.0,
+                                x_data_range=None,
+                                all_nls_weights=pd.DataFrame(),
+                                label_cms_status=True, energy_year_label='',
+                                fig_size_shape='sq',
+                                legend_labels=None, legend_position=setts.leg_vs_plots_pos,
+                                leg_marker_sc=setts.leg_vs_plots_marker_scale,
+                                leg_text_s=setts.leg_vs_plots_text_s, nls_label=True,
+                                histtype='step', stacked=True, fill=False
+                                ):
+    global ratio_hist
+    fig_size = get_fig_size(fig_size_shape)
+    fig, ax = plt.subplots(figsize=fig_size)
+    legend_labels_list = []
+
+    if x_data_range is None:
+        x_data_range = (xmin, xmax)
+
+    for hist_name in list(list_nls_data):
+        if all_nls_weights.empty:
+            list_nls_data[hist_name].hist(bins=nbins, alpha=1, ax=ax, label=hist_name, grid=False, figsize=fig_size,
+                                            range=x_data_range, histtype=histtype, stacked=stacked, fill=fill)
+
+        else:
+            list_nls_data[hist_name].dropna().hist(bins=nbins, alpha=1, ax=ax, label=hist_name, grid=False, figsize=fig_size,
+                                                    range=x_data_range, histtype=histtype, stacked=stacked, fill=fill,
+                                                    weights=all_nls_weights[hist_name].dropna())
+
+    if legend_labels is None:
+        print("No legend set")
+    else:
+        if nls_label:
+            for nls in legend_labels:
+                legend_labels_list.append(str(nls) + " LS")
+        else:
+            legend_labels_list = legend_labels
+        ax.legend(legend_labels_list, ncol=1,
+                    markerscale=leg_marker_sc, fontsize=leg_text_s, loc=legend_position)
+
+    ax.set_title(title)
+    ax.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size)
+    ax.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size)
+
+    if xmin != 0 and xmax != 0:
+        plt.xlim(xmin, xmax)
+
+    if label_cms_status:
+        add_extra_text(ax, fig_size_shape, energy_year_label=energy_year_label,
+                       experiment=setts.experiment, work_status=setts.work_status)
+
+    return fig
+
