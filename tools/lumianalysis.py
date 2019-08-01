@@ -3,10 +3,12 @@ from tools.detectorsratio import DetectorsRatio as Ratios
 from tools.detectorsratio import MultipleDetectorsRatio as MRatios
 from tools.linearityanalysis import LinearityAnalysis
 import settings as setts
+from tools.by_nls_test import ByNlsTest as BNLS
+
 
 class LAnalysis:
-    def __init__(self, dets_file_labels: list, input_dir: str, vs_all_analysis = False,
-                 run_linearity_analysis=False, mixed_data=False) -> None:
+    def __init__(self, dets_file_labels: list, input_dir: str, vs_all_analysis=False,
+                 run_linearity_analysis=False, mixed_data=False, run_stddev_test=False) -> None:
 
         n_files = len(dets_file_labels)
         detcs = []
@@ -22,6 +24,15 @@ class LAnalysis:
             print("******** 2 detector comparison choose!! ******")
 
             ratios12 = Ratios(detcs[0], detcs[1])
+
+            if run_stddev_test:
+                #test = BNLS(detcs[0], detcs[1], array_by_step = 5)
+                test = BNLS(detcs[0], detcs[1])
+                # Standard deviation test
+                test.plot_stddev_vs_nls()
+                test.plot_nls_histograms()
+                test.save_plots()
+                quit()
 
             # Fill stability plots
             ratios12.plot_ratio_vs_date()
@@ -66,9 +77,6 @@ class LAnalysis:
 
             # Save plots
             ratios123.save_plots()
-
-
-
 
 # if n_files == 2:
 #

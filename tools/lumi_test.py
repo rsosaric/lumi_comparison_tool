@@ -6,7 +6,7 @@ from tools import lumi_tools as ltools
 import tools.plotting_tools as plotting
 
 
-class DetectorsRatio(L):
+class nls_test(L):
 
     def __init__(self, det1: L, det2: L, year: str = None, energy: str = None,
                  fill_nls_data: bool = True, fill_stats=True, load_all_data = False,
@@ -45,14 +45,14 @@ class DetectorsRatio(L):
         self.output_dir = setts.default_output_dir + str(self.year) + '/' + det1.name + '-' + det2.name + '/'
         self.__year_energy_label = str(self.energy) + 'TeV(' + str(self.year) + ')'
         self.__label_ratio = det1.name + '/' + det2.name
-        self.__by_nls_label_ratio = 'by_' + str(self.__nls) + 'nls_' + self.__label_ratio
+        self.__by_nls_label_ratio = 'by_nls_' + self.__label_ratio
         self.__lumi_unit = det2.lumi_unit
         self.__det1 = det1
         self.__det2 = det2
-        self.__by_nls_lumi_rec_label1 = det1.lumi_rec_label + '_by_' + str(self.__nls) + 'nls'
-        self.__by_nls_lumi_rec_label2 = det2.lumi_rec_label + '_by_' + str(self.__nls) + 'nls'
+        self.__by_nls_lumi_rec_label1 = det1.lumi_rec_label + '_by_nls'
+        self.__by_nls_lumi_rec_label2 = det2.lumi_rec_label + '_by_nls'
         self.__by_nls_label_ratio_err = self.__by_nls_label_ratio + '_err'
-        self.__by_nls_lumi_label = 'by_' + str(self.__nls) + 'nls_lumi_' + self.__label_ratio
+        self.__by_nls_lumi_label = 'by_nls_lumi_' + self.__label_ratio
         self.__accumulated_rec_lumi1_label = det1.lumi_rec_label + '_accumulated'
         self.__accumulated_rec_lumi2_label = det2.lumi_rec_label + '_accumulated'
         self.__by_nls_accumulated_rec_lumi1_label = self.__by_nls_lumi_rec_label1 + '_accumulated'
@@ -125,7 +125,7 @@ class DetectorsRatio(L):
             self.fill_stats()
 
         # Initializing other variables:
-        self.__plt_plots = {}
+        self.__plt_plots = []
         self.__nbx_data = None
 
     # Other functions
@@ -235,7 +235,7 @@ class DetectorsRatio(L):
                                                      xmin=setts.ratio_min, xmax=setts.ratio_max,
                                                      mean=self.__ratios_mean, stdv=self.__ratios_stdv,
                                                      energy_year_label=self.__year_energy_label)
-        self.__plt_plots['ratio_hist'] = ratio_hist[0][0].get_figure()
+        self.__plt_plots.append(['ratio_hist', ratio_hist[0][0].get_figure()])
 
     def plot_ratio_hist_weighted(self):
         ratio_hist_lumi2_w = plotting.hist_from_pandas_frame(data_frame=self.__common_data_filtered,
@@ -250,7 +250,7 @@ class DetectorsRatio(L):
                                                              stdv=self.__ratios_lw_stdv,
                                                              energy_year_label=self.__year_energy_label,
                                                              weight_label=self.det2.lumi_rec_label)
-        self.__plt_plots['ratio_hist_lw'] = ratio_hist_lumi2_w[0][0].get_figure()
+        self.__plt_plots.append(['ratio_hist_lw', ratio_hist_lumi2_w[0][0].get_figure()])
 
     def plot_nls_ratio_hist(self):
         ratio_hist = plotting.hist_from_pandas_frame(data_frame=self.common_data_filtered,
@@ -263,7 +263,7 @@ class DetectorsRatio(L):
                                                      xmin=setts.ratio_min, xmax=setts.ratio_max,
                                                      mean=self.__nls_ratios_mean, stdv=self.__nls_ratios_stdv,
                                                      energy_year_label=self.__year_energy_label)
-        self.__plt_plots['ratio_nls_hist'] = ratio_hist[0][0].get_figure()
+        self.__plt_plots.append(['ratio_nls_hist', ratio_hist[0][0].get_figure()])
 
     def plot_nls_ratio_hist_weighted(self):
         ratio_hist_lumi2_w = plotting.hist_from_pandas_frame(data_frame=self.__common_data_filtered_no_nan,
@@ -279,7 +279,7 @@ class DetectorsRatio(L):
                                                              stdv=self.__nls_ratios_lw_stdv,
                                                              energy_year_label=self.__year_energy_label,
                                                              weight_label=self.__by_nls_lumi_label)
-        self.__plt_plots['nls_ratio_hist_lw'] = ratio_hist_lumi2_w[0][0].get_figure()
+        self.__plt_plots.append(['nls_ratio_hist_lw', ratio_hist_lumi2_w[0][0].get_figure()])
 
     # TODO: stability plots (double axis config)
     # TODO: binning, nls tests plots
@@ -291,7 +291,7 @@ class DetectorsRatio(L):
                                                                 ylabel=self.__label_ratio + " ratios",
                                                                 ymin=setts.ratio_min, ymax=setts.ratio_max,
                                                                 energy_year_label=self.__year_energy_label)
-        self.__plt_plots['ratio_vs_time'] = ratio_vs_time.get_figure()
+        self.__plt_plots.append(['ratio_vs_time', ratio_vs_time.get_figure()])
 
     def plot_ratio_vs_date(self):
         ratio_vs_date = plotting.scatter_plot_from_pandas_frame(data_frame=self.__common_data_filtered,
@@ -300,7 +300,7 @@ class DetectorsRatio(L):
                                                                 ylabel=self.__label_ratio + " ratios",
                                                                 ymin=setts.ratio_min, ymax=setts.ratio_max,
                                                                 energy_year_label=self.__year_energy_label)
-        self.__plt_plots['ratio_vs_date'] = ratio_vs_date.get_figure()
+        self.__plt_plots.append(['ratio_vs_date', ratio_vs_date.get_figure()])
 
     def plot_ratio_vs_lumi2(self):
         ratio_vs_time = plotting.scatter_plot_from_pandas_frame(data_frame=self.__common_data_filtered,
@@ -311,7 +311,7 @@ class DetectorsRatio(L):
                                                                 ylabel=self.__label_ratio + " ratios",
                                                                 ymin=setts.ratio_min, ymax=setts.ratio_max,
                                                                 energy_year_label=self.__year_energy_label)
-        self.__plt_plots['ratio_vs_lumi2'] = ratio_vs_time.get_figure()
+        self.__plt_plots.append(['ratio_vs_lumi2', ratio_vs_time.get_figure()])
 
     def plot_nls_ratio_vs_time(self):
         ratio_vs_time = plotting.scatter_plot_from_pandas_frame(data_frame=self.common_data_filtered,
@@ -322,7 +322,7 @@ class DetectorsRatio(L):
                                                                        str(self.__nls) + ' LS',
                                                                 ymin=setts.ratio_min, ymax=setts.ratio_max,
                                                                 energy_year_label=self.__year_energy_label)
-        self.__plt_plots['by_nls_ratio_vs_time'] = ratio_vs_time.get_figure()
+        self.__plt_plots.append(['by_nls_ratio_vs_time', ratio_vs_time.get_figure()])
 
     def plot_nls_ratio_vs_date(self):
         ratio_vs_date = plotting.scatter_plot_from_pandas_frame(data_frame=self.common_data_filtered,
@@ -332,7 +332,7 @@ class DetectorsRatio(L):
                                                                        str(self.__nls) + ' LS',
                                                                 ymin=setts.ratio_min, ymax=setts.ratio_max,
                                                                 energy_year_label=self.__year_energy_label)
-        self.__plt_plots['by_nls_ratio_vs_date'] = ratio_vs_date.get_figure()
+        self.__plt_plots.append(['by_nls_ratio_vs_date', ratio_vs_date.get_figure()])
 
     def plot_nls_ratio_vs_lumi2(self):
         ratio_vs_lumi = plotting.scatter_plot_from_pandas_frame(data_frame=self.common_data_filtered,
@@ -344,7 +344,7 @@ class DetectorsRatio(L):
                                                                        str(self.__nls) + ' LS',
                                                                 ymin=setts.ratio_min, ymax=setts.ratio_max,
                                                                 energy_year_label=self.__year_energy_label)
-        self.__plt_plots['by_nls_ratio_vs_lumi2'] = ratio_vs_lumi.get_figure()
+        self.__plt_plots.append(['by_nls_ratio_vs_lumi2', ratio_vs_lumi.get_figure()])
 
     # Things I added
 
@@ -357,7 +357,7 @@ class DetectorsRatio(L):
                                                                       str(self.__nls) + ' LS',
                                                                ymin=setts.ratio_min, ymax=setts.ratio_max,
                                                                energy_year_label=self.__year_energy_label)
-        self.__plt_plots['by_nls_ratio_vs_run'] = ratio_vs_run.get_figure()
+        self.__plt_plots.append(['by_nls_ratio_vs_run', ratio_vs_run.get_figure()])
 
     def plot_nls_ratio_vs_fill(self):
         ratio_vs_fill = plotting.scatter_plot_from_pandas_frame(data_frame=self.common_data_filtered,
@@ -368,7 +368,7 @@ class DetectorsRatio(L):
                                                                        str(self.__nls) + ' LS',
                                                                 ymin=setts.ratio_min, ymax=setts.ratio_max,
                                                                 energy_year_label=self.__year_energy_label)
-        self.__plt_plots['by_nls_ratio_vs_fill'] = ratio_vs_fill.get_figure()
+        self.__plt_plots.append(['by_nls_ratio_vs_fill', ratio_vs_fill.get_figure()])
 
     def plot_ratio_vs_run(self):
         ratio_vs_run = plotting.scatter_plot_from_pandas_frame(data_frame=self.common_data_filtered,
@@ -378,7 +378,7 @@ class DetectorsRatio(L):
                                                                ylabel=self.__label_ratio + " ratios",
                                                                ymin=setts.ratio_min, ymax=setts.ratio_max,
                                                                energy_year_label=self.__year_energy_label)
-        self.__plt_plots['by_ratio_vs_run'] = ratio_vs_run.get_figure()
+        self.__plt_plots.append(['by_ratio_vs_run', ratio_vs_run.get_figure()])
 
     def plot_ratio_vs_fill(self):
         ratio_vs_fill = plotting.scatter_plot_from_pandas_frame(data_frame=self.common_data_filtered,
@@ -388,7 +388,7 @@ class DetectorsRatio(L):
                                                                 ylabel=self.__label_ratio + " ratios",
                                                                 ymin=setts.ratio_min, ymax=setts.ratio_max,
                                                                 energy_year_label=self.__year_energy_label)
-        self.__plt_plots['by_ratio_vs_fill'] = ratio_vs_fill.get_figure()
+        self.__plt_plots.append(['by_ratio_vs_fill', ratio_vs_fill.get_figure()])
 
     # End of things I added
 
@@ -459,10 +459,6 @@ class DetectorsRatio(L):
     @property
     def common_data_filtered(self):
         return self.__common_data_filtered
-
-    @property
-    def common_data_filtered_no_nan(self):
-        return self.__common_data_filtered_no_nan
 
     @property
     def nls(self):
