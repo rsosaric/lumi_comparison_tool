@@ -305,3 +305,89 @@ def hist_list_from_pandas_frame(list_nls_data, nbins, title='', xlabel='', ylabe
 
     return fig
 
+
+def plot_bad_fill_info(data_frame, x_data_label, y_data_label, z_data_label, title='', xlabel='', ylabel='',
+                                   ymin=0.0, ymax=0.0, label_cms_status=True,
+                                   energy_year_label='', mean=None, stdv=None,
+                                   fig_size_shape='nsq', ratio_acceptance=0.01, filePath='', txtfileName="NoName"):
+    fig_size = get_fig_size(fig_size_shape)
+    fig, ax = plt.subplots(figsize=fig_size)
+
+    x_data_list = list(data_frame[x_data_label])
+    y_data_list = list(data_frame[y_data_label])
+    z_data_list = list(data_frame[z_data_label])
+
+    data = pd.DataFrame()
+
+    for i in range(0,len(x_data_list), 1):
+        if str(x_data_list[i]) in data.keys():
+            data[str(x_data_list[i])][0] = data[str(x_data_list[i])][0] + y_data_list[i]*z_data_list[i]
+            data[str(x_data_list[i])][1] = data[str(x_data_list[i])][1] + z_data_list[i]
+        else:
+            data[str(x_data_list[i])] = (y_data_list[i]*z_data_list[i], z_data_list[i])
+
+    total_lumi = 0
+    for i in list(data):
+        data[i][0] = data[i][0]/data[i][1]
+        total_lumi = total_lumi + data[i][1]
+
+    x_data_reduced = []
+    y_data_mean = []
+    z_data_acum = []
+    ey = []
+    colors = []
+
+    for i in list(data):
+        x_data_reduced.append(int(i))
+        y_data_mean.append(data[i][0])
+        z_data_acum.append(data[i][1])
+        ey.append(1000*data[i][1]/total_lumi)
+        colors.append(100*data[i][1]/total_lumi)
+
+    lumi_porcent = max(colors)*setts.lumisensitivity
+    limratioUP = mean + stdv*ratio_acceptance
+    limratioDOWN = mean - stdv*ratio_acceptance
+
+    bad_fills = []
+    bad_fillsPos = []
+
+    for i in range(0,len(x_data_reduced), 1):
+        if (y_data_mean[i] > limratioUP or y_data_mean[i] < limratioDOWN) and (100*z_data_acum[i]/total_lumi) > lumi_porcent:
+            bad_fills.append(x_data_reduced[i])
+            bad_fillsPos.append((x_data_reduced[i],y_data_mean[i]))
+
+    print(x_data_label + "s to analize", bad_fills)
+    ##write file:
+    ltools.check_and_create_folder(filePath)
+    fileout = open(filePath + txtfileName + ".txt", "w+")
+    fileout.write(str(bad_fills))
+    fileout.close()
+
+    sc = plt.scatter(x_data_reduced, y_data_mean, s=ey, c=colors, vmin=0, vmax=max(colors))
+
+    plt.plot(x_data_reduced, y_data_mean, linewidth=0.5, alpha=0.8, linestyle="--")
+    plt.axhline(mean, color='black', lw=0.8, alpha=0.7, linestyle="--")
+    plt.axhline(limratioUP, color='red', lw=0.8, alpha=0.7, linestyle="--")
+    plt.axhline(limratioDOWN, color='red', lw=0.8, alpha=0.7, linestyle="--")
+
+    for i, txt in enumerate(bad_fills):
+        plt.annotate(txt, bad_fillsPos[i], xytext=(-25, 25),
+                     textcoords='offset points', ha='right', va='top',
+                     bbox=dict(boxstyle='round,pad=0.3', fc='yellow', alpha=0.5),
+                     arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=0'))
+    plt.colormaps()
+    cbar = plt.colorbar(sc)
+    cbar.set_label('% of the total integrated luminosity')
+
+    # plt.title(title)
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+
+    if ymin != 0 and ymax != 0:
+        plt.ylim(ymin, ymax)
+
+    if label_cms_status:
+        add_extra_text(ax, fig_size_shape, energy_year_label=energy_year_label,
+                       experiment=setts.experiment, work_status=setts.work_status)
+
+    return fig

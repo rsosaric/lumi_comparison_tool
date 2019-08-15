@@ -26,7 +26,6 @@ class ByNlsTest:
         self.__by_nls_lumi_label = None
         self.__label_ratio = None
         self.__by_nls_label_ratio = None
-        self.__nls_list = []
 
         self.__all_nls_data = pd.DataFrame()
         self.__all_nls_weights = pd.DataFrame()
@@ -54,9 +53,8 @@ class ByNlsTest:
             self.__by_nls_lumi_label = ratios12.by_nls_lumi_label
             self.__label_ratio = ratios12.label_ratio
             self.__by_nls_label_ratio = ratios12.by_nls_label_ratio
-            self.__nls_list.append([ratios12.common_data_filtered_no_nan,ratios12.by_nls_lumi_label])
 
-        self.__data_file_pd = pd.DataFrame(self.__data, columns = ['nls' , 'stddev'])
+        self.__data_file_pd = pd.DataFrame(self.__data, columns = ['nls', 'stddev'])
         self.__output_dir = self.__output_dir + 'stdtest/'
 
     def plot_stddev_vs_nls(self):
@@ -85,6 +83,3 @@ class ByNlsTest:
     def save_plots(self):
         print('\n\n Saving test plots:')
         plotting.save_plots(self.__plt_plots, self.__output_dir)
-
-    def nls_list(self):
-        return self.__nls_list

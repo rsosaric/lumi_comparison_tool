@@ -9,7 +9,7 @@ import tools.plotting_tools as plotting
 class DetectorsRatio(L):
 
     def __init__(self, det1: L, det2: L, year: str = None, energy: str = None,
-                 fill_nls_data: bool = True, fill_stats=True, load_all_data = False,
+                 fill_nls_data: bool = True, fill_stats=True, load_all_data = False, c_years = False,
                  nls = None) -> None:
 
         if fill_stats:
@@ -21,7 +21,11 @@ class DetectorsRatio(L):
             else:
                 raise ValueError("Comparing detectors from different years or energies makes no sense :(")
         else:
-            self.year = year
+            if c_years:
+                list_years = year.split(',')
+                self.year = list_years[0]
+            else:
+                self.year = year
 
         if energy is None:
             if (det1.year == det2.year) and (det1.energy == det2.energy):
@@ -42,8 +46,13 @@ class DetectorsRatio(L):
                 self.__nls = setts.nls_default
 
         # column labels for dataframes
-        self.output_dir = setts.default_output_dir + str(self.year) + '/' + det1.name + '-' + det2.name + '/'
-        self.__year_energy_label = str(self.energy) + 'TeV(' + str(self.year) + ')'
+        if c_years:
+            self.output_dir = setts.default_output_dir + year.replace(',', '-') + '/' + det1.name + '-' + det2.name + '/'
+            self.__year_energy_label = str(self.energy) + 'TeV(' + year + ')'
+        else:
+            self.output_dir = setts.default_output_dir + str(self.year) + '/' + det1.name + '-' + det2.name + '/'
+            self.__year_energy_label = str(self.energy) + 'TeV(' + str(self.year) + ')'
+
         self.__label_ratio = det1.name + '/' + det2.name
         self.__by_nls_label_ratio = 'by_' + str(self.__nls) + 'nls_' + self.__label_ratio
         self.__lumi_unit = det2.lumi_unit
@@ -57,6 +66,7 @@ class DetectorsRatio(L):
         self.__accumulated_rec_lumi2_label = det2.lumi_rec_label + '_accumulated'
         self.__by_nls_accumulated_rec_lumi1_label = self.__by_nls_lumi_rec_label1 + '_accumulated'
         self.__by_nls_accumulated_rec_lumi2_label = self.__by_nls_lumi_rec_label2 + '_accumulated'
+        self.__rec_label = det2.lumi_rec_label
 
         det2.data = det2.data.sort_values(by="time", ascending=True)
         det1.data = det1.data.sort_values(by="time", ascending=True)
@@ -79,13 +89,19 @@ class DetectorsRatio(L):
         allowed_min_ratio = temp_mean - setts.allowed_ratio_stdv_factor * temp_stdv
         allowed_max_ratio = temp_mean + setts.allowed_ratio_stdv_factor * temp_stdv
 
-        if allowed_min_ratio > setts.ratio_min:
+        if np.isnan(allowed_min_ratio) or np.isnan(allowed_max_ratio):
+            print("WARNING ----- Mean and Std Deviation in " + self.label_ratio + " are undefined")
+            allowed_min_ratio = 0
+            allowed_max_ratio = 2
+
+        if allowed_min_ratio > setts.ratio_min or np.isnan(allowed_min_ratio):
             allowed_min_ratio = setts.ratio_min
-        if allowed_max_ratio < setts.ratio_max:
+        if allowed_max_ratio < setts.ratio_max or np.isnan(allowed_max_ratio):
             allowed_max_ratio = setts.ratio_max
 
         common_data_filtered_in = common_data_in[(common_data_in[self.label_ratio] >= allowed_min_ratio) &
                                                  (common_data_in[self.label_ratio] <= allowed_max_ratio)]
+
         # Resetting indexes
         common_data_filtered_in = common_data_filtered_in.reset_index(drop=True)
         self.__common_data_filtered = common_data_filtered_in
@@ -247,7 +263,7 @@ class DetectorsRatio(L):
                                                              # title='Detectors Ratios Histogram (lumi weighted)',
                                                              xmin=setts.ratio_min, xmax=setts.ratio_max,
                                                              mean=self.__ratios_lw_mean,
-                                                             stdv=self.__ratios_lw_stdv,
+                                                             stdv=self.__ratios_lw_stdv_dof_corr,
                                                              energy_year_label=self.__year_energy_label,
                                                              weight_label=self.det2.lumi_rec_label)
         self.__plt_plots['ratio_hist_lw'] = ratio_hist_lumi2_w[0][0].get_figure()
@@ -276,7 +292,7 @@ class DetectorsRatio(L):
                                                              # title='Detectors Ratios Histogram (lumi weighted)',
                                                              xmin=setts.ratio_min, xmax=setts.ratio_max,
                                                              mean=self.__nls_ratios_lw_mean,
-                                                             stdv=self.__nls_ratios_lw_stdv,
+                                                             stdv=self.__nls_ratios_lw_stdv_dof_corr,
                                                              energy_year_label=self.__year_energy_label,
                                                              weight_label=self.__by_nls_lumi_label)
         self.__plt_plots['nls_ratio_hist_lw'] = ratio_hist_lumi2_w[0][0].get_figure()
@@ -391,6 +407,39 @@ class DetectorsRatio(L):
         self.__plt_plots['by_ratio_vs_fill'] = ratio_vs_fill.get_figure()
 
     # End of things I added
+
+    # Fill test
+    def plot_bad_fills(self):
+        ratio_vs_fill = plotting.plot_bad_fill_info(data_frame=self.common_data_filtered_no_nan, x_data_label='fill',
+                                                    y_data_label=self.label_ratio, z_data_label=self.__rec_label,
+                                                    xlabel= 'Fill Number', ylabel=self.__label_ratio + " ratios",
+                                                    mean=self.__nls_ratios_lw_mean,
+                                                    stdv=self.__nls_ratios_lw_stdv_dof_corr,
+                                                    ratio_acceptance=setts.bad_ratio_to_plot_stdv_factor,
+                                                    filePath=self.output_dir + 'txt/',
+                                                    ymin=self.__nls_ratios_lw_mean-3*setts.bad_ratio_to_plot_stdv_factor
+                                                         * self.__nls_ratios_lw_stdv_dof_corr,
+                                                    ymax=self.__nls_ratios_lw_mean+3*setts.bad_ratio_to_plot_stdv_factor
+                                                         * self.__nls_ratios_lw_stdv_dof_corr,
+                                                    energy_year_label=self.__year_energy_label,
+                                                    txtfileName='Bad_fills')
+        self.__plt_plots['by_ratio_vs_fill_bad_fills'] = ratio_vs_fill
+
+    def plot_bad_runs(self):
+        ratio_vs_run = plotting.plot_bad_fill_info(data_frame=self.common_data_filtered_no_nan, x_data_label='run',
+                                                    y_data_label=self.label_ratio, z_data_label=self.__rec_label,
+                                                    xlabel= 'Run Number', ylabel=self.__label_ratio + " ratios",
+                                                    mean=self.__nls_ratios_lw_mean,
+                                                    stdv=self.__nls_ratios_lw_stdv_dof_corr,
+                                                    ratio_acceptance=setts.bad_ratio_to_plot_stdv_factor,
+                                                    filePath=self.output_dir + 'txt/',
+                                                    ymin=self.__nls_ratios_lw_mean-3*setts.bad_ratio_to_plot_stdv_factor
+                                                         *self.__nls_ratios_lw_stdv_dof_corr,
+                                                    ymax=self.__nls_ratios_lw_mean+3*setts.bad_ratio_to_plot_stdv_factor
+                                                         *self.__nls_ratios_lw_stdv_dof_corr,
+                                                    energy_year_label=self.__year_energy_label,
+                                                    txtfileName='Bad_runs')
+        self.__plt_plots['by_ratio_vs_run_bad_runs'] = ratio_vs_run
 
     def save_plots(self):
         print('\n\n Saving plots:')
@@ -535,7 +584,7 @@ class DetectorsRatio(L):
 # TODO: make numb of detectors automatic
 class MultipleDetectorsRatio:
     def __init__(self, det1: L, det2: L, det3: L, year: str = None, energy: str = None,
-                 full_data: list = None) -> None:
+                 full_data: list = None, c_years = False) -> None:
 
         self.__dets = [det1, det2, det3]
         number_of_dets = len(self.__dets)
@@ -548,7 +597,11 @@ class MultipleDetectorsRatio:
             else:
                 raise ValueError("Comparing detectors from different years or energies makes no sense :(")
         else:
-            self.year = year
+            if c_years:
+                list_years = year.split(',')
+                self.year = list_years[0]
+            else:
+                self.year = year
 
         if energy is None:
             if (det1.year == det2.year) and (det1.energy == det2.energy) \
@@ -562,9 +615,14 @@ class MultipleDetectorsRatio:
         assert det1.lumi_unit == det3.lumi_unit and det2.lumi_unit == det3.lumi_unit
         self.__lumi_unit = det3.lumi_unit
 
-        self.__output_dir = setts.default_output_dir + str(self.year) + '/' + det1.name + '-' + det2.name \
-                            + '-' + det3.name + '/'
-        self.__year_energy_label = str(self.energy) + 'TeV(' + str(self.year) + ')'
+        if c_years:
+            self.__output_dir = setts.default_output_dir + year.replace(',', '-') + '/' + det1.name + '-' + det2.name \
+                                + '-' + det3.name + '/'
+            self.__year_energy_label = str(self.energy) + 'TeV(' + year + ')'
+        else:
+            self.__output_dir = setts.default_output_dir + str(self.year) + '/' + det1.name + '-' + det2.name \
+                                + '-' + det3.name + '/'
+            self.__year_energy_label = str(self.energy) + 'TeV(' + str(self.year) + ')'
 
         self.__ratios = []
         self.__ratios_all = []
@@ -622,7 +680,7 @@ class MultipleDetectorsRatio:
         ltools.check_and_clean_after_merging(merge_tmp)
 
         self.__combined_data = merge_tmp
-        print(list(merge_tmp))
+        #print(list(merge_tmp))
 
         self.__plt_plots = {}
         self.__sns_plots = []
@@ -632,7 +690,7 @@ class MultipleDetectorsRatio:
         ratios_vs_date = plotting.scatter_plot_from_pandas_frame(data_frame=self.combined_data,
                                                                  y_data_label=self.__ratio_col_names,
                                                                  x_data_label='date',
-                                                                 ylabel="ratios in " + str(self.__nls) + ' LS',
+                                                                 ylabel="ratios",
                                                                  ymin=setts.ratio_min, ymax=setts.ratio_max,
                                                                  energy_year_label=self.__year_energy_label,
                                                                  # legend_labels=self.__nls_ratio_plotting_labels
@@ -644,7 +702,9 @@ class MultipleDetectorsRatio:
         ratios_vs_lumi3 = plotting.scatter_plot_from_pandas_frame(data_frame=self.combined_data,
                                                                   y_data_label=self.__ratio_col_names,
                                                                   x_data_label=self.__lumi3_col_name,
-                                                                  ylabel="ratios in " + str(self.__nls) + ' LS',
+                                                                  ylabel="ratios",
+                                                                  xlabel="Integrated luminosity [$" +
+                                                                         self.__lumi_unit + "^{-1}$]",
                                                                   ymin=setts.ratio_min, ymax=setts.ratio_max,
                                                                   energy_year_label=self.__year_energy_label,
                                                                   # legend_labels=self.__nls_ratio_plotting_labels
@@ -683,7 +743,7 @@ class MultipleDetectorsRatio:
                                                                 y_data_label=self.__ratio_col_names,
                                                                 x_data_label='run',
                                                                 xlabel="run",
-                                                                ylabel="ratios in " + str(self.__nls) + ' LS',
+                                                                ylabel="ratios",
                                                                 ymin=setts.ratio_min, ymax=setts.ratio_max,
                                                                 energy_year_label=self.__year_energy_label,
                                                                 # legend_labels=self.__nls_ratio_plotting_labels

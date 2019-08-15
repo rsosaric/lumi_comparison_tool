@@ -4,26 +4,47 @@ from tools.detectorsratio import MultipleDetectorsRatio as MRatios
 from tools.linearityanalysis import LinearityAnalysis
 import settings as setts
 from tools.by_nls_test import ByNlsTest as BNLS
+from tools import full_run_utilities as frutils
 
 
 class LAnalysis:
     def __init__(self, dets_file_labels: list, input_dir: str, vs_all_analysis=False,
-                 run_linearity_analysis=False, mixed_data=False, run_stddev_test=False) -> None:
+                 run_linearity_analysis=False, mixed_data=False, run_stddev_test=False, c_years = False) -> None:
 
-        n_files = len(dets_file_labels)
-        detcs = []
-        for det in dets_file_labels:
-            try:
-                detcs.append(L(det, input_dir + det + ".csv", mixed_data=mixed_data))
-            except IOError as errIO:
-                print(errIO)
-                print('Please check if default input folder is correctly created: ' + setts.csv_input_base_dir)
-                print('Also check that your .csv file is in the correct year folder: ' + input_dir)
-                raise
+        n_files = 0
+        if c_years:
+            years_and_dir = input_dir.split(',')
+            n_files = len(dets_file_labels)
+            files_path = []
+            detcs = []
+            for i in range(1, len(years_and_dir), 1):
+                files_path.append(years_and_dir[0] + years_and_dir[i] + '/')
+
+            for det in dets_file_labels:
+                detcs.append(frutils.merge_lumies(det, files_path, mixed_data=mixed_data))
+        else:
+            n_files = len(dets_file_labels)
+            detcs = []
+            for det in dets_file_labels:
+                try:
+                    detcs.append(L(det, input_dir + det + ".csv", mixed_data=mixed_data))
+                except IOError as errIO:
+                    print(errIO)
+                    print('Please check if default input folder is correctly created: ' + setts.csv_input_base_dir)
+                    print('Also check that your .csv file is in the correct year folder: ' + input_dir)
+                    raise
+
         if n_files == 2:
             print("******** 2 detector comparison choose!! ******")
 
-            ratios12 = Ratios(detcs[0], detcs[1])
+            if c_years:
+                years_and_dir = input_dir.split(',')
+                years = years_and_dir[1]
+                for i in range(2, len(years_and_dir), 1):
+                    years = years + ',' + years_and_dir[i]
+                ratios12 = Ratios(detcs[0], detcs[1], year=years, c_years=c_years)
+            else:
+                ratios12 = Ratios(detcs[0], detcs[1])
 
             if run_stddev_test:
                 #test = BNLS(detcs[0], detcs[1], array_by_step = 5)
@@ -41,12 +62,15 @@ class LAnalysis:
             ratios12.plot_ratio_hist()
             ratios12.plot_nls_ratio_hist()
             ratios12.plot_ratio_hist_weighted()
+            ratios12.plot_nls_ratio_hist_weighted()
 
             # Mine
             ratios12.plot_nls_ratio_vs_run()
             ratios12.plot_nls_ratio_vs_fill()
             ratios12.plot_ratio_vs_run()
             ratios12.plot_ratio_vs_fill()
+            ratios12.plot_bad_fills()
+            ratios12.plot_bad_runs()
 
             ratios12.save_plots()
 
@@ -60,7 +84,14 @@ class LAnalysis:
         elif n_files == 3:
             print("******** 3 detector comparison choose!! ******")
 
-            ratios123 = MRatios(detcs[0], detcs[1], detcs[2])
+            if c_years:
+                years_and_dir = input_dir.split(',')
+                years = years_and_dir[1]
+                for i in range(2, len(years_and_dir), 1):
+                    years = years + ',' + years_and_dir[i]
+                ratios123 = MRatios(detcs[0], detcs[1], detcs[2], year=years, c_years=c_years)
+            else:
+                ratios123 = MRatios(detcs[0], detcs[1], detcs[2])
 
             # Fill plots
             ratios123.plot_nls_ratios_vs_date()
