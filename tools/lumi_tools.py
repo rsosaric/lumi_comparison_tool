@@ -119,3 +119,4 @@ def get_linear_model_from_pd_cols(data: pd.DataFrame, x_col_name: str, y_col_nam
     y = data[y_col_name]
 
     return sm.OLS(y, x)
+

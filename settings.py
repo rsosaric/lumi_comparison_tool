@@ -41,7 +41,7 @@ axis_case_size = 12
 
 ratio_min = 0.94
 ratio_max = 1.06
-nbins = 150
+nbins = 300
 
 date_format = "%Y-%m-%d %H:%M"
 
@@ -89,6 +89,10 @@ default_output_dir = 'plots/'
 # -*-*-*-*-*-*-*-*-*-*-*- > > > Data structure and format < < < -*-*-*-*-*-*-*-*-*-*-*-
 
 # TODO: create plot to check this config
-allowed_ratio_stdv_factor = 3.0
+allowed_ratio_stdv_factor = 3
 remove_outliers_in_lin_by_fill = True
 min_number_of_points_req = 5
+
+bad_ratio_to_plot_stdv_factor = 2
+lumisensitivity = 0.05                  # Multiplicity of the total luminosity porcent of each pint for acceptance.
+                                        # Higher means less strict.
