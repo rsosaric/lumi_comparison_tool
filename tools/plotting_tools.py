@@ -360,7 +360,8 @@ def plot_bad_fill_info(data_frame, x_data_label, y_data_label, z_data_label, tit
     ##write file:
     ltools.check_and_create_folder(filePath)
     fileout = open(filePath + txtfileName + ".txt", "w+")
-    fileout.write(str(bad_fills))
+    for i in bad_fills:
+        fileout.write(str(i) + ' ')
     fileout.close()
 
     sc = plt.scatter(x_data_reduced, y_data_mean, s=ey, c=colors, vmin=0, vmax=max(colors))
