@@ -12,8 +12,15 @@ class DetectorsRatio(L):
                  fill_nls_data: bool = True, fill_stats=True, load_all_data = False, c_years = False,
                  nls = None) -> None:
 
+        self.__detcs = (det1, det2)
+
         if fill_stats:
             fill_nls_data = True
+
+        if det1.all_data_analysis_included and det1.all_data_analysis_included:
+            self.__all_data_analysis_included = True
+        else:
+            self.__all_data_analysis_included = False
 
         if year is None:
             if (det1.year == det2.year) and (det1.energy == det2.energy):
@@ -67,11 +74,10 @@ class DetectorsRatio(L):
         self.__by_nls_accumulated_rec_lumi1_label = self.__by_nls_lumi_rec_label1 + '_accumulated'
         self.__by_nls_accumulated_rec_lumi2_label = self.__by_nls_lumi_rec_label2 + '_accumulated'
         self.__rec_label = det2.lumi_rec_label
-
-        det2.data = det2.data.sort_values(by="time", ascending=True)
-        det1.data = det1.data.sort_values(by="time", ascending=True)
+        self.__ratio_excluded_label = 'Exclusion info (' + self.__label_ratio + ')'
 
         keys_for_merging = ['ls', 'time', 'run', 'fill']
+        print ("Merging " + det1.name + " and " + det2.name + " ...")
         common_data_in = pd.merge(det1.data, det2.data, on=keys_for_merging, how='outer')
 
         # Computing single ls ratio
@@ -119,6 +125,28 @@ class DetectorsRatio(L):
 
         self.__common_data_filtered_no_nan = self.__common_data_filtered.dropna()
 
+        self.__data_all = None
+        self.__data_excluded = None
+
+        if self.all_data_analysis_included:
+            print ("Merging " + det1.name + " and " + det2.name + " (all data) ... \n")
+            common_data_in_all = pd.merge(det1.all_data, det2.all_data, on=keys_for_merging, how='outer')
+
+            common_data_in_all[det1.excluded_label] = common_data_in_all[det1.excluded_label].fillna(det1.label_for_excluded)
+            common_data_in_all[det2.excluded_label] = common_data_in_all[det2.excluded_label].fillna(det2.label_for_excluded)
+
+            common_data_in_all[self.label_ratio] = common_data_in_all[det1.lumi_rec_label] / common_data_in_all[det2.lumi_rec_label]
+
+            common_data_in_all[self.__ratio_excluded_label] = np.where(
+                (common_data_in_all[det1.excluded_label] == det1.label_for_excluded) | (common_data_in_all[det2.excluded_label] == det2.label_for_excluded),
+                det2.label_for_excluded, det2.label_for_included)
+
+            common_data_in_all[self.accumulated_rec_lumi2_label] = common_data_in_all[det2.lumi_rec_label].cumsum()
+            common_data_in_all[self.accumulated_rec_lumi1_label] = common_data_in_all[det1.lumi_rec_label].cumsum()
+
+            self.__data_all = common_data_in_all
+
+
         # -> Initializing stats vars
         # single ls ratios
         self.__ratios_mean = None
@@ -142,6 +170,7 @@ class DetectorsRatio(L):
 
         # Initializing other variables:
         self.__plt_plots = {}
+        self.__sns_plots = {}
         self.__nbx_data = None
 
     # Other functions
@@ -441,9 +470,43 @@ class DetectorsRatio(L):
                                                     txtfileName='Bad_runs')
         self.__plt_plots['by_ratio_vs_run_bad_runs'] = ratio_vs_run
 
+    # All/excluded data analysis plots
+    def __plot_all_and_excluded(self, det_index):
+        if type(det_index)==int and det_index<=1:
+            det = self.__detcs[det_index]
+            suffix_plot_name = det.excluded_label.replace(" ","_").replace(":","")
+            scatter_all_and_excluded_lumi2 = plotting.snsplot_detector_all_and_excluded(self.__data_all,
+                                                                                  x_data_label=self.accumulated_rec_lumi2_label,
+                                                                                  y_data_label=self.label_ratio,
+                                                                                  conditional_label=det.excluded_label,
+                                                                                  xlabel="Integrated luminosity [$" +
+                                                                                         self.lumi_unit + "^{-1}$]",
+                                                                                  ylabel=self.__label_ratio + " ratios",
+                                                                                  ymin=setts.ratio_min, ymax=setts.ratio_max,
+                                                                                  energy_year_label=self.__year_energy_label)
+            self.__sns_plots['scatter_all_and_excluded_vs_lum2_' + suffix_plot_name] = scatter_all_and_excluded_lumi2
+
+            scatter_all_and_excluded_run = plotting.snsplot_detector_all_and_excluded(self.__data_all,
+                                                                                  x_data_label="run",
+                                                                                  y_data_label=self.label_ratio,
+                                                                                  conditional_label=det.excluded_label,
+                                                                                  xlabel="Run",
+                                                                                  ylabel=self.__label_ratio + " ratios",
+                                                                                  ymin=setts.ratio_min,
+                                                                                  ymax=setts.ratio_max,
+                                                                                  energy_year_label=self.__year_energy_label)
+            self.__sns_plots['scatter_all_and_excluded_vs_run_' + suffix_plot_name] = scatter_all_and_excluded_run
+        else:
+            raise AssertionError("Index must be 0 or 1")
+
+    def plot_all_and_excluded_by_detc(self):
+        self.__plot_all_and_excluded(0)
+        self.__plot_all_and_excluded(1)
+
     def save_plots(self):
         print('\n\n Saving plots:')
         plotting.save_plots(self.plt_plots, self.output_dir)
+        plotting.save_plots(self.sns_plots, self.output_dir)
 
     @property
     def output_dir(self):
@@ -452,6 +515,10 @@ class DetectorsRatio(L):
     @property
     def label_ratio(self):
         return self.__label_ratio
+
+    @property
+    def all_data_analysis_included(self):
+        return self.__all_data_analysis_included
 
     @property
     def by_nls_label_ratio(self):
@@ -500,6 +567,10 @@ class DetectorsRatio(L):
     @property
     def year_energy_label(self):
         return self.__year_energy_label
+
+    @property
+    def ratio_excluded_label(self):
+        return self.__ratio_excluded_label
 
     @property
     def common_data(self):
@@ -563,6 +634,10 @@ class DetectorsRatio(L):
     def plt_plots(self):
         return self.__plt_plots
 
+    @property
+    def sns_plots(self):
+        return self.__sns_plots
+
     # setters
     @common_data.setter
     def common_data(self, data):
@@ -583,8 +658,7 @@ class DetectorsRatio(L):
 
 # TODO: make numb of detectors automatic
 class MultipleDetectorsRatio:
-    def __init__(self, det1: L, det2: L, det3: L, year: str = None, energy: str = None,
-                 full_data: list = None, c_years = False) -> None:
+    def __init__(self, det1: L, det2: L, det3: L, year: str = None, energy: str = None, c_years = False) -> None:
 
         self.__dets = [det1, det2, det3]
         number_of_dets = len(self.__dets)
@@ -624,26 +698,20 @@ class MultipleDetectorsRatio:
                                 + '-' + det3.name + '/'
             self.__year_energy_label = str(self.energy) + 'TeV(' + str(self.year) + ')'
 
+        #Checking all_data_analysis_included for all detectors
+        self.__all_data_analysis_included = True
+        for det in self.__dets:
+            if not det.all_data_analysis_included:
+                self.__all_data_analysis_included = False
+
         self.__ratios = []
         self.__ratios_all = []
 
         # TODO: implement full_data comparison
-        if full_data:
-            if len(full_data) == number_of_dets:
-                for i in range(0, number_of_dets):
-                    for j in range(i + 1, number_of_dets):
-                        print('Setting ' + str(self.__dets[i].name) + '/' + str(self.__dets[j].name) + ' ...')
-                        self.__ratios.append(DetectorsRatio(self.__dets[i], self.__dets[j]))
-                        print('Setting all data ' + str(self.__dets[i].name) + '/' + str(self.__dets[j].name) + ' ...')
-                        self.__ratios_all.append(DetectorsRatio(full_data[i], full_data[j]))
-            else:
-                raise AssertionError('number of detectors in array for full data not '
-                                     'equal to the number of detectors')
-        else:
-            for i in range(0, number_of_dets):
-                for j in range(i + 1, number_of_dets):
-                    print('Setting ' + str(self.__dets[i].name) + '/' + str(self.__dets[j].name) + ' ...')
-                    self.__ratios.append(DetectorsRatio(self.__dets[i], self.__dets[j]))
+        for i in range(0, number_of_dets):
+            for j in range(i + 1, number_of_dets):
+                print('Setting ' + str(self.__dets[i].name) + '/' + str(self.__dets[j].name) + ' ...')
+                self.__ratios.append(DetectorsRatio(self.__dets[i], self.__dets[j]))
 
         self.__ref_ratio = self.__ratios[len(self.__ratios) - 1]
         self.__nls = self.__ref_ratio.nls
@@ -661,18 +729,29 @@ class MultipleDetectorsRatio:
 
         # TODO: Make this automatic for the number of detectors
         if len(self.__dets) == 3:
-            if full_data:
-                merge_tmp_all = pd.merge(self.__ratios_all[0].common_data_filtered,
-                                         self.__ratios_all[1].common_data_filtered,
-                                         on=keys_for_merging,
-                                         how='outer').merge(self.__ratios_all[2].common_data_filtered,
-                                                            on=keys_for_merging, how='outer')
-                merge_tmp_all = merge_tmp_all.reset_index(drop=True)
-                ltools.check_and_clean_after_merging(merge_tmp_all)
             merge_tmp = pd.merge(self.__ratios[0].common_data_filtered, self.__ratios[1].common_data_filtered,
                                  on=keys_for_merging,
                                  how='outer').merge(self.__ratios[2].common_data_filtered,
                                                     on=keys_for_merging, how='outer')
+            # if full_data:
+            #     merge_tmp_all = pd.merge(self.__ratios_all[0].common_data_filtered,
+            #                              self.__ratios_all[1].common_data_filtered,
+            #                              on=keys_for_merging,
+            #                              how='outer').merge(self.__ratios_all[2].common_data_filtered,
+            #                                                 on=keys_for_merging, how='outer')
+            #     merge_tmp_all = merge_tmp_all.reset_index(drop=True)
+            #     ltools.check_and_clean_after_merging(merge_tmp_all)
+            #
+            #     merge_tmp_excluded = pd.concat([merge_tmp_all, merge_tmp, merge_tmp], sort=True).drop_duplicates(keep=False)
+            #     merge_tmp_excluded = merge_tmp_excluded.reset_index(drop=True)
+            #     ltools.check_and_clean_after_merging(merge_tmp_excluded)
+            #
+            #     self.__combined_data_all = merge_tmp_all
+            #     self.__combined_data_excluded = merge_tmp_excluded
+            #
+            #     print(len(merge_tmp_excluded), len(merge_tmp), len(merge_tmp_all))
+            #     print (" \n Data percent excluded in normtags (%): " + str((len(merge_tmp_all) - len(merge_tmp))*100/len(merge_tmp_all)) + "\n")
+
         else:
             raise ValueError('Number of detectors not implemented yet :(')
 

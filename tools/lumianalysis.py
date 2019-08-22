@@ -9,9 +9,15 @@ from tools import full_run_utilities as frutils
 
 class LAnalysis:
     def __init__(self, dets_file_labels: list, input_dir: str, vs_all_analysis=False,
-                 run_linearity_analysis=False, mixed_data=False, run_stddev_test=False, c_years = False) -> None:
+                 run_linearity_analysis=False, mixed_data=False, run_stddev_test=False, c_years = False,
+                 all_and_excluded_analysis=False) -> None:
 
         n_files = 0
+        if all_and_excluded_analysis:
+            all_data_detcs = []
+        else:
+            all_data_detcs = None
+
         if c_years:
             years_and_dir = input_dir.split(',')
             n_files = len(dets_file_labels)
@@ -27,7 +33,8 @@ class LAnalysis:
             detcs = []
             for det in dets_file_labels:
                 try:
-                    detcs.append(L(det, input_dir + det + ".csv", mixed_data=mixed_data))
+                    detcs.append(L(det, input_dir + det + ".csv", mixed_data=mixed_data, full_data_analysis=all_and_excluded_analysis))
+
                 except IOError as errIO:
                     print(errIO)
                     print('Please check if default input folder is correctly created: ' + setts.csv_input_base_dir)
@@ -64,13 +71,16 @@ class LAnalysis:
             ratios12.plot_ratio_hist_weighted()
             ratios12.plot_nls_ratio_hist_weighted()
 
-            # Mine
+            # Extra
             ratios12.plot_nls_ratio_vs_run()
             ratios12.plot_nls_ratio_vs_fill()
             ratios12.plot_ratio_vs_run()
             ratios12.plot_ratio_vs_fill()
             ratios12.plot_bad_fills()
             ratios12.plot_bad_runs()
+
+            # all/excluded analysis plots
+            ratios12.plot_all_and_excluded_by_detc()
 
             ratios12.save_plots()
 

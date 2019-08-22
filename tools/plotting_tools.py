@@ -215,44 +215,6 @@ def plot_from_fit(x, y, fitted_slope, fitted_slope_err, fitted_intercept, fitted
     return fig
 
 
-def add_extra_text(ax, plot_frame_ratio, energy_year_label='', experiment='', work_status=''):
-    if plot_frame_ratio == 'nsq':
-        plt.text(__year_energy_label_pos_nsq[0], __year_energy_label_pos_nsq[1], str(energy_year_label), ha='left',
-                 fontsize=setts.leg_font_size, fontweight='bold', transform=ax.transAxes)
-        plt.text(__cms_label_pos_nsq[0], __cms_label_pos_nsq[1], str(experiment), ha='left',
-                 fontsize=setts.leg_font_size, fontweight='bold', transform=ax.transAxes)
-        plt.text(__cms_label_pos_nsq[0], __cms_label_pos_nsq[1] - __delta_y_pos_nsq, str(work_status), ha='left',
-                 fontsize=setts.leg_font_size, fontweight='light', transform=ax.transAxes)
-
-    elif plot_frame_ratio == 'sq':
-        plt.text(__year_energy_label_pos_sq[0], __year_energy_label_pos_sq[1], str(energy_year_label), ha='left',
-                 fontsize=setts.leg_font_size, fontweight='bold', transform=ax.transAxes)
-        plt.text(__cms_label_pos_sq[0], __cms_label_pos_sq[1], str(experiment), ha='left',
-                 fontsize=setts.leg_font_size, fontweight='bold', transform=ax.transAxes)
-        plt.text(__cms_label_pos_sq[0], __cms_label_pos_sq[1] - __delta_y_pos_sq, str(work_status), ha='left',
-                 fontsize=setts.leg_font_size, fontweight='light', transform=ax.transAxes)
-    else:
-        raise ValueError('frame ratio value not implemented')
-
-
-def plot_plt_scatter(x, y):
-    fig, ax = plt.subplots()
-    plt.scatter(x, y)
-
-    return fig
-
-
-def sns_regresion_plot(data, x_data_label, y_data_label):
-    sns.set(color_codes=True)
-    fig = sns.lmplot(x=x_data_label, y=y_data_label, data=data)
-
-    return fig
-
-
-def get_fig_size(shape: str) -> tuple:
-    return setts.fig_sizes[shape]
-
-
 def hist_list_from_pandas_frame(list_nls_data, nbins, title='', xlabel='', ylabel='', xmin=0.0, xmax=0.0,
                                 x_data_range=None,
                                 all_nls_weights=pd.DataFrame(),
@@ -391,3 +353,84 @@ def plot_bad_fill_info(data_frame, x_data_label, y_data_label, z_data_label, tit
                        experiment=setts.experiment, work_status=setts.work_status)
 
     return fig
+
+
+## All/excluded plots
+def snsplot_detector_all_and_excluded(data_frame, x_data_label, y_data_label, conditional_label, conditional_label_extra=None ,title='', xlabel='', ylabel='',
+                                      ymin=0.0, ymax=0.0, label_cms_status=True, energy_year_label='', fig_size_shape='nsq', use_pts_white_border=False,
+                                      marker_size=2):
+
+    fig_size = get_fig_size(fig_size_shape)
+    fig, ax = plt.subplots(figsize=fig_size)
+
+    if conditional_label_extra:
+        conditional_style = conditional_label_extra
+    else:
+        conditional_style = conditional_label
+
+    if not use_pts_white_border:
+        plot = sns.scatterplot(x=x_data_label, y=y_data_label, hue = conditional_label, style = conditional_style, data = data_frame,
+                               ax=ax, s=marker_size, linewidth=0)
+    else:
+        plot = sns.scatterplot(x=x_data_label, y=y_data_label, hue=conditional_label, style=conditional_style, data=data_frame,
+                               ax=ax, s=marker_size)
+
+
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+
+    if ymin != 0 and ymax != 0:
+        plt.ylim(ymin, ymax)
+
+    if label_cms_status:
+        add_extra_text(ax, fig_size_shape, energy_year_label=energy_year_label,
+                       experiment=setts.experiment, work_status=setts.work_status)
+
+    plot.set_title(title)
+    plot.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size)
+    plot.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size)
+
+    # margin optimization
+    if fig_size == (12, 4):
+        plt.subplots_adjust(left=0.1, right=0.97, top=0.9, bottom=0.2)
+
+
+    return fig
+
+
+def add_extra_text(ax, plot_frame_ratio, energy_year_label='', experiment='', work_status=''):
+    if plot_frame_ratio == 'nsq':
+        plt.text(__year_energy_label_pos_nsq[0], __year_energy_label_pos_nsq[1], str(energy_year_label), ha='left',
+                 fontsize=setts.leg_font_size, fontweight='bold', transform=ax.transAxes)
+        plt.text(__cms_label_pos_nsq[0], __cms_label_pos_nsq[1], str(experiment), ha='left',
+                 fontsize=setts.leg_font_size, fontweight='bold', transform=ax.transAxes)
+        plt.text(__cms_label_pos_nsq[0] + __delta_y_pos_nsq, __cms_label_pos_nsq[1], str(work_status), ha='left',
+                 fontsize=setts.leg_font_size, fontweight='light', transform=ax.transAxes)
+
+    elif plot_frame_ratio == 'sq':
+        plt.text(__year_energy_label_pos_sq[0], __year_energy_label_pos_sq[1], str(energy_year_label), ha='left',
+                 fontsize=setts.leg_font_size, fontweight='bold', transform=ax.transAxes)
+        plt.text(__cms_label_pos_sq[0], __cms_label_pos_sq[1], str(experiment), ha='left',
+                 fontsize=setts.leg_font_size, fontweight='bold', transform=ax.transAxes)
+        plt.text(__cms_label_pos_sq[0] + __delta_y_pos_sq, __cms_label_pos_sq[1], str(work_status), ha='left',
+                 fontsize=setts.leg_font_size, fontweight='light', transform=ax.transAxes)
+    else:
+        raise ValueError('frame ratio value not implemented')
+
+
+def plot_plt_scatter(x, y):
+    fig, ax = plt.subplots()
+    plt.scatter(x, y)
+
+    return fig
+
+
+def sns_regresion_plot(data, x_data_label, y_data_label):
+    sns.set(color_codes=True)
+    fig = sns.lmplot(x=x_data_label, y=y_data_label, data=data)
+
+    return fig
+
+
+def get_fig_size(shape: str) -> tuple:
+    return setts.fig_sizes[shape]
