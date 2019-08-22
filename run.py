@@ -34,5 +34,5 @@ if options.test:
     print("test is being done")
 
 lumi_analysis = Lumi(dets_file_labels=args, input_dir=base_input_path, run_linearity_analysis=options.lin_an,
-                     mixed_data=options.mixed, run_stddev_test=options.test, c_years=several_years)
+                     mixed_data=options.mixed, run_stddev_test=options.test, c_years=several_years, all_and_excluded_analysis=options.all)
 

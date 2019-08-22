@@ -6,10 +6,10 @@ csv_input_base_dir = 'csv_input_files/'
 
 # -*-*-*-*-*-*-*-*-*-*-*- > > > Plotting settings < < < -*-*-*-*-*-*-*-*-*-*-*-
 
-cms_label_pos_sq = (0.01, 0.96)
-cms_label_pos_nsq = (0.01, 0.92)
-delta_y_pos_sq = 0.03
-delta_y_pos_nsq = 0.06
+cms_label_pos_sq = (0.008, 1.02)
+cms_label_pos_nsq = (0.008, 1.02)
+delta_y_pos_sq = 0.08
+delta_y_pos_nsq = 0.045
 
 year_energy_label_pos_sq = (0.82, 1.01)
 year_energy_label_pos_nsq = (0.87, 1.02)
@@ -96,3 +96,14 @@ min_number_of_points_req = 5
 bad_ratio_to_plot_stdv_factor = 2
 lumisensitivity = 0.05                  # Multiplicity of the total luminosity porcent of each pint for acceptance.
                                         # Higher means less strict.
+
+
+class bcolors:
+    HEADER = '\033[95m'
+    OKBLUE = '\033[94m'
+    OKGREEN = '\033[92m'
+    WARNING = '\033[93m'
+    FAIL = '\033[91m'
+    ENDC = '\033[0m'
+    BOLD = '\033[1m'
+    UNDERLINE = '\033[4m'
