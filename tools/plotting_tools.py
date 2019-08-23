@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+plt.rcParams.update({'figure.max_open_warning': 0})
 import settings as setts
 import tools.lumi_tools as ltools
 from statsmodels.graphics.api import abline_plot
@@ -17,6 +18,7 @@ __year_energy_label_pos_nsq = setts.year_energy_label_pos_nsq
 
 def save_py_fig_to_file(fig, output_name):
     fig.savefig(output_name)
+    plt.close(fig)
 
 
 def save_plots(names_and_plots, output_name):
@@ -357,20 +359,21 @@ def plot_bad_fill_info(data_frame, x_data_label, y_data_label, z_data_label, tit
 
 
 ## All/excluded plots
-def snsplot_detector_all_and_excluded(data_frame, x_data_label, y_data_label, conditional_label, conditional_label_extra=None ,title='', xlabel='', ylabel='',
-                                      ymin=0.0, ymax=0.0, label_cms_status=True, energy_year_label='', fig_size_shape='nsq', use_pts_white_border=False,
-                                      marker_size=2):
+def snsplot_detector_all_and_excluded(data_frame, x_data_label, y_data_label, conditional_label, title='', xlabel='', ylabel='',
+                                      ymin=None, ymax=None, xmin=None, xmax=None, xlabel_rotation = None,
+                                      label_cms_status=True, energy_year_label='', fig_size_shape='nsq', use_pts_white_border=False,
+                                      marker_size=5):
 
     fig_size = get_fig_size(fig_size_shape)
     fig, ax = plt.subplots(figsize=fig_size)
 
-    if conditional_label_extra:
-        conditional_style = conditional_label_extra
-    else:
-        conditional_style = conditional_label
+    # if conditional_label_extra:
+    #     conditional_style = conditional_label_extra
+    # else:
+    #     conditional_style = conditional_label
 
     if not use_pts_white_border:
-        plot = sns.scatterplot(x=x_data_label, y=y_data_label, hue = conditional_label, style = conditional_style, data = data_frame,
+        plot = sns.scatterplot(x=x_data_label, y=y_data_label, hue = conditional_label, data = data_frame,
                                ax=ax, s=marker_size, linewidth=0)
     else:
         plot = sns.scatterplot(x=x_data_label, y=y_data_label, hue=conditional_label, style=conditional_style, data=data_frame,
@@ -380,8 +383,13 @@ def snsplot_detector_all_and_excluded(data_frame, x_data_label, y_data_label, co
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
 
-    if ymin != 0 and ymax != 0:
-        plt.ylim(ymin, ymax)
+    if ymin is not None:
+        if ymax is not None:
+            plt.ylim(ymin, ymax)
+
+    if xmin is not None:
+        if xmax is not None:
+            plt.xlim(xmin, xmax)
 
     if label_cms_status:
         add_extra_text(ax, fig_size_shape, energy_year_label=energy_year_label,
@@ -395,6 +403,54 @@ def snsplot_detector_all_and_excluded(data_frame, x_data_label, y_data_label, co
     if fig_size == (12, 4):
         plt.subplots_adjust(left=0.1, right=0.97, top=0.9, bottom=0.2)
 
+    if xlabel_rotation:
+        plt.xticks(rotation=xlabel_rotation)
+
+
+    return fig
+
+def snsplot_hist_all_and_excluded(data_frame, x_data_label, conditional_label, bins, xmin, xmax,
+                                  title='', xlabel='', ylabel='',
+                                  ymin=None, ymax=None,
+                                  label_cms_status=True, energy_year_label='', fig_size_shape='sq'):
+
+    fig_size = get_fig_size(fig_size_shape)
+    fig, ax = plt.subplots(figsize=fig_size)
+
+    keys = np.unique(data_frame[conditional_label])
+    histos_data = {}
+
+    for key in keys:
+        histos_data[key] = []
+
+    for index_data in range(0, len(data_frame)):
+        key = data_frame[conditional_label][index_data]
+        histos_data[key].append(data_frame[x_data_label][index_data])
+
+    for key in keys:
+        data_to_plot = np.array(histos_data[key])
+        data_to_plot = data_to_plot[~np.isnan(data_to_plot)]
+        data_to_plot = data_to_plot[(data_to_plot >= xmin) & (data_to_plot <= xmax)]
+        sns.distplot(data_to_plot, ax=ax, kde=False, bins=bins, label=key)
+
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+
+    if ymin is not None:
+        if ymax is not None:
+            plt.ylim(ymin, ymax)
+
+    plt.xlim(xmin, xmax)
+
+    if label_cms_status:
+        add_extra_text(ax, fig_size_shape, energy_year_label=energy_year_label,
+                       experiment=setts.experiment, work_status=setts.work_status)
+
+    ax.set_title(title)
+    ax.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size)
+    ax.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size)
+
+    plt.legend()
 
     return fig
 

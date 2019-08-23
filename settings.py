@@ -97,6 +97,8 @@ bad_ratio_to_plot_stdv_factor = 2
 lumisensitivity = 0.05                  # Multiplicity of the total luminosity porcent of each pint for acceptance.
                                         # Higher means less strict.
 
+# -*-*-*-*-*-*-*-*-*-*-*- > > > all/excluded < < < -*-*-*-*-*-*-*-*-*-*-*-
+by_nls_exclusion_threshold = 50.  # percent of excluded points in the nls interval
 
 class bcolors:
     HEADER = '\033[95m'
