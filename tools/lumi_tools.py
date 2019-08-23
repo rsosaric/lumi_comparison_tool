@@ -45,7 +45,7 @@ def check_and_create_folder(folder_path, creation_info = True):
         print('output folder has been created: ' + folder_path)
     except:
         if creation_info:
-            print(folder_path + ' Already exists')
+            print(folder_path + ' Already exists -->> Content will be overwritten.')
 
 
 def get_lumi_unit_from_csv(file_path):
