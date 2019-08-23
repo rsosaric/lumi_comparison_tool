@@ -9,13 +9,15 @@ import numpy as np
 
 
 class LAnalysis:
-    def __init__(self, dets_file_labels: list, input_dir: str, vs_all_analysis=False,
+    def __init__(self, dets_file_labels: list, input_dir: str,
                  run_linearity_analysis=False, mixed_data=False, run_stddev_test=False, c_years = False,
                  exclusion = False, all_and_excluded_analysis=False) -> None:
 
         if exclusion:
             print('Executing exclusion mode ...\n')
             n_files = len(dets_file_labels)
+            if n_files<3:
+                raise AssertionError("Number of detectors must be equal or higher than 3.")
             det_read = []
             years_and_dir = input_dir.split('/')
             year = years_and_dir[1]
@@ -60,10 +62,6 @@ class LAnalysis:
             quit()
 
         n_files = 0
-        if all_and_excluded_analysis:
-            all_data_detcs = []
-        else:
-            all_data_detcs = None
 
         if c_years:
             years_and_dir = input_dir.split(',')
@@ -127,7 +125,8 @@ class LAnalysis:
             ratios12.plot_bad_runs()
 
             # all/excluded analysis plots
-            ratios12.plot_all_and_excluded_by_detc()
+            if all_and_excluded_analysis:
+                ratios12.plot_all_and_excluded_by_detc()
 
             ratios12.save_plots()
 
@@ -162,6 +161,9 @@ class LAnalysis:
             # ratios123.plot_nls_ratios_vs_fill()
             ratios123.plot_ratios_vs_run()
             # ratios123.plot_ratios_vs_fill()
+
+            if all_and_excluded_analysis:
+                ratios123.plot_all_and_excluded_vs_lumi2()
 
             # Save plots
             ratios123.save_plots()

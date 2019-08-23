@@ -367,17 +367,52 @@ def snsplot_detector_all_and_excluded(data_frame, x_data_label, y_data_label, co
     fig_size = get_fig_size(fig_size_shape)
     fig, ax = plt.subplots(figsize=fig_size)
 
-    # if conditional_label_extra:
-    #     conditional_style = conditional_label_extra
-    # else:
-    #     conditional_style = conditional_label
+    assert (type(y_data_label) == type(conditional_label))
 
-    if not use_pts_white_border:
-        plot = sns.scatterplot(x=x_data_label, y=y_data_label, hue = conditional_label, data = data_frame,
-                               ax=ax, s=marker_size, linewidth=0)
+    if type(y_data_label) == list and type(conditional_label) == list:
+        for excl_label in conditional_label:
+            if 'by nls exclusion (' not in excl_label:
+                raise AssertionError("Only binary exclusion label [by_nls_binary_exclusion_info_label] "
+                                     "have been implemented for this plot function. Input label: " + excl_label)
+
+        colors = ('blue', 'darkorange', 'magneta')
+        excluded_color = 'red'
+        markers = ("o", "v", "s")
+        marker_size = 13
+
+        detcs_excld_data = {}
+        detcs__data = {}
+
+        for key in y_data_label:
+            detcs_excld_data[key] = {"x": [], "y": []}
+            detcs__data[key] = {"x": [], "y": []}
+
+        for index_data in range(0, len(data_frame)):
+            for detector_pair_index in range(0, len(y_data_label)):
+                if data_frame[conditional_label[detector_pair_index]][index_data] == "included":
+                    detcs__data[y_data_label[detector_pair_index]]["x"].append(data_frame[x_data_label][index_data])
+                    detcs__data[y_data_label[detector_pair_index]]["y"].append(data_frame[y_data_label[detector_pair_index]][index_data])
+                elif data_frame[conditional_label[detector_pair_index]][index_data] == "excluded":
+                    detcs_excld_data[y_data_label[detector_pair_index]]["x"].append(data_frame[x_data_label][index_data])
+                    detcs_excld_data[y_data_label[detector_pair_index]]["y"].append(data_frame[y_data_label[detector_pair_index]][index_data])
+                else:
+                    raise AssertionError("something wrong!")
+
+        for detector_pair_index in range(0, len(y_data_label)-1):
+            data_label = y_data_label[detector_pair_index]
+            label_in_plot = data_label.split("_")[-1]
+            sns.scatterplot(y=detcs__data[data_label]["y"], x=detcs__data[data_label]["x"], color=colors[detector_pair_index], ax=ax, s=marker_size, linewidth=0,
+                            marker=markers[detector_pair_index], label=label_in_plot)
+            sns.scatterplot(y=detcs_excld_data[data_label]["y"], x=detcs_excld_data[data_label]["x"], color=excluded_color,
+                            ax=ax, s=marker_size, linewidth=0, marker=markers[detector_pair_index], label=label_in_plot + " excl.")
+        plt.legend(ncol=2)
     else:
-        plot = sns.scatterplot(x=x_data_label, y=y_data_label, hue=conditional_label, style=conditional_style, data=data_frame,
-                               ax=ax, s=marker_size)
+        if not use_pts_white_border:
+            sns.scatterplot(x=x_data_label, y=y_data_label, hue = conditional_label, data = data_frame,
+                                   ax=ax, s=marker_size, linewidth=0)
+        else:
+            sns.scatterplot(x=x_data_label, y=y_data_label, hue=conditional_label, style=conditional_style, data=data_frame,
+                                   ax=ax, s=marker_size)
 
 
     plt.xlabel(xlabel)
@@ -395,9 +430,9 @@ def snsplot_detector_all_and_excluded(data_frame, x_data_label, y_data_label, co
         add_extra_text(ax, fig_size_shape, energy_year_label=energy_year_label,
                        experiment=setts.experiment, work_status=setts.work_status)
 
-    plot.set_title(title)
-    plot.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size)
-    plot.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size)
+    ax.set_title(title)
+    ax.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size)
+    ax.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size)
 
     # margin optimization
     if fig_size == (12, 4):
@@ -408,6 +443,8 @@ def snsplot_detector_all_and_excluded(data_frame, x_data_label, y_data_label, co
 
 
     return fig
+
+
 
 def snsplot_hist_all_and_excluded(data_frame, x_data_label, conditional_label, bins, xmin, xmax,
                                   title='', xlabel='', ylabel='',
