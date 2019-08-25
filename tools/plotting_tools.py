@@ -362,7 +362,7 @@ def plot_bad_fill_info(data_frame, x_data_label, y_data_label, z_data_label, tit
 def snsplot_detector_all_and_excluded(data_frame, x_data_label, y_data_label, conditional_label, title='', xlabel='', ylabel='',
                                       ymin=None, ymax=None, xmin=None, xmax=None, xlabel_rotation = None,
                                       label_cms_status=True, energy_year_label='', fig_size_shape='nsq', use_pts_white_border=False,
-                                      marker_size=5):
+                                      marker_size=5, leg_col=None):
 
     fig_size = get_fig_size(fig_size_shape)
     fig, ax = plt.subplots(figsize=fig_size)
@@ -440,6 +440,9 @@ def snsplot_detector_all_and_excluded(data_frame, x_data_label, y_data_label, co
 
     if xlabel_rotation:
         plt.xticks(rotation=xlabel_rotation)
+
+    if leg_col is not None:
+        plt.legend(ncol=leg_col)
 
 
     return fig

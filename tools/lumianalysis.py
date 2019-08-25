@@ -11,7 +11,7 @@ import numpy as np
 class LAnalysis:
     def __init__(self, dets_file_labels: list, input_dir: str,
                  run_linearity_analysis=False, mixed_data=False, run_stddev_test=False, c_years = False,
-                 exclusion = False, all_and_excluded_analysis=False) -> None:
+                 exclusion = False, all_and_excluded_analysis=False, physics_analysis=False) -> None:
 
         if exclusion:
             print('Executing exclusion mode ...\n')

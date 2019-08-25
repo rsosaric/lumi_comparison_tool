@@ -904,6 +904,10 @@ class DetectorsRatio(L):
     def sns_plots(self):
         return self.__sns_plots
 
+    @property
+    def year_energy_label(self):
+        return self.__year_energy_label
+
     # setters
     @common_data.setter
     def common_data(self, data):
