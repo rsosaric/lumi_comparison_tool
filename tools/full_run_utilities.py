@@ -15,3 +15,5 @@ def merge_lumies(name: str, data_file_name: list, all_data: bool = False,
     lumi_merge.data = pd.concat(data_frame_list)
 
     return lumi_merge
+
+
