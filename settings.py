@@ -94,11 +94,24 @@ remove_outliers_in_lin_by_fill = True
 min_number_of_points_req = 5
 
 bad_ratio_to_plot_stdv_factor = 2
-lumisensitivity = 0.05                  # Multiplicity of the total luminosity porcent of each pint for acceptance.
+lumisensitivity = 0.05                  # Multiplicity of the total luminosity percent of each pint for acceptance.
                                         # Higher means less strict.
 
 # -*-*-*-*-*-*-*-*-*-*-*- > > > all/excluded < < < -*-*-*-*-*-*-*-*-*-*-*-
 by_nls_exclusion_threshold = 50.  # percent of excluded points in the nls interval
+
+# -*-*-*-*-*-*-*-*-*-*-*- > > > best/second best < < < -*-*-*-*-*-*-*-*-*-*-*-
+normalization_factor = {
+    2017: {
+        "HFET/DT": 0.993,
+        "HFET/HFOC": 0.976,
+        "HFET/PLTZERO": 1.001,
+        "HFET/PXL": 0.997,
+        "HFOC/DT": 1.016,
+        "HFOC/PXL": 1.021,
+        "PXL/DT": 0.995
+    }
+}
 
 class bcolors:
     HEADER = '\033[95m'
