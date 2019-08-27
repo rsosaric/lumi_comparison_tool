@@ -39,7 +39,7 @@ def copy_data_columns(pd_copy_from: object, pd_copy_to: object, labels_list: obj
         pd_copy_to[label] = pd_copy_from[label]
 
 
-def check_and_create_folder(folder_path, creation_info = True):
+def check_and_create_folder(folder_path, creation_info=True):
     try:
         os.makedirs(folder_path)
         print('output folder has been created: ' + folder_path)
@@ -102,11 +102,20 @@ def check_and_clean_after_merging(pd_df):
                 raise AssertionError('Cleaning after merging not possible!')
 
 
-def get_w_stats(vals_array, w_array):
+def get_w_stats(vals_array, w_array, min_val=None, max_val=None):
     # dropping NaN values:
-    vals_array = vals_array[~np.isnan(vals_array)]
+    temp_list = []
+    temp_list_w = []
+    if min_val is not None and max_val is not None:
+        for ratio_index in range(0, len(vals_array)):
+            ratio_val = vals_array[ratio_index]
+            if ratio_val >= min_val and ratio_val <= max_val:
+                temp_list.append(ratio_val)
+                temp_list_w.append(w_array[ratio_index])
+    vals_array=np.array(temp_list)
+    w_array=np.array(temp_list_w)
     w_array = w_array[~np.isnan(w_array)]
-
+    vals_array = vals_array[~np.isnan(vals_array)]
     assert len(vals_array) == len(w_array)
 
     w_stats = DescrStatsW(vals_array, weights=w_array)
@@ -119,4 +128,3 @@ def get_linear_model_from_pd_cols(data: pd.DataFrame, x_col_name: str, y_col_nam
     y = data[y_col_name]
 
     return sm.OLS(y, x)
-

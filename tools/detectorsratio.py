@@ -381,8 +381,10 @@ class DetectorsRatio(L):
         self.__nls_ratios_mean = self.__common_data_filtered[self.by_nls_label_ratio].mean()
         self.__nls_ratios_stdv = self.__common_data_filtered[self.by_nls_label_ratio].std()
 
-        lw_stats = ltools.get_w_stats(data[self.label_ratio], data[self.det2.lumi_rec_label])
-        nls_lw_stats = ltools.get_w_stats(data[self.by_nls_label_ratio], data[self.by_nls_lumi_label])
+        lw_stats = ltools.get_w_stats(data[self.label_ratio], data[self.det2.lumi_rec_label],
+                                      min_val=setts.ratio_min, max_val=setts.ratio_max)
+        nls_lw_stats = ltools.get_w_stats(data[self.by_nls_label_ratio], data[self.by_nls_lumi_label],
+                                          min_val=setts.ratio_min, max_val=setts.ratio_max)
 
         self.__ratios_lw_mean = lw_stats.mean
         self.__ratios_lw_stdv = lw_stats.std_mean
