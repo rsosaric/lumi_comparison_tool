@@ -2,6 +2,7 @@ import optparse
 import settings as setts
 from tools.lumianalysis import LAnalysis as Lumi
 from tools.bestdata import BestDataAnalysis
+from tools.exclusion_mode import exclusion_fill
 
 # TODO: develop a proper input option interface here
 p = optparse.OptionParser()
@@ -38,6 +39,9 @@ if options.test:
 
 if options.physics:
     physics_analysis = BestDataAnalysis(dets_file_labels=args, input_dir=base_input_path, c_years=several_years)
+elif options.exclusion:
+    exclusion_fill(dets_file_labels=args, input_dir=base_input_path, mixed_data=options.mixed,
+                   run_stddev_test=options.test, c_years=several_years)
 else:
     lumi_analysis = Lumi(dets_file_labels=args, input_dir=base_input_path, run_linearity_analysis=options.lin_an,
                          mixed_data=options.mixed, run_stddev_test=options.test, c_years=several_years,
