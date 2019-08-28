@@ -103,13 +103,13 @@ by_nls_exclusion_threshold = 50.  # percent of excluded points in the nls interv
 # -*-*-*-*-*-*-*-*-*-*-*- > > > best/second best < < < -*-*-*-*-*-*-*-*-*-*-*-
 normalization_factor = {
     2017: {
-        "HFET/DT": 0.993,
-        "HFET/HFOC": 0.976,
-        "HFET/PLTZERO": 1.001,
+        "HFET/DT": 0.995,
+        "HFET/HFOC": 0.981,
+        "HFET/PLTZERO": 1.000,
         "HFET/PXL": 0.997,
-        "HFOC/DT": 1.016,
-        "HFOC/PXL": 1.021,
-        "PXL/DT": 0.995
+        "HFOC/DT": 1.014,
+        "HFOC/PXL": 1.017,
+        "PXL/DT": 0.998
     }
 }
 

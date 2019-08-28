@@ -7,7 +7,7 @@ from datetime import datetime
 
 class Luminometer:
     __allowed_detectors = ["PXL", "HFOC", "HFET", "DT", "BCM1F", "PLTZERO", "RAMSES", "BCM1FSI"]
-    __allowed_detectors_file_labels = ["pcc", "hfoc", "hfet", "dt", "bcm1f", "plt", "ram"]
+    __allowed_detectors_file_labels = ["pcc", "hfoc", "hfet", "dt", "bcm1f", "plt", "ram", "bcm1f_si", "bcm1f_d"]
 
     __lumi_unit = 'fb'
     __nbx_label = 'nbx'

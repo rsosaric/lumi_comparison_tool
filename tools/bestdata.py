@@ -4,6 +4,7 @@ import settings as setts
 from tools.luminometer import Luminometer as L
 from tools.detectorsratio import DetectorsRatio as Ratios
 import tools.plotting_tools as plotting
+from tools import lumi_tools as ltools
 
 class BestDataAnalysis():
     def __init__(self, dets_file_labels: list, input_dir: str, c_years: bool = False) -> None:
@@ -33,8 +34,20 @@ class BestDataAnalysis():
         ratios12 = Ratios(detcs[0], detcs[1])
         self.__ratios = ratios12
         self.__label_ratio_normalized = self.__ratios.label_ratio + "_normalized"
+        self.__label_ratio_nls_normalized = self.__ratios.label_ratio + "_nls_normalized"
         self.fill_detector_ratio_label_column()
         self.normalized_detector_ratios_by_pair()
+        self.__common_data_filtered_no_nan = self.__ratios.common_data_filtered.dropna()
+        self.__common_data_filtered_no_nan_index = self.__common_data_filtered_no_nan.reset_index(drop=True)
+
+        # -> Initializing stats vars
+        # single ls ratios
+        # lumi weighted
+        self.__nls_ratios_lw_mean = None
+        self.__nls_ratios_lw_stdv = None
+        self.__nls_ratios_lw_stdv_dof_corr = None
+
+        self.fill_stats()
 
         #TODO: detector usage percent in physics and physics_compre
 
@@ -57,6 +70,7 @@ class BestDataAnalysis():
         self.plot_vs_lumi2_by_pair()
         self.plot_normalized_vs_lumi2_by_pair()
         self.plot_normalized_hist_detectors()
+        self.plot_nls_ratio_hist_weighted_normalized()
 
         ratios12.save_plots()
         self.save_plots()
@@ -87,12 +101,18 @@ class BestDataAnalysis():
         data_to_use = self.__ratios.common_data_filtered
 
         temp_array = []
+        temp_nls_array = []
 
         for index_data in range(0, len(data_to_use)):
             ratio_mean_factor = setts.normalization_factor[int(self.__ratios.year)][data_to_use[self.__detector_ratio_label][index_data]]
             temp_array.append(data_to_use[self.__ratios.label_ratio][index_data]/ratio_mean_factor)
+            if np.isnan(data_to_use[self.__ratios.by_nls_label_ratio][index_data]):
+                temp_nls_array.append(data_to_use[self.__ratios.by_nls_label_ratio][index_data])
+            else:
+                temp_nls_array.append(data_to_use[self.__ratios.by_nls_label_ratio][index_data]/ratio_mean_factor)
 
         data_to_use[self.__label_ratio_normalized] = np.array(temp_array)
+        data_to_use[self.__label_ratio_nls_normalized] = np.array(temp_nls_array)
 
     def plot_hist_detectors(self):
         hist_detectors = plotting.snsplot_hist_all_and_excluded(self.__ratios.common_data_filtered,
@@ -154,6 +174,22 @@ class BestDataAnalysis():
                                                                        leg_col=4)
         self.__sns_plots['normalized_vs_lumi2_by_pair'] = normalized_vs_lumi2_by_pair
 
+    def plot_nls_ratio_hist_weighted_normalized(self):
+        ratio_hist_lumi2_w = plotting.hist_from_pandas_frame(data_frame=self.__common_data_filtered_no_nan,
+                                                             col_label=self.__label_ratio_nls_normalized,
+                                                             nbins=setts.nbins,
+                                                             xlabel=self.__ratios.label_ratio + " ratios in " + str(
+                                                                 self.__ratios.nls) + ' LS',
+                                                             ylabel="Integrated luminosity [$" +
+                                                                    self.__ratios.lumi_unit + "^{-1}$]",
+                                                             # title='Detectors Ratios Histogram (lumi weighted)',
+                                                             xmin=setts.ratio_min, xmax=setts.ratio_max,
+                                                             mean=self.__nls_ratios_lw_mean,
+                                                             stdv=self.__nls_ratios_lw_stdv_dof_corr,
+                                                             energy_year_label=self.__ratios.year_energy_label,
+                                                             weight_label=self.__ratios.by_nls_lumi_label)
+        self.__sns_plots['nls_ratio_hist_lw_normalized'] = ratio_hist_lumi2_w[0][0].get_figure()
+
     def save_plots(self):
         print('\n\n Saving plots:')
         #plotting.save_plots(self.__plt_plots, self.__output_dir)
@@ -164,3 +200,15 @@ class BestDataAnalysis():
         if self.__detector_pair_percent_dict is None:
             raise AssertionError("Variable not filled")
         return self.__detector_pair_percent_dict
+
+
+    def fill_stats(self):
+        data = self.__common_data_filtered_no_nan_index
+
+        nls_lw_stats = ltools.get_w_stats(data[self.__label_ratio_nls_normalized],
+                                           data[self.__ratios.by_nls_lumi_label],
+                                           min_val=setts.ratio_min, max_val=setts.ratio_max)
+
+        self.__nls_ratios_lw_mean = nls_lw_stats.mean
+        self.__nls_ratios_lw_stdv = nls_lw_stats.std_mean
+        self.__nls_ratios_lw_stdv_dof_corr = nls_lw_stats.std
