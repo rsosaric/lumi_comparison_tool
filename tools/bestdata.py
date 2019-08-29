@@ -5,14 +5,12 @@ from tools.luminometer import Luminometer as L
 from tools.detectorsratio import DetectorsRatio as Ratios
 import tools.plotting_tools as plotting
 from tools import lumi_tools as ltools
+from tools import full_run_utilities as frutils
 
 class BestDataAnalysis():
     def __init__(self, dets_file_labels: list, input_dir: str, c_years: bool = False) -> None:
         print('Executing physics data analysis ...\n')
         mixed_data = True
-
-        #Propagating needed vars
-        self.__input_dir = input_dir
 
         # dict [int year][str label_ratio] = mean_vale
         self.__ratio_pair_mean_info = {}
@@ -22,21 +20,36 @@ class BestDataAnalysis():
         self.__detector_pair_percent_dict = None
 
         n_files = len(dets_file_labels)
-        if n_files != 2:
-            raise AssertionError("BestDataAnalysis only implemented for 2 'detectors'")
-
         detcs = []
-        for det in dets_file_labels:
-            try:
-                detcs.append(L(det, input_dir + det + ".csv", mixed_data=mixed_data))
 
-            except IOError as errIO:
-                print(errIO)
-                print('Please check if default input folder is correctly created: ' + setts.csv_input_base_dir)
-                print('Also check that your .csv file is in the correct year folder: ' + input_dir)
-                raise
+        if c_years:
+            years_and_dir = input_dir.split(',')
+            self.__input_dir = years_and_dir[0]
+            files_path = []
+            for i in range(1, len(years_and_dir), 1):
+                files_path.append(years_and_dir[0] + years_and_dir[i] + '/')
 
-        ratios12 = Ratios(detcs[0], detcs[1])
+            for det in dets_file_labels:
+                detcs.append(frutils.merge_lumies(det, files_path, mixed_data=mixed_data))
+            years = years_and_dir[1]
+            for i in range(2, len(years_and_dir), 1):
+                years = years + ',' + years_and_dir[i]
+            ratios12 = Ratios(detcs[0], detcs[1], year=years, c_years=c_years)
+        else:
+            self.__input_dir = input_dir
+            if n_files != 2:
+                raise AssertionError("BestDataAnalysis only implemented for 2 'detectors'")
+            for det in dets_file_labels:
+                try:
+                    detcs.append(L(det, input_dir + det + ".csv", mixed_data=mixed_data))
+
+                except IOError as errIO:
+                    print(errIO)
+                    print('Please check if default input folder is correctly created: ' + setts.csv_input_base_dir)
+                    print('Also check that your .csv file is in the correct year folder: ' + input_dir)
+                    raise
+            ratios12 = Ratios(detcs[0], detcs[1])
+
         self.__ratios = ratios12
         self.__year = ratios12.year
         self.__label_ratio_normalized = self.__ratios.label_ratio + "_normalized"
@@ -134,24 +147,27 @@ class BestDataAnalysis():
         det1_label = ltools.convert_detector_name(dets_labels[0]).lower()
         det2_label = ltools.convert_detector_name(dets_labels[1]).lower()
 
-        stats_file_name = setts.default_output_dir + str(year) + '/' + det1_label + '-' + det2_label + '/stats.csv'
+        base_year_path = setts.csv_input_base_dir + str(year)
+        base_year_path_plots = setts.default_output_dir + str(year)
+
+        stats_file_name = base_year_path_plots + '/' + det1_label + '-' + det2_label + '/stats.csv'
 
         if setts.clean_run:
             print ("Run clean option have been set. Producing the file for "+ str(stats_file_name) + "...")
-            det1 = L(det1_label, self.__input_dir + det1_label + ".csv")
-            det2 = L(det2_label, self.__input_dir + det2_label + ".csv")
+            det1 = L(det1_label, base_year_path + '/' + det1_label + ".csv")
+            det2 = L(det2_label, base_year_path + '/' + det2_label + ".csv")
 
             ratio12_temp = Ratios(det1, det2)
             pair_mean_value = ratio12_temp.nls_ratios_lw_mean
         else:
             try:
                 stats_file_pd = pd.read_csv(stats_file_name)
-                print ("reading mean from stat file for: " + detector_pair_label)
+                print ("\n reading mean from stat file for: [" + str(year) +"]" + detector_pair_label + "\n")
                 pair_mean_value = stats_file_pd["nls_ratios_lw_mean"][0]
             except:
-                print ("File " + str(stats_file_name) + " not found. Producing the file ...")
-                det1 = L(det1_label, self.__input_dir + det1_label + ".csv")
-                det2 = L(det2_label, self.__input_dir + det2_label + ".csv")
+                print (" \n File " + str(stats_file_name) + " not found. Producing the file ... \n")
+                det1 = L(det1_label, base_year_path + '/' + det1_label + ".csv")
+                det2 = L(det2_label, base_year_path + '/' + det2_label + ".csv")
 
                 ratio12_temp = Ratios(det1, det2)
                 pair_mean_value = ratio12_temp.nls_ratios_lw_mean

@@ -57,7 +57,11 @@ class DetectorsRatio(L):
         # column labels for dataframes
         if c_years:
             self.output_dir = setts.default_output_dir + year.replace(',', '-') + '/' + det1.name + '-' + det2.name + '/'
-            self.__year_energy_label = str(self.energy) + 'TeV(' + year + ')'
+            if (year == "2016,2017,2018"):
+                year_label = "full RunII"
+            else:
+                year_label = year
+            self.__year_energy_label = str(self.energy) + 'TeV(' + year_label + ')'
         else:
             self.output_dir = setts.default_output_dir + str(self.year) + '/' + det1.name + '-' + det2.name + '/'
             self.__year_energy_label = str(self.energy) + 'TeV(' + str(self.year) + ')'
@@ -436,6 +440,7 @@ class DetectorsRatio(L):
 
     def save_stats_to_file(self):
         #stats_file = open(self.output_dir + "stats.csv")
+        ltools.check_and_create_folder(self.output_dir, creation_info=False)
         self.__stats_DF.to_csv(index=False, path_or_buf=self.output_dir + "stats.csv")
         #stats_file.close()
 
