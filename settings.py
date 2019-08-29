@@ -8,11 +8,13 @@ csv_input_base_dir = 'csv_input_files/'
 
 cms_label_pos_sq = (0.008, 1.02)
 cms_label_pos_nsq = (0.008, 1.02)
+experiment_font_size = 12
 delta_y_pos_sq = 0.08
 delta_y_pos_nsq = 0.045
 
 year_energy_label_pos_sq = (0.82, 1.01)
 year_energy_label_pos_nsq = (0.87, 1.02)
+year_energy_font_size = 12
 
 # canvas sizes
 fig_sizes = {
@@ -21,7 +23,7 @@ fig_sizes = {
 }
 
 # legends position for histograms mean values, etc (axis converted format x,y: [0->1][0->1])
-leg_font_size = 12
+leg_font_size = 15
 pos_leg_1 = (0.75, 0.95)
 pos_leg_2 = (0.75, 0.90)
 pos_leg_3 = (0.75, 0.85)
@@ -37,10 +39,18 @@ leg_vs_plots_marker_scale = 7  # -> marker_in_legend/...in_plot scale
 # axis configuration:
 axis_labelpad = 20
 axis_weight = 'bold'
-axis_case_size = 12
 
-ratio_min = 0.94
-ratio_max = 1.06
+axis_case_size = {
+    'sq': 14,
+    'nsq': 14
+}
+axis_thicks_case_size = {
+    'sq': 14,
+    'nsq': 13
+}
+
+ratio_min = 0.95
+ratio_max = 1.05
 nbins = 300
 
 date_format = "%Y-%m-%d %H:%M"

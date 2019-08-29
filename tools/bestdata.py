@@ -104,7 +104,8 @@ class BestDataAnalysis():
         temp_nls_array = []
 
         for index_data in range(0, len(data_to_use)):
-            ratio_mean_factor = setts.normalization_factor[int(self.__ratios.year)][data_to_use[self.__detector_ratio_label][index_data]]
+            index_year = int(data_to_use["date"][index_data].year)
+            ratio_mean_factor = setts.normalization_factor[index_year][data_to_use[self.__detector_ratio_label][index_data]]
             temp_array.append(data_to_use[self.__ratios.label_ratio][index_data]/ratio_mean_factor)
 
             if np.isnan(data_to_use[self.__ratios.by_nls_label_ratio][index_data]):
@@ -169,9 +170,7 @@ class BestDataAnalysis():
                                                                        # conditional_label_extra=self.det2.excluded_label,
                                                                        xlabel="Integrated luminosity [$" +
                                                                               self.__ratios.lumi_unit + "^{-1}$]",
-                                                                       ylabel=self.__ratios.label_ratio + " ratios in "
-                                                                              + str(
-                                                                           self.__ratios.nls) + ' LS',
+                                                                       ylabel=self.__ratios.label_ratio + " ratios",
                                                                        ymin=setts.ratio_min,
                                                                        ymax=setts.ratio_max,
                                                                        energy_year_label=self.__ratios.year_energy_label,
@@ -186,9 +185,7 @@ class BestDataAnalysis():
                                                                        # conditional_label_extra=self.det2.excluded_label,
                                                                        xlabel="Integrated luminosity [$" +
                                                                               self.__ratios.lumi_unit + "^{-1}$]",
-                                                                       ylabel=self.__ratios.label_ratio + " ratios in "
-                                                                              + str(
-                                                                           self.__ratios.nls) + ' LS',
+                                                                       ylabel=self.__ratios.label_ratio + " ratios",
                                                                        ymin=setts.ratio_min,
                                                                        ymax=setts.ratio_max,
                                                                        energy_year_label=self.__ratios.year_energy_label,
@@ -205,7 +202,7 @@ class BestDataAnalysis():
                                                                     self.__ratios.lumi_unit + "^{-1}$]",
                                                              # title='Detectors Ratios Histogram (lumi weighted)',
                                                              xmin=setts.ratio_min, xmax=setts.ratio_max,
-                                                             mean=self.__nls_ratios_lw_mean,
+                                                             #mean=self.__nls_ratios_lw_mean,
                                                              stdv=self.__nls_ratios_lw_stdv_dof_corr,
                                                              energy_year_label=self.__ratios.year_energy_label,
                                                              weight_label=self.__ratios.by_nls_lumi_label)

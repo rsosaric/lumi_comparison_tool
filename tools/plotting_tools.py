@@ -54,8 +54,12 @@ def hist_from_pandas_frame(data_frame, col_label, nbins, title='', xlabel='', yl
     ratio_hist_ax = ratio_hist[0][0]
 
     ratio_hist_ax.set_title(title)
-    ratio_hist_ax.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size)
-    ratio_hist_ax.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size)
+    ratio_hist_ax.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size[fig_size_shape])
+    ratio_hist_ax.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size[fig_size_shape])
+
+    plt.xticks(fontsize=setts.axis_thicks_case_size[fig_size_shape])
+    plt.yticks(fontsize=setts.axis_thicks_case_size[fig_size_shape])
+
     if xmin != 0 and xmax != 0:
         plt.xlim(xmin, xmax)
 
@@ -102,8 +106,11 @@ def hist_from_array(data, nbins, title='', xlabel='', ylabel='', xmin=0.0, xmax=
                  color=color, zorder=2, rwidth=0.9)
 
     ax.set_title(title)
-    ax.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size)
-    ax.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size)
+    ax.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size[fig_size_shape])
+    ax.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size[fig_size_shape])
+    plt.xticks(fontsize=setts.axis_thicks_case_size[fig_size_shape])
+    plt.yticks(fontsize=setts.axis_thicks_case_size[fig_size_shape])
+
     if xmin != 0 and xmax != 0:
         plt.xlim(xmin, xmax)
 
@@ -162,8 +169,11 @@ def scatter_plot_from_pandas_frame(data_frame, x_data_label, y_data_label, title
         plot = data_frame.plot(x=x_data_label, y=y_data_label, style=plot_style, figsize=fig_size,
                                markersize=marker_size, legend=None, ax=ax)
     plot.set_title(title)
-    plot.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size)
-    plot.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size)
+    plot.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size[fig_size_shape])
+    plot.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size[fig_size_shape])
+
+    plt.xticks(fontsize=setts.axis_thicks_case_size[fig_size_shape])
+    plt.yticks(fontsize=setts.axis_thicks_case_size[fig_size_shape])
 
     if label_cms_status:
         add_extra_text(ax, fig_size_shape, energy_year_label=energy_year_label,
@@ -201,8 +211,11 @@ def plot_from_fit(x, y, fitted_slope, fitted_slope_err, fitted_intercept, fitted
     xfine = np.linspace(np.min(x), np.max(x), 100)
     plt.plot(xfine, fitted_f(xfine, a=fitted_slope, b=fitted_intercept), 'r-')
 
-    ax.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size)
-    ax.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size)
+    ax.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size[fig_size_shape])
+    ax.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size[fig_size_shape])
+
+    plt.xticks(fontsize=setts.axis_thicks_case_size[fig_size_shape])
+    plt.yticks(fontsize=setts.axis_thicks_case_size[fig_size_shape])
 
     add_extra_text(ax, fig_size_shape, energy_year_label=energy_year_label,
                    experiment=setts.experiment, work_status=setts.work_status)
@@ -257,8 +270,11 @@ def hist_list_from_pandas_frame(list_nls_data, nbins, title='', xlabel='', ylabe
                     markerscale=leg_marker_sc, fontsize=leg_text_s, loc=legend_position)
 
     ax.set_title(title)
-    ax.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size)
-    ax.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size)
+    ax.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size[fig_size_shape])
+    ax.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size[fig_size_shape])
+
+    plt.xticks(fontsize=setts.axis_thicks_case_size[fig_size_shape])
+    plt.yticks(fontsize=setts.axis_thicks_case_size[fig_size_shape])
 
     if xmin != 0 and xmax != 0:
         plt.xlim(xmin, xmax)
@@ -431,8 +447,11 @@ def snsplot_detector_all_and_excluded(data_frame, x_data_label, y_data_label, co
                        experiment=setts.experiment, work_status=setts.work_status)
 
     ax.set_title(title)
-    ax.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size)
-    ax.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size)
+    ax.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size[fig_size_shape])
+    ax.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size[fig_size_shape])
+
+    plt.xticks(fontsize=setts.axis_thicks_case_size[fig_size_shape])
+    plt.yticks(fontsize=setts.axis_thicks_case_size[fig_size_shape])
 
     # margin optimization
     if fig_size == (12, 4):
@@ -487,8 +506,11 @@ def snsplot_hist_all_and_excluded(data_frame, x_data_label, conditional_label, b
                        experiment=setts.experiment, work_status=setts.work_status)
 
     ax.set_title(title)
-    ax.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size)
-    ax.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size)
+    ax.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size[fig_size_shape])
+    ax.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size[fig_size_shape])
+
+    plt.xticks(fontsize=setts.axis_thicks_case_size[fig_size_shape])
+    plt.yticks(fontsize=setts.axis_thicks_case_size[fig_size_shape])
 
     plt.legend()
 
@@ -498,19 +520,19 @@ def snsplot_hist_all_and_excluded(data_frame, x_data_label, conditional_label, b
 def add_extra_text(ax, plot_frame_ratio, energy_year_label='', experiment='', work_status=''):
     if plot_frame_ratio == 'nsq':
         plt.text(__year_energy_label_pos_nsq[0], __year_energy_label_pos_nsq[1], str(energy_year_label), ha='left',
-                 fontsize=setts.leg_font_size, fontweight='bold', transform=ax.transAxes)
+                 fontsize=setts.year_energy_font_size, fontweight='bold', transform=ax.transAxes)
         plt.text(__cms_label_pos_nsq[0], __cms_label_pos_nsq[1], str(experiment), ha='left',
-                 fontsize=setts.leg_font_size, fontweight='bold', transform=ax.transAxes)
+                 fontsize=setts.experiment_font_size, fontweight='bold', transform=ax.transAxes)
         plt.text(__cms_label_pos_nsq[0] + __delta_y_pos_nsq, __cms_label_pos_nsq[1], str(work_status), ha='left',
-                 fontsize=setts.leg_font_size, fontweight='light', transform=ax.transAxes)
+                 fontsize=setts.experiment_font_size, fontweight='light', transform=ax.transAxes)
 
     elif plot_frame_ratio == 'sq':
         plt.text(__year_energy_label_pos_sq[0], __year_energy_label_pos_sq[1], str(energy_year_label), ha='left',
-                 fontsize=setts.leg_font_size, fontweight='bold', transform=ax.transAxes)
+                 fontsize=setts.year_energy_font_size, fontweight='bold', transform=ax.transAxes)
         plt.text(__cms_label_pos_sq[0], __cms_label_pos_sq[1], str(experiment), ha='left',
-                 fontsize=setts.leg_font_size, fontweight='bold', transform=ax.transAxes)
+                 fontsize=setts.experiment_font_size, fontweight='bold', transform=ax.transAxes)
         plt.text(__cms_label_pos_sq[0] + __delta_y_pos_sq, __cms_label_pos_sq[1], str(work_status), ha='left',
-                 fontsize=setts.leg_font_size, fontweight='light', transform=ax.transAxes)
+                 fontsize=setts.experiment_font_size, fontweight='light', transform=ax.transAxes)
     else:
         raise ValueError('frame ratio value not implemented')
 
