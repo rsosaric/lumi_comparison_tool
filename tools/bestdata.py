@@ -11,6 +11,12 @@ class BestDataAnalysis():
         print('Executing physics data analysis ...\n')
         mixed_data = True
 
+        #Propagating needed vars
+        self.__input_dir = input_dir
+
+        # dict [int year][str label_ratio] = mean_vale
+        self.__ratio_pair_mean_info = {}
+
         # Class variables
         self.__detector_ratio_label = "Ratios"
         self.__detector_pair_percent_dict = None
@@ -75,6 +81,8 @@ class BestDataAnalysis():
         ratios12.save_plots()
         self.save_plots()
 
+        #print (self.__ratio_pair_mean_info)
+
     def fill_detector_ratio_label_column(self):
         data = self.__ratios.common_data_filtered
         data[self.__detector_ratio_label] = data[self.__ratios.det1.detector_name_label] + "/" + data[
@@ -98,6 +106,7 @@ class BestDataAnalysis():
             self.__detector_pair_percent_dict[keys[i]] = percents_np[i]
 
     def normalized_detector_ratios_by_pair(self):
+        print ("Adding normalized data ...")
         data_to_use = self.__ratios.common_data_filtered
 
         temp_array = []
@@ -105,7 +114,8 @@ class BestDataAnalysis():
 
         for index_data in range(0, len(data_to_use)):
             index_year = int(data_to_use["date"][index_data].year)
-            ratio_mean_factor = setts.normalization_factor[index_year][data_to_use[self.__detector_ratio_label][index_data]]
+            index_label_ratio = data_to_use[self.__detector_ratio_label][index_data]
+            ratio_mean_factor = self.get_detector_pair_mean(detector_pair_label=index_label_ratio, year=index_year)
             temp_array.append(data_to_use[self.__ratios.label_ratio][index_data]/ratio_mean_factor)
 
             if np.isnan(data_to_use[self.__ratios.by_nls_label_ratio][index_data]):
@@ -117,22 +127,47 @@ class BestDataAnalysis():
         data_to_use[self.__label_ratio_nls_normalized] = np.array(temp_nls_array)
 
 
-    # def get_detector_pair_mean(self, detector_pair_label: str):
-    #     pair_mean_value = None
-    #     # splitting detectors:
-    #     dets_labels = detector_pair_label.split("/")
-    #     det1_label = ltools.convert_detector_name(dets_labels[0]).lower()
-    #     det2_label = ltools.convert_detector_name(dets_labels[1]).lower()
-    #
-    #     stats_file_name = setts.default_output_dir + str(self.__year) + '/' + det1_label + '-' + det2_label + '/stats.csv'
-    #
-    #     try:
-    #         stats_file_pd = pd.read_csv(stats_file_name)
-    #     except:
-    #         print ("File " + str(stats_file_name) + " not found. Producing the file ...")
-    #         temp_ratio =
-    #
-    #     return pair_mean_value
+    def __get_detector_pair_mean_value_from_stat_file(self, detector_pair_label: str, year: int):
+        pair_mean_value = None
+        # splitting detectors:
+        dets_labels = detector_pair_label.split("/")
+        det1_label = ltools.convert_detector_name(dets_labels[0]).lower()
+        det2_label = ltools.convert_detector_name(dets_labels[1]).lower()
+
+        stats_file_name = setts.default_output_dir + str(year) + '/' + det1_label + '-' + det2_label + '/stats.csv'
+
+        if setts.clean_run:
+            print ("Run clean option have been set. Producing the file for "+ str(stats_file_name) + "...")
+            det1 = L(det1_label, self.__input_dir + det1_label + ".csv")
+            det2 = L(det2_label, self.__input_dir + det2_label + ".csv")
+
+            ratio12_temp = Ratios(det1, det2)
+            pair_mean_value = ratio12_temp.nls_ratios_lw_mean
+        else:
+            try:
+                stats_file_pd = pd.read_csv(stats_file_name)
+                print ("reading mean from stat file for: " + detector_pair_label)
+                pair_mean_value = stats_file_pd["nls_ratios_lw_mean"][0]
+            except:
+                print ("File " + str(stats_file_name) + " not found. Producing the file ...")
+                det1 = L(det1_label, self.__input_dir + det1_label + ".csv")
+                det2 = L(det2_label, self.__input_dir + det2_label + ".csv")
+
+                ratio12_temp = Ratios(det1, det2)
+                pair_mean_value = ratio12_temp.nls_ratios_lw_mean
+
+        return pair_mean_value
+
+    def get_detector_pair_mean(self, detector_pair_label: str, year: int):
+        if ltools.keys_exists(self.__ratio_pair_mean_info, year, detector_pair_label):
+            pair_mean_value = self.__ratio_pair_mean_info[year][detector_pair_label]
+        else:
+            pair_mean_value = self.__get_detector_pair_mean_value_from_stat_file(detector_pair_label=detector_pair_label, year=year)
+            if not ltools.keys_exists(self.__ratio_pair_mean_info, year):
+                self.__ratio_pair_mean_info[year] = {}
+            self.__ratio_pair_mean_info[year][detector_pair_label] = pair_mean_value
+
+        return pair_mean_value
 
 
 

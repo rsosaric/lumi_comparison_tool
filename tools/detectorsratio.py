@@ -928,6 +928,12 @@ class DetectorsRatio(L):
         return self.__nls_ratios_mean
 
     @property
+    def nls_ratios_lw_mean(self):
+        if self.__nls_ratios_lw_mean is None:
+            raise AssertionError("please run first the create_nls_data() method")
+        return self.__nls_ratios_lw_mean
+
+    @property
     def ratios_stdv(self):
         return self.__ratios_stdv
 

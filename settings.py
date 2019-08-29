@@ -3,7 +3,7 @@ work_status = 'Preliminary'
 # work_status = 'Work in Progress'
 experiment = 'CMS'
 csv_input_base_dir = 'csv_input_files/'
-
+clean_run = False  # if [True]: all needed files will be produced even if they exist
 # -*-*-*-*-*-*-*-*-*-*-*- > > > Plotting settings < < < -*-*-*-*-*-*-*-*-*-*-*-
 
 cms_label_pos_sq = (0.008, 1.02)
@@ -111,17 +111,17 @@ lumisensitivity = 0.05                  # Multiplicity of the total luminosity p
 by_nls_exclusion_threshold = 50.  # percent of excluded points in the nls interval
 
 # -*-*-*-*-*-*-*-*-*-*-*- > > > best/second best < < < -*-*-*-*-*-*-*-*-*-*-*-
-normalization_factor = {
-    2017: {
-        "HFET/DT": 0.995,
-        "HFET/HFOC": 0.981,
-        "HFET/PLTZERO": 1.000,
-        "HFET/PXL": 0.997,
-        "HFOC/DT": 1.014,
-        "HFOC/PXL": 1.017,
-        "PXL/DT": 0.998
-    }
-}
+# normalization_factor = {
+#     2017: {
+#         "HFET/DT": 0.995,
+#         "HFET/HFOC": 0.981,
+#         "HFET/PLTZERO": 1.000,
+#         "HFET/PXL": 0.997,
+#         "HFOC/DT": 1.014,
+#         "HFOC/PXL": 1.017,
+#         "PXL/DT": 0.998
+#     }
+# }
 
 class bcolors:
     HEADER = '\033[95m'
