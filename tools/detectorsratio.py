@@ -10,9 +10,11 @@ class DetectorsRatio(L):
 
     def __init__(self, det1: L, det2: L, year: str = None, energy: str = None,
                  fill_nls_data: bool = True, fill_stats=True, load_all_data = False, c_years = False,
-                 nls = None) -> None:
+                 nls = None, only_stats: bool = False) -> None:
 
         self.__detcs = (det1, det2)
+        self.__only_stats = only_stats
+        self.__stats_DF = None
 
         if fill_stats:
             fill_nls_data = True
@@ -179,15 +181,15 @@ class DetectorsRatio(L):
         self.__ratios_unfiltered_stdv = None
         # lumi weighted
         self.__ratios_lw_mean = None
+        self.__ratios_lw_mean_error = None
         self.__ratios_lw_stdv = None
-        self.__ratios_lw_stdv_dof_corr = None
         # by nls ratios
         self.__nls_ratios_mean = None
         self.__nls_ratios_stdv = None
         # lumi weighted
         self.__nls_ratios_lw_mean = None
+        self.__nls_ratios_lw_mean_error = None
         self.__nls_ratios_lw_stdv = None
-        self.__nls_ratios_lw_stdv_dof_corr = None
 
         if fill_stats:
             self.fill_stats()
@@ -371,6 +373,8 @@ class DetectorsRatio(L):
 
     def fill_stats(self):
         data = self.common_data_filtered
+        stats_names = []
+        stats_values = []
 
         # non_weighted_stats
         self.__ratios_unfiltered_mean = self.__common_data[self.label_ratio].mean()
@@ -381,20 +385,60 @@ class DetectorsRatio(L):
         self.__nls_ratios_mean = self.__common_data_filtered[self.by_nls_label_ratio].mean()
         self.__nls_ratios_stdv = self.__common_data_filtered[self.by_nls_label_ratio].std()
 
+
         lw_stats = ltools.get_w_stats(data[self.label_ratio], data[self.det2.lumi_rec_label],
                                       min_val=setts.ratio_min, max_val=setts.ratio_max)
         nls_lw_stats = ltools.get_w_stats(data[self.by_nls_label_ratio], data[self.by_nls_lumi_label],
                                           min_val=setts.ratio_min, max_val=setts.ratio_max)
 
         self.__ratios_lw_mean = lw_stats.mean
-        self.__ratios_lw_stdv = lw_stats.std_mean
-        self.__ratios_lw_stdv_dof_corr = lw_stats.std
+        self.__ratios_lw_mean_error = lw_stats.std_mean
+        self.__ratios_lw_stdv = lw_stats.std
 
         self.__nls_ratios_lw_mean = nls_lw_stats.mean
-        self.__nls_ratios_lw_stdv = nls_lw_stats.std_mean
-        self.__nls_ratios_lw_stdv_dof_corr = nls_lw_stats.std
+        self.__nls_ratios_lw_mean_error = nls_lw_stats.std_mean
+        self.__nls_ratios_lw_stdv = nls_lw_stats.std
+
+
+        # Filling stats DF arrays:
+        stats_names.append("ratios_unfiltered_mean")
+        stats_values.append(self.__ratios_unfiltered_mean)
+        stats_names.append("ratios_mean")
+        stats_values.append(self.__ratios_mean)
+        stats_names.append("ratios_unfiltered_stdv")
+        stats_values.append(self.__ratios_unfiltered_stdv)
+        stats_names.append("ratios_stdv")
+        stats_values.append(self.__ratios_stdv)
+        stats_names.append("nls_ratios_mean")
+        stats_values.append(self.__nls_ratios_mean)
+        stats_names.append("nls_ratios_stdv")
+        stats_values.append(self.__nls_ratios_stdv)
+        stats_names.append("ratios_lw_mean")
+        stats_values.append(self.__ratios_lw_mean)
+        stats_names.append("ratios_lw_mean_error")
+        stats_values.append(self.__ratios_lw_mean_error)
+        stats_names.append("ratios_lw_stdv")
+        stats_values.append(self.__ratios_lw_stdv)
+        stats_names.append("nls_ratios_lw_mean")
+        stats_values.append(self.__nls_ratios_lw_mean)
+        stats_names.append("nls_ratios_lw_mean_error")
+        stats_values.append(self.__nls_ratios_lw_mean_error)
+        stats_names.append("nls_ratios_lw_stdv")
+        stats_values.append(self.__nls_ratios_lw_stdv)
+
+        self.__stats_DF = pd.DataFrame()
+        for col_id in range(0,len(stats_names)):
+            self.__stats_DF[stats_names[col_id]]=[stats_values[col_id]]
+        self.save_stats_to_file()
+
 
     # TODO: implement def fill_equal_lumi_data(self):
+
+    def save_stats_to_file(self):
+        #stats_file = open(self.output_dir + "stats.csv")
+        self.__stats_DF.to_csv(index=False, path_or_buf=self.output_dir + "stats.csv")
+        #stats_file.close()
+
 
     def plot_ratio_hist(self):
         ratio_hist = plotting.hist_from_pandas_frame(data_frame=self.__common_data_filtered, col_label=self.label_ratio,
@@ -416,7 +460,7 @@ class DetectorsRatio(L):
                                                              # title='Detectors Ratios Histogram (lumi weighted)',
                                                              xmin=setts.ratio_min, xmax=setts.ratio_max,
                                                              mean=self.__ratios_lw_mean,
-                                                             stdv=self.__ratios_lw_stdv_dof_corr,
+                                                             stdv=self.__ratios_lw_stdv,
                                                              energy_year_label=self.__year_energy_label,
                                                              weight_label=self.det2.lumi_rec_label)
         self.__plt_plots['ratio_hist_lw'] = ratio_hist_lumi2_w[0][0].get_figure()
@@ -445,7 +489,7 @@ class DetectorsRatio(L):
                                                              # title='Detectors Ratios Histogram (lumi weighted)',
                                                              xmin=setts.ratio_min, xmax=setts.ratio_max,
                                                              mean=self.__nls_ratios_lw_mean,
-                                                             stdv=self.__nls_ratios_lw_stdv_dof_corr,
+                                                             stdv=self.__nls_ratios_lw_stdv,
                                                              energy_year_label=self.__year_energy_label,
                                                              weight_label=self.__by_nls_lumi_label)
         self.__plt_plots['nls_ratio_hist_lw'] = ratio_hist_lumi2_w[0][0].get_figure()
@@ -567,13 +611,13 @@ class DetectorsRatio(L):
                                                     y_data_label=self.label_ratio, z_data_label=self.__rec_label,
                                                     xlabel= 'Fill Number', ylabel=self.__label_ratio + " ratios",
                                                     mean=self.__nls_ratios_lw_mean,
-                                                    stdv=self.__nls_ratios_lw_stdv_dof_corr,
+                                                    stdv=self.__nls_ratios_lw_stdv,
                                                     ratio_acceptance=setts.bad_ratio_to_plot_stdv_factor,
                                                     filePath=self.output_dir + 'txt/',
                                                     ymin=self.__nls_ratios_lw_mean-3*setts.bad_ratio_to_plot_stdv_factor
-                                                         * self.__nls_ratios_lw_stdv_dof_corr,
+                                                         * self.__nls_ratios_lw_stdv,
                                                     ymax=self.__nls_ratios_lw_mean+3*setts.bad_ratio_to_plot_stdv_factor
-                                                         * self.__nls_ratios_lw_stdv_dof_corr,
+                                                         * self.__nls_ratios_lw_stdv,
                                                     energy_year_label=self.__year_energy_label,
                                                     txtfileName='Bad_fills')
         self.__plt_plots['by_ratio_vs_fill_bad_fills'] = ratio_vs_fill
@@ -583,13 +627,13 @@ class DetectorsRatio(L):
                                                     y_data_label=self.label_ratio, z_data_label=self.__rec_label,
                                                     xlabel= 'Run Number', ylabel=self.__label_ratio + " ratios",
                                                     mean=self.__nls_ratios_lw_mean,
-                                                    stdv=self.__nls_ratios_lw_stdv_dof_corr,
+                                                    stdv=self.__nls_ratios_lw_stdv,
                                                     ratio_acceptance=setts.bad_ratio_to_plot_stdv_factor,
                                                     filePath=self.output_dir + 'txt/',
                                                     ymin=self.__nls_ratios_lw_mean-3*setts.bad_ratio_to_plot_stdv_factor
-                                                         *self.__nls_ratios_lw_stdv_dof_corr,
+                                                         *self.__nls_ratios_lw_stdv,
                                                     ymax=self.__nls_ratios_lw_mean+3*setts.bad_ratio_to_plot_stdv_factor
-                                                         *self.__nls_ratios_lw_stdv_dof_corr,
+                                                         *self.__nls_ratios_lw_stdv,
                                                     energy_year_label=self.__year_energy_label,
                                                     txtfileName='Bad_runs')
         self.__plt_plots['by_ratio_vs_run_bad_runs'] = ratio_vs_run
@@ -754,9 +798,12 @@ class DetectorsRatio(L):
         self.__sns_plots['all_and_excluded_by_nls_hist'] = scatter_all_and_excluded_hist_by_nls
 
     def save_plots(self):
-        print('\n\n Saving plots:')
-        plotting.save_plots(self.plt_plots, self.output_dir)
-        plotting.save_plots(self.sns_plots, self.output_dir)
+        if self.__only_stats:
+            print ("Only stats mode. Plots won't be produced")
+        else:
+            print('\n\n Saving plots:')
+            plotting.save_plots(self.plt_plots, self.output_dir)
+            plotting.save_plots(self.sns_plots, self.output_dir)
 
     @property
     def output_dir(self):

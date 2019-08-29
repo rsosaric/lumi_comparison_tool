@@ -4,6 +4,7 @@ import settings as setts
 from tools.luminometer import Luminometer as L
 from tools.detectorsratio import DetectorsRatio as Ratios
 import tools.plotting_tools as plotting
+from tools import lumi_tools as ltools
 
 class BestDataAnalysis():
     def __init__(self, dets_file_labels: list, input_dir: str, c_years: bool = False) -> None:
@@ -13,7 +14,6 @@ class BestDataAnalysis():
         # Class variables
         self.__detector_ratio_label = "Ratios"
         self.__detector_pair_percent_dict = None
-
 
         n_files = len(dets_file_labels)
         if n_files != 2:
@@ -32,6 +32,7 @@ class BestDataAnalysis():
 
         ratios12 = Ratios(detcs[0], detcs[1])
         self.__ratios = ratios12
+        self.__year = ratios12.year
         self.__label_ratio_normalized = self.__ratios.label_ratio + "_normalized"
         self.fill_detector_ratio_label_column()
         self.normalized_detector_ratios_by_pair()
@@ -91,8 +92,29 @@ class BestDataAnalysis():
         for index_data in range(0, len(data_to_use)):
             ratio_mean_factor = setts.normalization_factor[int(self.__ratios.year)][data_to_use[self.__detector_ratio_label][index_data]]
             temp_array.append(data_to_use[self.__ratios.label_ratio][index_data]/ratio_mean_factor)
+            #self.get_detector_pair_mean(data_to_use[self.__detector_ratio_label][index_data])
 
         data_to_use[self.__label_ratio_normalized] = np.array(temp_array)
+
+
+    # def get_detector_pair_mean(self, detector_pair_label: str):
+    #     pair_mean_value = None
+    #     # splitting detectors:
+    #     dets_labels = detector_pair_label.split("/")
+    #     det1_label = ltools.convert_detector_name(dets_labels[0]).lower()
+    #     det2_label = ltools.convert_detector_name(dets_labels[1]).lower()
+    #
+    #     stats_file_name = setts.default_output_dir + str(self.__year) + '/' + det1_label + '-' + det2_label + '/stats.csv'
+    #
+    #     try:
+    #         stats_file_pd = pd.read_csv(stats_file_name)
+    #     except:
+    #         print ("File " + str(stats_file_name) + " not found. Producing the file ...")
+    #         temp_ratio =
+    #
+    #     return pair_mean_value
+
+
 
     def plot_hist_detectors(self):
         hist_detectors = plotting.snsplot_hist_all_and_excluded(self.__ratios.common_data_filtered,

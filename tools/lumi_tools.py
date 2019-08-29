@@ -128,3 +128,15 @@ def get_linear_model_from_pd_cols(data: pd.DataFrame, x_col_name: str, y_col_nam
     y = data[y_col_name]
 
     return sm.OLS(y, x)
+
+
+def convert_detector_name(name : str) -> str:
+    exit_label = name
+    if name == "PXL":
+        exit_label = "pcc"
+    elif name == "PLTZERO":
+        exit_label = "plt"
+    elif name == "RAMSES":
+        exit_label = "ram"
+
+    return exit_label
