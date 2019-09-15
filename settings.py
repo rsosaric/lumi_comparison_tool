@@ -93,7 +93,9 @@ nls_for_lin_year = {
 }
 
 # -*-*-*-*-*-*-*-*-*-*-*- > > > Input, Output < < < -*-*-*-*-*-*-*-*-*-*-*-
-plots_formats = ('pdf', 'png')
+# plots_formats = ('pdf', 'png')
+plots_formats = 'png'
+dpi_png_plots = 1200
 default_output_dir = 'plots/'
 
 # -*-*-*-*-*-*-*-*-*-*-*- > > > Data structure and format < < < -*-*-*-*-*-*-*-*-*-*-*-
@@ -110,19 +112,20 @@ lumisensitivity = 0.05                  # Multiplicity of the total luminosity p
 # -*-*-*-*-*-*-*-*-*-*-*- > > > all/excluded < < < -*-*-*-*-*-*-*-*-*-*-*-
 by_nls_exclusion_threshold = 50.  # percent of excluded points in the nls interval
 
-# -*-*-*-*-*-*-*-*-*-*-*- > > > best/second best < < < -*-*-*-*-*-*-*-*-*-*-*-
-# normalization_factor = {
-#     2017: {
-#         "HFET/DT": 0.995,
-#         "HFET/HFOC": 0.981,
-#         "HFET/PLTZERO": 1.000,
-#         "HFET/PXL": 0.997,
-#         "HFOC/DT": 1.014,
-#         "HFOC/PXL": 1.017,
-#         "PXL/DT": 0.998
-#     }
-# }
 
+# -*-*-*-*-*-*-*-*-*-*-*- > > > RAMSES calibration < < < -*-*-*-*-*-*-*-*-*-*-*-
+ramses_output_file_name = "ramses_calibration_output/"
+variation_studies_nbins = 50
+to_ref_studies_nbins = 100
+soft_ratio_lim = 10
+medium_ratio_lim = 1.5
+ratio_to_ref_min = 6.2
+ratio_to_ref_max = 8.5
+ramses_cal_min_ratio = 0.90
+ramses_cal_max_ratio = 1.10
+
+
+# -*-*-*-*-*-*-*-*-*-*-*- > > > Other Settings and helpers < < < -*-*-*-*-*-*-*-*-*-*-*-
 class bcolors:
     HEADER = '\033[95m'
     OKBLUE = '\033[94m'

@@ -23,13 +23,15 @@ class Luminometer:
         self.__lumi_unit = Luminometer.__lumi_unit
         self.__lumi_rec_label = 'lumi_recorded_' + self.name
         self.__lumi_del_label = 'lumi_delivered_' + self.name
+        self.__lumi_rec_label_original_units = 'lumi_recorded_ou' + self.name
+        self.__lumi_del_label_original_units = 'lumi_delivered_ou' + self.name
         self.__detector_name_label = 'detector_name_' + self.name
         self.__excluded_label = self.name + ' exclusion info:'
         self.__label_for_excluded = 'excluded'
         self.__label_for_included = 'included'
 
-        __csv_file_col_names = ['run_fill', 'ls', 'time', 'beam_status', 'energy', self.lumi_del_label,
-                                self.lumi_rec_label, 'avg_PU_' + self.name, self.detector_name_label]
+        __csv_file_col_names = ['run_fill', 'ls', 'time', 'beam_status', 'energy', self.__lumi_del_label_original_units,
+                                self.__lumi_rec_label_original_units, 'avg_PU_' + self.name, self.detector_name_label]
         __not_needed_columns = ['run_fill', 'beam_status', 'energy', 'avg_PU_' + self.name]
 
         # read data from csv file
@@ -49,9 +51,10 @@ class Luminometer:
         self.__lumi_csv_unit = ltools.get_lumi_unit_from_csv(data_file_name)
         lumi_convertion_factor = ltools.get_lumi_unit_convertion_factor_to_inv_fb(self.__lumi_csv_unit)
 
-        data_file_pd['lumi_delivered_' + self.name] = data_file_pd[
-                                                          'lumi_delivered_' + self.name] * lumi_convertion_factor
-        data_file_pd['lumi_recorded_' + self.name] = data_file_pd['lumi_recorded_' + self.name] * lumi_convertion_factor
+        data_file_pd[self.__lumi_del_label] = data_file_pd[
+                                                  self.__lumi_del_label_original_units] * lumi_convertion_factor
+        data_file_pd[self.__lumi_rec_label] = data_file_pd[
+                                                  self.__lumi_rec_label_original_units] * lumi_convertion_factor
 
         # TODO: Find if timestamp is for UTC or some CERN time
         # ltools.add_date_column(data_file_pd)
@@ -73,10 +76,10 @@ class Luminometer:
             data_file_pd_all["ls"] = ls_double_all[0].astype(str).astype(int)
             data_file_pd_all.drop(columns=__not_needed_columns, inplace=True)
 
-            data_file_pd_all['lumi_delivered_' + self.name] = data_file_pd_all[
-                                                              'lumi_delivered_' + self.name] * lumi_convertion_factor
-            data_file_pd_all['lumi_recorded_' + self.name] = data_file_pd_all[
-                                                             'lumi_recorded_' + self.name] * lumi_convertion_factor
+            data_file_pd_all[self.__lumi_del_label] = data_file_pd_all[
+                                                          self.__lumi_del_label_original_units] * lumi_convertion_factor
+            data_file_pd_all[self.__lumi_rec_label] = data_file_pd_all[
+                                                          self.__lumi_rec_label_original_units] * lumi_convertion_factor
 
             self.__all_data = data_file_pd_all
             self.__all_data = self.__all_data.sort_values(by="time", ascending=True)
@@ -86,8 +89,10 @@ class Luminometer:
             merge_tmp_excluded = data_file_pd_all[~data_file_pd_all['time'].isin(data_file_pd['time'])]
             self.__all_data[self.__excluded_label]= ~data_file_pd_all['time'].isin(data_file_pd['time'])
 
-            #Changing name from True -> excluded; False -> included
-            self.__all_data[self.__excluded_label].replace([True, False], [self.__label_for_excluded, self.__label_for_included], inplace=True)
+            # Changing name from True -> excluded; False -> included
+            self.__all_data[self.__excluded_label].replace([True, False],
+                                                           [self.__label_for_excluded, self.__label_for_included],
+                                                           inplace=True)
 
             merge_tmp_excluded = merge_tmp_excluded.reset_index(drop=True)
 
@@ -96,8 +101,9 @@ class Luminometer:
             if abs(len(data_file_pd_all) - len(data_file_pd)) != len(merge_tmp_excluded):
                 raise AssertionError("Problem during extraction of excluded data")
 
-            #print(len(merge_tmp_excluded), len(data_file_pd), len(data_file_pd_all))
-            print ("    Data percent excluded in normtag (%): " + str((len(data_file_pd_all) - len(data_file_pd))*100/len(data_file_pd_all)))
+            # print(len(merge_tmp_excluded), len(data_file_pd), len(data_file_pd_all))
+            print("    Data percent excluded in normtag (%): " +
+                  str((len(data_file_pd_all) - len(data_file_pd))*100/len(data_file_pd_all)))
 
             self.__excluded_data = self.__excluded_data.sort_values(by="time", ascending=True)
 
@@ -154,6 +160,14 @@ class Luminometer:
     @property
     def lumi_del_label(self):
         return self.__lumi_del_label
+
+    @property
+    def lumi_rec_label_original_units(self):
+        return self.__lumi_rec_label_original_units
+
+    @property
+    def lumi_del_label_original_units(self):
+        return self.__lumi_del_label_original_units
 
     @property
     def detector_name_label(self):

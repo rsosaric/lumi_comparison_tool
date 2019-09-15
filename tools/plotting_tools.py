@@ -16,8 +16,11 @@ __year_energy_label_pos_sq = setts.year_energy_label_pos_sq
 __year_energy_label_pos_nsq = setts.year_energy_label_pos_nsq
 
 
-def save_py_fig_to_file(fig, output_name):
-    fig.savefig(output_name)
+def save_py_fig_to_file(fig, output_name,plot_dpi=None):
+    if plot_dpi is not None:
+        fig.savefig(output_name,dpi=plot_dpi)
+    else:
+        fig.savefig(output_name)
     plt.close(fig)
 
 
@@ -26,10 +29,25 @@ def save_plots(names_and_plots, output_name):
     plot_names = list(names_and_plots)
     for plot_name in plot_names:
         plot_object = names_and_plots[plot_name]
-        for plot_format in setts.plots_formats:
+        if type(setts.plots_formats) == tuple or type(setts.plots_formats) == list:
+            for plot_format in setts.plots_formats:
+                plot_full_path = output_name + plot_name + '.' + plot_format
+                if plot_format=="png":
+                    save_py_fig_to_file(plot_object, plot_full_path, plot_dpi=setts.dpi_png_plots)
+                else:
+                    save_py_fig_to_file(plot_object, plot_full_path)
+                print('saved plot: ' + plot_full_path)
+        elif type(setts.plots_formats) == str:
+            plot_format = setts.plots_formats
             plot_full_path = output_name + plot_name + '.' + plot_format
-            save_py_fig_to_file(plot_object, plot_full_path)
+            if plot_format == "png":
+                save_py_fig_to_file(plot_object, plot_full_path, plot_dpi=setts.dpi_png_plots)
+            else:
+                save_py_fig_to_file(plot_object, plot_full_path)
             print('saved plot: ' + plot_full_path)
+        else:
+            raise IOError("No format information for saving plots have been provided! check settings.py")
+
 
 
 # TODO: set histo range for same binning
@@ -93,17 +111,17 @@ def hist_from_pandas_frame(data_frame, col_label, nbins, title='', xlabel='', yl
 
 def hist_from_array(data, nbins, title='', xlabel='', ylabel='', xmin=0.0, xmax=0.0,
                     weight=None,
-                    mean=None, stdv=None, err_mean=None, color='#86bf91',
+                    mean=None, stdv=None, err_mean=None, color='royalblue',
                     label_cms_status=True, energy_year_label='',
                     fig_size_shape='sq'):
     fig_size = get_fig_size(fig_size_shape)
     fig, ax = plt.subplots(figsize=fig_size)
     if weight:
         plt.hist(data, bins=nbins, weights=weight,
-                 color=color, zorder=2, rwidth=0.9)
+                 color=color)
     else:
         plt.hist(data, bins=nbins,
-                 color=color, zorder=2, rwidth=0.9)
+                 color=color)
 
     ax.set_title(title)
     ax.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size[fig_size_shape])
