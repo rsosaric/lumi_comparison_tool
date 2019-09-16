@@ -10,6 +10,10 @@ import settings as setts
 
 class RamsesCrossCal:
     __csv_channel_file_col_names = ('time', 'dose')
+    __cols_format = ("run:fill", "ls", "time", "beamstatus", "E(GeV)",
+                     "delivered", "recorded", "avgpu", "source")
+    __cols_to_fill_with_calibration = ("delivered", "recorded", "source")
+    __ramses_name = 'RAMSES'
     __output_file_name = setts.ramses_output_file_name
     __variation_studies_nbins = setts.variation_studies_nbins
     __to_ref_studies_nbins = setts.to_ref_studies_nbins
@@ -19,6 +23,9 @@ class RamsesCrossCal:
     __ratio_to_ref_max = setts.ratio_to_ref_max
     __min_ratio = setts.ramses_cal_min_ratio
     __max_ratio = setts.ramses_cal_max_ratio
+
+    __comment_line = '#Data tag : cross_calibration , Norm tag: None \n' \
+                     '#run:fill,ls,time,beamstatus,E(GeV),delivered(hz/ub),recorded(hz/ub),avgpu,source \n'
 
     def __init__(self, ramses_channels_plus_ref: list, remove_outliers_in_raw_channels: bool = False) -> None:
         if len(ramses_channels_plus_ref) >= 2:
@@ -30,11 +37,21 @@ class RamsesCrossCal:
             self.__ch_raw_plot_id = 0
             ramses_raw_files_path = []
             self.__channels_data = []
+
             ref_detector_file_path = ramses_channels_plus_ref[-1]
             ref_name = ref_detector_file_path.split("/")[-1].replace(".csv", "")
-            self.__ref_det = L(ref_name, ref_detector_file_path)
-            self.__label_normalized_to_ref = 'normalized_to_ref'
-            self.__label_ratio_to_ref = 'ratio_to_ref'
+            self.__ref_det = L(ref_name, ref_detector_file_path, remove_extra_cols=False, split_run_fill_ls_cols=False)
+            self.__label_lumi_ref_rec = self.__ref_det.lumi_rec_label_original_units
+            self.__label_lumi_ref_del = self.__ref_det.lumi_del_label_original_units
+
+            self.__label_normalized_to_ref_rec = 'normalized_to_ref_rec'
+            self.__label_normalized_to_ref_del = 'normalized_to_ref_del'
+            self.__label_ratio_to_ref_rec = 'ratio_to_ref_rec'
+            self.__label_ratio_to_ref_del = 'ratio_to_ref_del'
+
+            self.__all_cols_info_calibration = None
+            # Only time, dose, __label_normalized_to_ref, __label_ratio_to_ref
+            self.__calibrated_data = None
 
             for det_id in range(0, len(ramses_channels_plus_ref) - 1):
                 ramses_raw_files_path.append(ramses_channels_plus_ref[det_id])
@@ -148,47 +165,115 @@ class RamsesCrossCal:
 
     def normalized_to_ref(self, data):
         ref_data = self.__ref_det.data
-        ratio_data_ref = data['dose'] / ref_data[self.__ref_det.lumi_del_label]
-        ratio_data_ref.dropna(inplace=True)
 
-        ratio_data_ref = ratio_data_ref[(ratio_data_ref < RamsesCrossCal.__ratio_to_ref_max) &
-                                        (ratio_data_ref > RamsesCrossCal.__ratio_to_ref_min)]
+        ratio_data_ref_del = data['dose'] / ref_data[self.__label_lumi_ref_del]
+        ratio_data_ref_del.dropna(inplace=True)
+        ratio_data_ref_del = ratio_data_ref_del[(ratio_data_ref_del < RamsesCrossCal.__ratio_to_ref_max) &
+                                                (ratio_data_ref_del > RamsesCrossCal.__ratio_to_ref_min)]
+        mean_del = np.mean(ratio_data_ref_del)
+        std_del = np.std(ratio_data_ref_del)
 
-        mean = np.mean(ratio_data_ref)
-        std = np.std(ratio_data_ref)
+        ratio_data_ref_rec = data['dose'] / ref_data[self.__label_lumi_ref_rec]
+        ratio_data_ref_rec.dropna(inplace=True)
+        ratio_data_ref_rec = ratio_data_ref_rec[(ratio_data_ref_rec < RamsesCrossCal.__ratio_to_ref_max) &
+                                                (ratio_data_ref_rec > RamsesCrossCal.__ratio_to_ref_min)]
+        mean_rec = np.mean(ratio_data_ref_rec)
+        std_rec = np.std(ratio_data_ref_rec)
 
-        print("Normalizing to mean=" + str(mean) + " ,with std=" + str(std))
+        print("Normalizing to mean (delivered)=" + str(mean_del) + " ,with std=" + str(std_del))
+        print("Using reference data: " + str(self.__label_lumi_ref_del))
+        print("Normalizing to mean (recorded)=" + str(mean_rec) + " ,with std=" + str(std_rec))
+        print("Using reference data: " + str(self.__label_lumi_ref_rec))
 
-        plot_ratio_to_ref = plotting.hist_from_array(np.array(ratio_data_ref),
-                                                     nbins=RamsesCrossCal.__to_ref_studies_nbins,
-                                                     xlabel='uncalibrated detector/reference detector', ylabel='counts',
-                                                     mean=mean, stdv=std,
-                                                     fig_size_shape='sq')
-        plotting.save_py_fig_to_file(plot_ratio_to_ref,
-                                     self.__output_file_name + 'ratio_to_ref')
-        data[self.__label_normalized_to_ref] = data['dose']/mean
-        data[self.__label_ratio_to_ref] = data[self.__label_normalized_to_ref]/ref_data[self.__ref_det.lumi_del_label]
+        plot_ratio_to_ref_rec = plotting.hist_from_array(np.array(ratio_data_ref_rec),
+                                                         nbins=RamsesCrossCal.__to_ref_studies_nbins,
+                                                         xlabel='uncalibrated detector/reference detector', ylabel='counts',
+                                                         mean=mean_rec/setts.ramses_scale,
+                                                         stdv=std_rec/setts.ramses_scale,
+                                                         fig_size_shape='sq')
+        plotting.save_py_fig_to_file(plot_ratio_to_ref_rec,
+                                     self.__output_file_name + 'ratio_to_ref_recorded')
 
-        ratio_norm_array = np.array(data[self.__label_ratio_to_ref])
-        ratio_norm_array = ratio_norm_array[(ratio_norm_array < RamsesCrossCal.__max_ratio) &
-                                            (ratio_norm_array > RamsesCrossCal.__min_ratio)]
-        mean_norm = np.mean(ratio_norm_array)
-        std_norm = np.std(ratio_norm_array)
+        plot_ratio_to_ref_del = plotting.hist_from_array(np.array(ratio_data_ref_del),
+                                                         nbins=RamsesCrossCal.__to_ref_studies_nbins,
+                                                         xlabel='uncalibrated detector/reference detector',
+                                                         ylabel='counts',
+                                                         mean=mean_del / setts.ramses_scale,
+                                                         stdv=std_del / setts.ramses_scale,
+                                                         fig_size_shape='sq')
+        plotting.save_py_fig_to_file(plot_ratio_to_ref_del,
+                                     self.__output_file_name + 'ratio_to_ref_delivered')
 
-        plot_ratio_to_ref_norm = plotting.hist_from_array(ratio_norm_array,
-                                                          nbins=RamsesCrossCal.__to_ref_studies_nbins,
-                                                          xlabel='normalized detector/reference detector', ylabel='counts',
-                                                          mean=mean_norm, stdv=std_norm,
-                                                          fig_size_shape='sq')
-        plotting.save_py_fig_to_file(plot_ratio_to_ref_norm,
-                                     self.__output_file_name + 'ratio_to_ref_norm')
+        data[self.__label_normalized_to_ref_rec] = data['dose']/mean_rec
+        data[self.__label_ratio_to_ref_rec] = data[self.__label_normalized_to_ref_rec]/ref_data[self.__label_lumi_ref_rec]
 
+        data[self.__label_normalized_to_ref_del] = data['dose'] / mean_del
+        data[self.__label_ratio_to_ref_del] = data[self.__label_normalized_to_ref_del] / ref_data[
+            self.__label_lumi_ref_del]
 
+        ratio_norm_array_rec = np.array(data[self.__label_ratio_to_ref_rec].copy())
+        ratio_norm_array_del = np.array(data[self.__label_ratio_to_ref_del].copy())
+        ratio_norm_array_rec = ratio_norm_array_rec[(ratio_norm_array_rec < RamsesCrossCal.__max_ratio) &
+                                                    (ratio_norm_array_rec > RamsesCrossCal.__min_ratio)]
+        ratio_norm_array_del = ratio_norm_array_del[(ratio_norm_array_del < RamsesCrossCal.__max_ratio) &
+                                                    (ratio_norm_array_del > RamsesCrossCal.__min_ratio)]
+        mean_norm_rec = np.mean(ratio_norm_array_rec)
+        mean_norm_del = np.mean(ratio_norm_array_del)
+        std_norm_rec = np.std(ratio_norm_array_rec)
+        std_norm_del = np.std(ratio_norm_array_del)
 
+        plot_ratio_to_ref_norm_rec = plotting.hist_from_array(ratio_norm_array_rec,
+                                                              nbins=RamsesCrossCal.__to_ref_studies_nbins,
+                                                              xlabel='normalized detector/reference detector', ylabel='counts',
+                                                              mean=mean_norm_rec, stdv=std_norm_rec,
+                                                              fig_size_shape='sq')
+        plotting.save_py_fig_to_file(plot_ratio_to_ref_norm_rec,
+                                     self.__output_file_name + 'ratio_to_ref_norm_recorded')
 
+        plot_ratio_to_ref_norm_del = plotting.hist_from_array(ratio_norm_array_del,
+                                                              nbins=RamsesCrossCal.__to_ref_studies_nbins,
+                                                              xlabel='normalized detector/reference detector',
+                                                              ylabel='counts',
+                                                              mean=mean_norm_del, stdv=std_norm_del,
+                                                              fig_size_shape='sq')
+        plotting.save_py_fig_to_file(plot_ratio_to_ref_norm_del,
+                                     self.__output_file_name + 'ratio_to_ref_norm_delivered')
 
+        # plot_ratio_to_ref_norm_csv = plotting.hist_from_array(data[self.__label_ratio_to_ref],
+        #                                                       nbins=RamsesCrossCal.__to_ref_studies_nbins,
+        #                                                       xlabel='normalized detector/reference detector',
+        #                                                       ylabel='counts',
+        #                                                       xmin=RamsesCrossCal.__min_ratio,
+        #                                                       xmax=RamsesCrossCal.__max_ratio,
+        #                                                       mean=mean_norm, stdv=std_norm,
+        #                                                       fig_size_shape='sq')
+        # plotting.save_py_fig_to_file(plot_ratio_to_ref_norm_csv,
+        #                              self.__output_file_name + 'ratio_to_ref_norm_csv')
 
+        self.__calibrated_data = data
+        self.__all_cols_info_calibration = pd.DataFrame()
 
+        for col in RamsesCrossCal.__cols_format:
+            if col not in RamsesCrossCal.__cols_to_fill_with_calibration:
+                self.__all_cols_info_calibration[col] = self.__ref_det.data[col]
+            else:
+                if col == 'source':
+                    self.__all_cols_info_calibration[col] = RamsesCrossCal.__ramses_name
+                elif col == "delivered":
+                    self.__all_cols_info_calibration[col] = data[self.__label_normalized_to_ref_del]
+                elif col == "recorded":
+                    self.__all_cols_info_calibration[col] = data[self.__label_normalized_to_ref_rec]
+                else:
+                    raise BrokenPipeError("something wrong!")
+
+        self.__all_cols_info_calibration.dropna(inplace=True)
+        print('\n Output summary: \n')
+        print(self.__all_cols_info_calibration)
+
+        saving_file = self.__output_dir + "ramses_calibrated.csv"
+        with open(saving_file, 'w') as f:
+            f.write(RamsesCrossCal.__comment_line)
+        self.__all_cols_info_calibration.to_csv(saving_file, index=False, header=False, mode='a')
 
     def get_ratio_between_channels(self, ch1_data, ch2_data, extra_label=""):
         ratio_data_ref = ch1_data['dose'] / ch2_data['dose']

@@ -15,7 +15,7 @@ class Luminometer:
     # _lumi_unit_label = "r'$"+ __lumi_unit +"^{-1}$'"
 
     def __init__(self, name: str, data_file_name: str, full_data_analysis: bool = False,
-                 mixed_data=False) -> None:
+                 mixed_data=False, remove_extra_cols: bool = True, split_run_fill_ls_cols: bool = True) -> None:
         # name contains detector name+possible calibration tag. Example:pcc18v3
         self.name = name
         self.__all_data_analysis_included = full_data_analysis
@@ -23,25 +23,27 @@ class Luminometer:
         self.__lumi_unit = Luminometer.__lumi_unit
         self.__lumi_rec_label = 'lumi_recorded_' + self.name
         self.__lumi_del_label = 'lumi_delivered_' + self.name
-        self.__lumi_rec_label_original_units = 'lumi_recorded_ou' + self.name
-        self.__lumi_del_label_original_units = 'lumi_delivered_ou' + self.name
+        self.__lumi_rec_label_original_units = 'lumi_recorded_ou_' + self.name
+        self.__lumi_del_label_original_units = 'lumi_delivered_ou_' + self.name
         self.__detector_name_label = 'detector_name_' + self.name
         self.__excluded_label = self.name + ' exclusion info:'
         self.__label_for_excluded = 'excluded'
         self.__label_for_included = 'included'
 
-        __csv_file_col_names = ['run_fill', 'ls', 'time', 'beam_status', 'energy', self.__lumi_del_label_original_units,
-                                self.__lumi_rec_label_original_units, 'avg_PU_' + self.name, self.detector_name_label]
-        __not_needed_columns = ['run_fill', 'beam_status', 'energy', 'avg_PU_' + self.name]
+        __csv_file_col_names = ['run:fill', 'ls', 'time', 'beamstatus', 'E(GeV)', self.__lumi_del_label_original_units,
+                                self.__lumi_rec_label_original_units, 'avgpu', self.detector_name_label]
+        __not_needed_columns = ['run:fill', 'beamstatus', 'E(GeV)', 'avgpu']
 
         # read data from csv file
         data_file_pd = pd.read_csv(data_file_name, comment='#', index_col=False, names=__csv_file_col_names)
-        run_fill_cols = data_file_pd["run_fill"].str.split(":", n=1, expand=True)
+        run_fill_cols = data_file_pd["run:fill"].str.split(":", n=1, expand=True)
         ls_double = data_file_pd["ls"].str.split(":", n=1, expand=True)
-        data_file_pd["run"] = run_fill_cols[0].astype(str).astype(int)
-        data_file_pd["fill"] = run_fill_cols[1].astype(str).astype(int)
-        data_file_pd["ls"] = ls_double[0].astype(str).astype(int)
-        data_file_pd.drop(columns=__not_needed_columns, inplace=True)
+        if split_run_fill_ls_cols:
+            data_file_pd["run"] = run_fill_cols[0].astype(str).astype(int)
+            data_file_pd["fill"] = run_fill_cols[1].astype(str).astype(int)
+            data_file_pd["ls"] = ls_double[0].astype(str).astype(int)
+        if remove_extra_cols:
+            data_file_pd.drop(columns=__not_needed_columns, inplace=True)
 
         year, energy = ltools.get_year_and_energy(run_fill_cols[1][0])
         self.year = year
@@ -108,6 +110,9 @@ class Luminometer:
             self.__excluded_data = self.__excluded_data.sort_values(by="time", ascending=True)
 
         self.__data = self.__data.sort_values(by="time", ascending=True)
+        if remove_extra_cols:
+            data_file_pd.drop(columns=[self.__lumi_del_label_original_units, self.__lumi_del_label_original_units],
+                              inplace=True)
 
     # Check detector type consistency between file_name, csv file label and allowed detectors
     def __check_detector_type(self):

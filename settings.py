@@ -119,8 +119,9 @@ variation_studies_nbins = 50
 to_ref_studies_nbins = 100
 soft_ratio_lim = 10
 medium_ratio_lim = 1.5
-ratio_to_ref_min = 6.2
-ratio_to_ref_max = 8.5
+ramses_scale = 1.0e-07
+ratio_to_ref_min = 1.64*ramses_scale
+ratio_to_ref_max = 1.705*ramses_scale
 ramses_cal_min_ratio = 0.90
 ramses_cal_max_ratio = 1.10
 
