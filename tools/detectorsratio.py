@@ -10,11 +10,20 @@ class DetectorsRatio(L):
 
     def __init__(self, det1: L, det2: L, year: str = None, energy: str = None,
                  fill_nls_data: bool = True, fill_stats=True, load_all_data = False, c_years = False,
-                 nls = None, only_stats: bool = False) -> None:
+                 nls=None, only_stats: bool = False, lumi_type='rec') -> None:
 
         self.__detcs = (det1, det2)
         self.__only_stats = only_stats
         self.__stats_DF = None
+
+        if lumi_type == 'rec':
+            self.__label_det1_lumi_to_use = det1.lumi_rec_label
+            self.__label_det2_lumi_to_use = det2.lumi_rec_label
+        elif lumi_type == 'del':
+            self.__label_det1_lumi_to_use = det1.lumi_del_label
+            self.__label_det2_lumi_to_use = det2.lumi_del_label
+        else:
+            raise AssertionError("lumitype not implemented!: " + lumi_type)
 
         if fill_stats:
             fill_nls_data = True
@@ -71,15 +80,14 @@ class DetectorsRatio(L):
         self.__lumi_unit = det2.lumi_unit
         self.__det1 = det1
         self.__det2 = det2
-        self.__by_nls_lumi_rec_label1 = det1.lumi_rec_label + '_by_' + str(self.__nls) + 'nls'
-        self.__by_nls_lumi_rec_label2 = det2.lumi_rec_label + '_by_' + str(self.__nls) + 'nls'
+        self.__by_nls_lumi_label1 = self.__label_det1_lumi_to_use + '_by_' + str(self.__nls) + 'nls'
+        self.__by_nls_lumi_label2 = self.__label_det2_lumi_to_use + '_by_' + str(self.__nls) + 'nls'
         self.__by_nls_label_ratio_err = self.__by_nls_label_ratio + '_err'
         self.__by_nls_lumi_label = 'by_' + str(self.__nls) + 'nls_lumi_' + self.__label_ratio
-        self.__accumulated_rec_lumi1_label = det1.lumi_rec_label + '_accumulated'
-        self.__accumulated_rec_lumi2_label = det2.lumi_rec_label + '_accumulated'
-        self.__by_nls_accumulated_rec_lumi1_label = self.__by_nls_lumi_rec_label1 + '_accumulated'
-        self.__by_nls_accumulated_rec_lumi2_label = self.__by_nls_lumi_rec_label2 + '_accumulated'
-        self.__rec_label = det2.lumi_rec_label
+        self.__accumulated_lumi1_label = self.__label_det1_lumi_to_use + '_accumulated'
+        self.__accumulated_lumi2_label = self.__label_det2_lumi_to_use + '_accumulated'
+        self.__by_nls_accumulated_lumi1_label = self.__by_nls_lumi_label1 + '_accumulated'
+        self.__by_nls_accumulated_lumi2_label = self.__by_nls_lumi_label2 + '_accumulated'
         self.__ratio_excluded_label = 'Exclusion info (' + self.__label_ratio + ')'
 
         # contains only: fully included, partially excluded, partially included
@@ -96,11 +104,11 @@ class DetectorsRatio(L):
         common_data_in = pd.merge(det1.data, det2.data, on=keys_for_merging, how='outer')
 
         # Computing single ls ratio
-        common_data_in[self.label_ratio] = common_data_in[det1.lumi_rec_label] / common_data_in[det2.lumi_rec_label]
+        common_data_in[self.label_ratio] = common_data_in[self.__label_det1_lumi_to_use] / common_data_in[self.__label_det2_lumi_to_use]
 
         # Adding cumulative luminosity column
-        common_data_in[self.accumulated_rec_lumi2_label] = common_data_in[det2.lumi_rec_label].cumsum()
-        common_data_in[self.accumulated_rec_lumi1_label] = common_data_in[det1.lumi_rec_label].cumsum()
+        common_data_in[self.accumulated_lumi2_label] = common_data_in[self.__label_det2_lumi_to_use].cumsum()
+        common_data_in[self.accumulated_lumi1_label] = common_data_in[self.__label_det1_lumi_to_use].cumsum()
         ltools.add_date_column(common_data_in)
 
         # Applying filters to ratios and store in common_data_filtered
@@ -139,13 +147,13 @@ class DetectorsRatio(L):
 
         # Excluded data analysis
         if self.all_data_analysis_included:
-            print ("Merging " + det1.name + " and " + det2.name + " (all data) ... \n")
+            print("Merging " + det1.name + " and " + det2.name + " (all data) ... \n")
             common_data_in_all = pd.merge(det1.all_data, det2.all_data, on=keys_for_merging, how='outer')
 
             common_data_in_all[det1.excluded_label] = common_data_in_all[det1.excluded_label].fillna(det1.label_for_excluded)
             common_data_in_all[det2.excluded_label] = common_data_in_all[det2.excluded_label].fillna(det2.label_for_excluded)
 
-            common_data_in_all[self.label_ratio] = common_data_in_all[det1.lumi_rec_label] / common_data_in_all[det2.lumi_rec_label]
+            common_data_in_all[self.label_ratio] = common_data_in_all[self.__label_det1_lumi_to_use] / common_data_in_all[self.__label_det2_lumi_to_use]
 
             ratio_excluded_label_list = []
             for index, row in common_data_in_all.iterrows():
@@ -162,8 +170,8 @@ class DetectorsRatio(L):
 
             common_data_in_all[self.__ratio_excluded_label] = np.array(ratio_excluded_label_list)
 
-            common_data_in_all[self.accumulated_rec_lumi2_label] = common_data_in_all[det2.lumi_rec_label].cumsum()
-            common_data_in_all[self.accumulated_rec_lumi1_label] = common_data_in_all[det1.lumi_rec_label].cumsum()
+            common_data_in_all[self.accumulated_lumi2_label] = common_data_in_all[self.__label_det2_lumi_to_use].cumsum()
+            common_data_in_all[self.accumulated_lumi1_label] = common_data_in_all[self.__label_det1_lumi_to_use].cumsum()
 
             ltools.add_date_column(common_data_in_all)
 
@@ -245,8 +253,8 @@ class DetectorsRatio(L):
 
         for index_data in range(0, len(data_to_use)):
             inls += 1
-            sum_lumi1 += data_to_use[self.__det1.lumi_rec_label][index_data]
-            sum_lumi2 += data_to_use[self.__det2.lumi_rec_label][index_data]
+            sum_lumi1 += data_to_use[self.__label_det1_lumi_to_use][index_data]
+            sum_lumi2 += data_to_use[self.__label_det2_lumi_to_use][index_data]
             nls_ratios_array.append(data_to_use[self.label_ratio][index_data])
 
             all_range_nls = np.nan
@@ -312,8 +320,8 @@ class DetectorsRatio(L):
 
         for index_data in range(0, len(data_to_use)):
             inls += 1
-            sum_lumi1 += data_to_use[self.__det1.lumi_rec_label][index_data]
-            sum_lumi2 += data_to_use[self.__det2.lumi_rec_label][index_data]
+            sum_lumi1 += data_to_use[self.__label_det1_lumi_to_use][index_data]
+            sum_lumi2 += data_to_use[self.__label_det2_lumi_to_use][index_data]
             nls_ratios_array.append(data_to_use[self.label_ratio][index_data])
             if data_to_use[self.__ratio_excluded_label][index_data] != "included":
                 number_of_excluded_points_in_nls += 1
@@ -389,8 +397,7 @@ class DetectorsRatio(L):
         self.__nls_ratios_mean = self.__common_data_filtered[self.by_nls_label_ratio].mean()
         self.__nls_ratios_stdv = self.__common_data_filtered[self.by_nls_label_ratio].std()
 
-
-        lw_stats = ltools.get_w_stats(data[self.label_ratio], data[self.det2.lumi_rec_label],
+        lw_stats = ltools.get_w_stats(data[self.label_ratio], data[self.__label_det2_lumi_to_use],
                                       min_val=setts.ratio_min, max_val=setts.ratio_max)
         nls_lw_stats = ltools.get_w_stats(data[self.by_nls_label_ratio], data[self.by_nls_lumi_label],
                                           min_val=setts.ratio_min, max_val=setts.ratio_max)
@@ -467,7 +474,7 @@ class DetectorsRatio(L):
                                                              mean=self.__ratios_lw_mean,
                                                              stdv=self.__ratios_lw_stdv,
                                                              energy_year_label=self.__year_energy_label,
-                                                             weight_label=self.det2.lumi_rec_label)
+                                                             weight_label=self.__label_det2_lumi_to_use)
         self.__plt_plots['ratio_hist_lw'] = ratio_hist_lumi2_w[0][0].get_figure()
 
     def plot_nls_ratio_hist(self):
@@ -523,7 +530,7 @@ class DetectorsRatio(L):
     def plot_ratio_vs_lumi2(self):
         ratio_vs_time = plotting.scatter_plot_from_pandas_frame(data_frame=self.__common_data_filtered,
                                                                 y_data_label=self.label_ratio,
-                                                                x_data_label=self.accumulated_rec_lumi2_label,
+                                                                x_data_label=self.accumulated_lumi2_label,
                                                                 xlabel="Integrated luminosity [$" +
                                                                        self.lumi_unit + "^{-1}$]",
                                                                 ylabel=self.__label_ratio + " ratios",
@@ -555,7 +562,7 @@ class DetectorsRatio(L):
     def plot_nls_ratio_vs_lumi2(self):
         ratio_vs_lumi = plotting.scatter_plot_from_pandas_frame(data_frame=self.common_data_filtered,
                                                                 y_data_label=self.by_nls_label_ratio,
-                                                                x_data_label=self.accumulated_rec_lumi2_label,
+                                                                x_data_label=self.accumulated_lumi2_label,
                                                                 xlabel="Integrated luminosity [$" +
                                                                        self.lumi_unit + "^{-1}$]",
                                                                 ylabel=self.__label_ratio + " ratios in " +
@@ -613,7 +620,8 @@ class DetectorsRatio(L):
     # Fill test
     def plot_bad_fills(self):
         ratio_vs_fill = plotting.plot_bad_fill_info(data_frame=self.common_data_filtered_no_nan, x_data_label='fill',
-                                                    y_data_label=self.label_ratio, z_data_label=self.__rec_label,
+                                                    y_data_label=self.label_ratio,
+                                                    z_data_label=self.__label_det2_lumi_to_use,
                                                     xlabel= 'Fill Number', ylabel=self.__label_ratio + " ratios",
                                                     mean=self.__nls_ratios_lw_mean,
                                                     stdv=self.__nls_ratios_lw_stdv,
@@ -629,18 +637,17 @@ class DetectorsRatio(L):
 
     def plot_bad_runs(self):
         ratio_vs_run = plotting.plot_bad_fill_info(data_frame=self.common_data_filtered_no_nan, x_data_label='run',
-                                                    y_data_label=self.label_ratio, z_data_label=self.__rec_label,
-                                                    xlabel= 'Run Number', ylabel=self.__label_ratio + " ratios",
-                                                    mean=self.__nls_ratios_lw_mean,
-                                                    stdv=self.__nls_ratios_lw_stdv,
-                                                    ratio_acceptance=setts.bad_ratio_to_plot_stdv_factor,
-                                                    filePath=self.output_dir + 'txt/',
-                                                    ymin=self.__nls_ratios_lw_mean-3*setts.bad_ratio_to_plot_stdv_factor
-                                                         *self.__nls_ratios_lw_stdv,
-                                                    ymax=self.__nls_ratios_lw_mean+3*setts.bad_ratio_to_plot_stdv_factor
-                                                         *self.__nls_ratios_lw_stdv,
-                                                    energy_year_label=self.__year_energy_label,
-                                                    txtfileName='Bad_runs')
+                                                   y_data_label=self.label_ratio,
+                                                   z_data_label=self.__label_det2_lumi_to_use,
+                                                   xlabel= 'Run Number', ylabel=self.__label_ratio + " ratios",
+                                                   mean=self.__nls_ratios_lw_mean,
+                                                   stdv=self.__nls_ratios_lw_stdv,
+                                                   ratio_acceptance=setts.bad_ratio_to_plot_stdv_factor,
+                                                   filePath=self.output_dir + 'txt/',
+                                                   ymin=self.__nls_ratios_lw_mean-3*setts.bad_ratio_to_plot_stdv_factor * self.__nls_ratios_lw_stdv,
+                                                   ymax=self.__nls_ratios_lw_mean+3*setts.bad_ratio_to_plot_stdv_factor * self.__nls_ratios_lw_stdv,
+                                                   energy_year_label=self.__year_energy_label,
+                                                   txtfileName='Bad_runs')
         self.__plt_plots['by_ratio_vs_run_bad_runs'] = ratio_vs_run
 
     # All/excluded data analysis plots
@@ -649,7 +656,7 @@ class DetectorsRatio(L):
             det = self.__detcs[det_index]
             suffix_plot_name = det.excluded_label.replace(" ","_").replace(":","")
             scatter_all_and_excluded_lumi2 = plotting.snsplot_detector_all_and_excluded(self.__data_all,
-                                                                                  x_data_label=self.accumulated_rec_lumi2_label,
+                                                                                  x_data_label=self.accumulated_lumi2_label,
                                                                                   y_data_label=self.label_ratio,
                                                                                   conditional_label=det.excluded_label,
                                                                                   xlabel="Integrated luminosity [$" +
@@ -691,7 +698,7 @@ class DetectorsRatio(L):
             self.__sns_plots['all_and_excluded_vs_run_combined'] = scatter_all_and_excluded_run_comb
 
             scatter_all_and_excluded_vs_lumi2_comb = plotting.snsplot_detector_all_and_excluded(self.__data_all,
-                                                                                           x_data_label=self.accumulated_rec_lumi2_label,
+                                                                                           x_data_label=self.accumulated_lumi2_label,
                                                                                            y_data_label=self.label_ratio,
                                                                                            conditional_label=self.__ratio_excluded_label,
                                                                                            # conditional_label_extra=self.det2.excluded_label,
@@ -734,7 +741,7 @@ class DetectorsRatio(L):
         self.__sns_plots['all_and_excluded_by_nls_vs_date_combined'] = scatter_all_and_excluded_vs_date_comb_by_nls
 
         scatter_all_and_excluded_vs_lumi2_comb_by_nls = plotting.snsplot_detector_all_and_excluded(self.__data_all,
-                                                                                                  x_data_label=self.accumulated_rec_lumi2_label,
+                                                                                                  x_data_label=self.accumulated_lumi2_label,
                                                                                                   y_data_label=self.by_nls_label_ratio,
                                                                                                   conditional_label=self.by_nls_exclusion_info_label,
                                                                                                   # conditional_label_extra=self.det2.excluded_label,
@@ -749,7 +756,7 @@ class DetectorsRatio(L):
         self.__sns_plots['all_and_excluded_by_nls_vs_lumi2_combined'] = scatter_all_and_excluded_vs_lumi2_comb_by_nls
 
         scatter_all_and_excluded_percent_vs_lumi2_comb_by_nls = plotting.snsplot_detector_all_and_excluded(self.__data_all,
-                                                                                                   x_data_label=self.accumulated_rec_lumi2_label,
+                                                                                                   x_data_label=self.accumulated_lumi2_label,
                                                                                                    y_data_label=self.by_nls_label_ratio,
                                                                                                    conditional_label=self.by_nls_exclusion_percent_label,
                                                                                                    # conditional_label_extra=self.det2.excluded_label,
@@ -832,11 +839,11 @@ class DetectorsRatio(L):
 
     @property
     def by_nls_lumi1(self):
-        return self.__by_nls_lumi_rec_label1
+        return self.__by_nls_lumi_label1
 
     @property
     def by_nls_lumi2(self):
-        return self.__by_nls_lumi_rec_label2
+        return self.__by_nls_lumi_label2
 
     @property
     def by_nls_lumi_label(self):
@@ -851,20 +858,20 @@ class DetectorsRatio(L):
         return self.__det2
 
     @property
-    def by_nls_accumulated_rec_lumi1_label(self):
-        return self.__by_nls_accumulated_rec_lumi1_label
+    def by_nls_accumulated_lumi1_label(self):
+        return self.__by_nls_accumulated_lumi1_label
 
     @property
-    def by_nls_accumulated_rec_lumi2_label(self):
-        return self.__by_nls_accumulated_rec_lumi2_label
+    def by_nls_accumulated_lumi2_label(self):
+        return self.__by_nls_accumulated_lumi2_label
 
     @property
-    def accumulated_rec_lumi1_label(self):
-        return self.__accumulated_rec_lumi1_label
+    def accumulated_lumi1_label(self):
+        return self.__accumulated_lumi1_label
 
     @property
-    def accumulated_rec_lumi2_label(self):
-        return self.__accumulated_rec_lumi2_label
+    def accumulated_lumi2_label(self):
+        return self.__accumulated_lumi2_label
 
     @property
     def year_energy_label(self):
@@ -988,7 +995,8 @@ class DetectorsRatio(L):
 
 # TODO: make numb of detectors automatic
 class MultipleDetectorsRatio:
-    def __init__(self, det1: L, det2: L, det3: L, year: str = None, energy: str = None, c_years = False) -> None:
+    def __init__(self, det1: L, det2: L, det3: L, lumi_type: str,
+                 year: str = None, energy: str = None, c_years=False) -> None:
 
         self.__dets = [det1, det2, det3]
         number_of_dets = len(self.__dets)
@@ -1041,7 +1049,8 @@ class MultipleDetectorsRatio:
         for i in range(0, number_of_dets):
             for j in range(i + 1, number_of_dets):
                 print('Setting ' + str(self.__dets[i].name) + '/' + str(self.__dets[j].name) + ' ...')
-                self.__ratios.append(DetectorsRatio(self.__dets[i], self.__dets[j]))
+                self.__ratios.append(DetectorsRatio(self.__dets[i], self.__dets[j],
+                                                    lumi_type=lumi_type))
 
         self.__ref_ratio = self.__ratios[len(self.__ratios) - 1]
         self.__nls = self.__ref_ratio.nls
@@ -1051,7 +1060,7 @@ class MultipleDetectorsRatio:
         for i_ratio in self.__ratios:
             self.__nls_ratio_col_names.append(i_ratio.by_nls_label_ratio)
             self.__ratio_plotting_labels.append(i_ratio.label_ratio)
-        self.__lumi3_col_name = self.__ref_ratio.accumulated_rec_lumi2_label
+        self.__lumi3_col_name = self.__ref_ratio.accumulated_lumi2_label
         self.__ratio_col_names = self.__ratio_plotting_labels
 
         keys_for_merging = ['fill', 'run', 'ls', 'time', 'date']
@@ -1064,9 +1073,9 @@ class MultipleDetectorsRatio:
                                                     on=keys_for_merging, how='outer')
             if self.__all_data_analysis_included:
                 merge_all_tmp = pd.merge(self.__ratios[0].data_all, self.__ratios[1].data_all,
-                                     on=keys_for_merging,
-                                     how='outer').merge(self.__ratios[2].data_all,
-                                                        on=keys_for_merging, how='outer')
+                                         on=keys_for_merging,
+                                         how='outer').merge(self.__ratios[2].data_all,
+                                                            on=keys_for_merging, how='outer')
                 merge_all_tmp = merge_all_tmp.reset_index(drop=True)
                 ltools.check_and_clean_after_merging(merge_all_tmp)
                 self.__all_data = merge_all_tmp

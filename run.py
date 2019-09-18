@@ -21,6 +21,8 @@ p.add_option("-t", "--test", action="store_true", help="test class", dest="test"
 p.add_option("-p", "--physics", action="store_true", help="physics selected data analysis", dest="physics", default=False)
 p.add_option("-e", "--exclusion", action="store_true", help="Find bad detector behavior", dest="exclusion", default=False)
 p.add_option("--ramses_crosscal", action="store_true", help="RAMSES cross-calibration", dest="ramses_crosscal", default=False)
+p.add_option("--lumi_type", type="string", help="Use rec(recorded) or del(delivered) lumi for the analysis",
+             dest="lumi_type", default='rec')
 
 (options, args) = p.parse_args()
 
@@ -42,7 +44,8 @@ if options.test:
 
 
 if options.physics:
-    physics_analysis = BestDataAnalysis(dets_file_labels=args, input_dir=base_input_path, c_years=several_years)
+    physics_analysis = BestDataAnalysis(dets_file_labels=args, input_dir=base_input_path, lumi_type=options.lumi_type,
+                                        c_years=several_years)
 elif options.ramses_crosscal:
     ramses_crosscal_analysis = RamsesCrossCal(ramses_channels_plus_ref=args)
 
@@ -50,7 +53,8 @@ elif options.exclusion:
     exclusion_fill(dets_file_labels=args, input_dir=base_input_path, mixed_data=options.mixed,
                    run_stddev_test=options.test, c_years=several_years)
 else:
-    lumi_analysis = Lumi(dets_file_labels=args, input_dir=base_input_path, run_linearity_analysis=options.lin_an,
+    lumi_analysis = Lumi(dets_file_labels=args, input_dir=base_input_path, lumi_type=options.lumi_type,
+                         run_linearity_analysis=options.lin_an,
                          mixed_data=options.mixed, run_stddev_test=options.test, c_years=several_years,
                          all_and_excluded_analysis=options.all, exclusion=options.exclusion)
 

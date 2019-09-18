@@ -112,20 +112,6 @@ lumisensitivity = 0.05                  # Multiplicity of the total luminosity p
 # -*-*-*-*-*-*-*-*-*-*-*- > > > all/excluded < < < -*-*-*-*-*-*-*-*-*-*-*-
 by_nls_exclusion_threshold = 50.  # percent of excluded points in the nls interval
 
-
-# -*-*-*-*-*-*-*-*-*-*-*- > > > RAMSES calibration < < < -*-*-*-*-*-*-*-*-*-*-*-
-ramses_output_file_name = "ramses_calibration_output/"
-variation_studies_nbins = 50
-to_ref_studies_nbins = 100
-soft_ratio_lim = 10
-medium_ratio_lim = 1.5
-ramses_scale = 1.0e-07
-ratio_to_ref_min = 1.64*ramses_scale
-ratio_to_ref_max = 1.705*ramses_scale
-ramses_cal_min_ratio = 0.90
-ramses_cal_max_ratio = 1.10
-
-
 # -*-*-*-*-*-*-*-*-*-*-*- > > > Other Settings and helpers < < < -*-*-*-*-*-*-*-*-*-*-*-
 class bcolors:
     HEADER = '\033[95m'

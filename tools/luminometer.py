@@ -58,6 +58,10 @@ class Luminometer:
         data_file_pd[self.__lumi_rec_label] = data_file_pd[
                                                   self.__lumi_rec_label_original_units] * lumi_convertion_factor
 
+        if remove_extra_cols:
+            data_file_pd.drop(columns=[self.__lumi_del_label_original_units, self.__lumi_del_label_original_units],
+                              inplace=True)
+
         # TODO: Find if timestamp is for UTC or some CERN time
         # ltools.add_date_column(data_file_pd)
 
@@ -71,7 +75,7 @@ class Luminometer:
 
         if full_data_analysis:
             data_file_pd_all = pd.read_csv(data_file_name.replace(".csv", "_all.csv"), comment='#', index_col=False, names=__csv_file_col_names)
-            run_fill_cols_all = data_file_pd_all["run_fill"].str.split(":", n=1, expand=True)
+            run_fill_cols_all = data_file_pd_all["run:fill"].str.split(":", n=1, expand=True)
             ls_double_all = data_file_pd_all["ls"].str.split(":", n=1, expand=True)
             data_file_pd_all["run"] = run_fill_cols_all[0].astype(str).astype(int)
             data_file_pd_all["fill"] = run_fill_cols_all[1].astype(str).astype(int)
@@ -110,9 +114,6 @@ class Luminometer:
             self.__excluded_data = self.__excluded_data.sort_values(by="time", ascending=True)
 
         self.__data = self.__data.sort_values(by="time", ascending=True)
-        if remove_extra_cols:
-            data_file_pd.drop(columns=[self.__lumi_del_label_original_units, self.__lumi_del_label_original_units],
-                              inplace=True)
 
     # Check detector type consistency between file_name, csv file label and allowed detectors
     def __check_detector_type(self):

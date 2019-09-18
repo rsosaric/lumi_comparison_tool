@@ -38,10 +38,20 @@ For minor modification of the analysis (stability, linearity) go first to lumian
 
 *********************** IMPLEMENTED OPTIONS ***********************
 
-"-i": Path to input Dir" (default=None)
+use the help: python run.py --help
 
-"-a": all data vs. selected analysis" (default=False)
+*********************** Analysis of the exclusion of bad zones (runs, fills) ***********************
+For this it are needed two files for each detector: det.csv(selected data) and det_all.csv (all data)
 
-"-y": Year (default=None) !This is only used for input folder, year is determined using the data in the .csv
+For example: python run.py -a -y 2017 hfet pcc
 
-"-l": linearity analysis" (default=False)
+Is also possible for 3 detectors: python run.py -a -y 2017 hfet pcc hfoc
+
+
+*********************** Best/second best analysis ***********************
+
+example for 2017: python run.py -p -y 2017 best second
+
+** Where best, second should be in this path: csv_input_files/2017/ as best.csv and second.csv
+
+*********************** Ramses(in principle can be used for any other cross calibration) ***********************

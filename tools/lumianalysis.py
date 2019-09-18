@@ -8,9 +8,9 @@ from tools import full_run_utilities as frutils
 
 
 class LAnalysis:
-    def __init__(self, dets_file_labels: list, input_dir: str,
-                 run_linearity_analysis=False, mixed_data=False, run_stddev_test=False, c_years = False,
-                 exclusion = False, all_and_excluded_analysis=False, physics_analysis=False) -> None:
+    def __init__(self, dets_file_labels: list, input_dir: str, lumi_type: str,
+                 run_linearity_analysis=False, mixed_data=False, run_stddev_test=False, c_years=False,
+                 exclusion=False, all_and_excluded_analysis=False) -> None:
 
         n_files = 0
 
@@ -29,7 +29,8 @@ class LAnalysis:
             detcs = []
             for det in dets_file_labels:
                 try:
-                    detcs.append(L(det, input_dir + det + ".csv", mixed_data=mixed_data, full_data_analysis=all_and_excluded_analysis))
+                    detcs.append(L(det, input_dir + det + ".csv", mixed_data=mixed_data,
+                                   full_data_analysis=all_and_excluded_analysis))
 
                 except IOError as errIO:
                     print(errIO)
@@ -45,9 +46,9 @@ class LAnalysis:
                 years = years_and_dir[1]
                 for i in range(2, len(years_and_dir), 1):
                     years = years + ',' + years_and_dir[i]
-                ratios12 = Ratios(detcs[0], detcs[1], year=years, c_years=c_years)
+                ratios12 = Ratios(detcs[0], detcs[1], year=years, c_years=c_years, lumi_type=lumi_type)
             else:
-                ratios12 = Ratios(detcs[0], detcs[1])
+                ratios12 = Ratios(detcs[0], detcs[1], lumi_type=lumi_type)
 
             if run_stddev_test:
                 #test = BNLS(detcs[0], detcs[1], array_by_step = 5)
@@ -96,9 +97,9 @@ class LAnalysis:
                 years = years_and_dir[1]
                 for i in range(2, len(years_and_dir), 1):
                     years = years + ',' + years_and_dir[i]
-                ratios123 = MRatios(detcs[0], detcs[1], detcs[2], year=years, c_years=c_years)
+                ratios123 = MRatios(detcs[0], detcs[1], detcs[2], year=years, c_years=c_years, lumi_type=lumi_type)
             else:
-                ratios123 = MRatios(detcs[0], detcs[1], detcs[2])
+                ratios123 = MRatios(detcs[0], detcs[1], detcs[2], lumi_type=lumi_type)
 
             # Fill plots
             ratios123.plot_nls_ratios_vs_date()

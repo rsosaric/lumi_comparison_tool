@@ -4,7 +4,7 @@ from scipy import interpolate
 import numpy as np
 import tools.plotting_tools as plotting
 import tools.lumi_tools as ltools
-import settings as setts
+import settings_ramses as setts_ram
 
 # Cross calibration to reference detector luminosity units
 
@@ -14,15 +14,17 @@ class RamsesCrossCal:
                      "delivered", "recorded", "avgpu", "source")
     __cols_to_fill_with_calibration = ("delivered", "recorded", "source")
     __ramses_name = 'RAMSES'
-    __output_file_name = setts.ramses_output_file_name
-    __variation_studies_nbins = setts.variation_studies_nbins
-    __to_ref_studies_nbins = setts.to_ref_studies_nbins
-    __soft_ratio_lim = setts.soft_ratio_lim
-    __medium_ratio_lim = setts.medium_ratio_lim
-    __ratio_to_ref_min = setts.ratio_to_ref_min
-    __ratio_to_ref_max = setts.ratio_to_ref_max
-    __min_ratio = setts.ramses_cal_min_ratio
-    __max_ratio = setts.ramses_cal_max_ratio
+    __output_file_name = setts_ram.ramses_output_file_name
+    __variation_studies_nbins = setts_ram.variation_studies_nbins
+    __to_ref_studies_nbins = setts_ram.to_ref_studies_nbins
+    __soft_ratio_lim = setts_ram.soft_ratio_lim
+    __medium_ratio_lim = setts_ram.medium_ratio_lim
+    __ratio_to_ref_min_rec = setts_ram.ratio_to_ref_min_rec
+    __ratio_to_ref_max_rec = setts_ram.ratio_to_ref_max_rec
+    __ratio_to_ref_min_del = setts_ram.ratio_to_ref_min_del
+    __ratio_to_ref_max_del = setts_ram.ratio_to_ref_max_del
+    __min_ratio = setts_ram.ramses_cal_min_ratio
+    __max_ratio = setts_ram.ramses_cal_max_ratio
 
     __comment_line = '#Data tag : cross_calibration , Norm tag: None \n' \
                      '#run:fill,ls,time,beamstatus,E(GeV),delivered(hz/ub),recorded(hz/ub),avgpu,source \n'
@@ -59,7 +61,9 @@ class RamsesCrossCal:
             print("RAMSES channels files: " + str(ramses_raw_files_path))
             print("Taken " + str(ref_detector_file_path) + " as the reference detector")
 
-            if len(self.__channels_data) == 2:
+            self.__number_of_channels = len(self.__channels_data)
+
+            if self.__number_of_channels == 2:
                 mean_ratio_raw_ch, std_ratio_raw_ch = self.get_ratio_between_channels(self.__channels_data[0],
                                                                                       self.__channels_data[1])
 
@@ -76,7 +80,7 @@ class RamsesCrossCal:
                 self.__channels_data_interpolated.append(
                     self.interpolate_to_ref_time(channel_df=channel_data, ref_df=self.__ref_det.data))
 
-            if len(self.__channels_data) == 2:
+            if self.__number_of_channels == 2:
                 mean_ratio_interp_ch, std_ratio_interp_ch = self.get_ratio_between_channels(self.__channels_data_interpolated[0],
                                                                                             self.__channels_data_interpolated[1],
                                                                                             extra_label="_interpolated")
@@ -142,13 +146,17 @@ class RamsesCrossCal:
             # print("Remaining percent of data: " + str((initial_no_nan_size - excl_size)*100./initial_no_nan_size))
         return df
 
-
     def get_calibrated_data(self, mode=0):
         if mode == 0:
             print(
                 "\n Normalization procedure: mean value between channels -> cross calibrate mean-channels detector to reference \n")
-            mean_channels_detector_df = self.get_mean_channel_detector_df()
-            self.normalized_to_ref(mean_channels_detector_df)
+            if self.__number_of_channels == 2:
+                raw_data = self.get_mean_channel_detector_df()
+            elif self.__number_of_channels == 1:
+                raw_data = self.__channels_data_interpolated[0]
+            else:
+                raise AssertionError("Number of channels not implemented")
+            self.normalized_to_ref(raw_data)
         else:
             raise AssertionError("mode not implemented")
 
@@ -168,15 +176,15 @@ class RamsesCrossCal:
 
         ratio_data_ref_del = data['dose'] / ref_data[self.__label_lumi_ref_del]
         ratio_data_ref_del.dropna(inplace=True)
-        ratio_data_ref_del = ratio_data_ref_del[(ratio_data_ref_del < RamsesCrossCal.__ratio_to_ref_max) &
-                                                (ratio_data_ref_del > RamsesCrossCal.__ratio_to_ref_min)]
+        ratio_data_ref_del = ratio_data_ref_del[(ratio_data_ref_del < RamsesCrossCal.__ratio_to_ref_max_del) &
+                                                (ratio_data_ref_del > RamsesCrossCal.__ratio_to_ref_min_del)]
         mean_del = np.mean(ratio_data_ref_del)
         std_del = np.std(ratio_data_ref_del)
 
         ratio_data_ref_rec = data['dose'] / ref_data[self.__label_lumi_ref_rec]
         ratio_data_ref_rec.dropna(inplace=True)
-        ratio_data_ref_rec = ratio_data_ref_rec[(ratio_data_ref_rec < RamsesCrossCal.__ratio_to_ref_max) &
-                                                (ratio_data_ref_rec > RamsesCrossCal.__ratio_to_ref_min)]
+        ratio_data_ref_rec = ratio_data_ref_rec[(ratio_data_ref_rec < RamsesCrossCal.__ratio_to_ref_max_rec) &
+                                                (ratio_data_ref_rec > RamsesCrossCal.__ratio_to_ref_min_rec)]
         mean_rec = np.mean(ratio_data_ref_rec)
         std_rec = np.std(ratio_data_ref_rec)
 
@@ -188,8 +196,8 @@ class RamsesCrossCal:
         plot_ratio_to_ref_rec = plotting.hist_from_array(np.array(ratio_data_ref_rec),
                                                          nbins=RamsesCrossCal.__to_ref_studies_nbins,
                                                          xlabel='uncalibrated detector/reference detector', ylabel='counts',
-                                                         mean=mean_rec/setts.ramses_scale,
-                                                         stdv=std_rec/setts.ramses_scale,
+                                                         mean=mean_rec/setts_ram.ramses_scale,
+                                                         stdv=std_rec/setts_ram.ramses_scale,
                                                          fig_size_shape='sq')
         plotting.save_py_fig_to_file(plot_ratio_to_ref_rec,
                                      self.__output_file_name + 'ratio_to_ref_recorded')
@@ -198,8 +206,8 @@ class RamsesCrossCal:
                                                          nbins=RamsesCrossCal.__to_ref_studies_nbins,
                                                          xlabel='uncalibrated detector/reference detector',
                                                          ylabel='counts',
-                                                         mean=mean_del / setts.ramses_scale,
-                                                         stdv=std_del / setts.ramses_scale,
+                                                         mean=mean_del / setts_ram.ramses_scale,
+                                                         stdv=std_del / setts_ram.ramses_scale,
                                                          fig_size_shape='sq')
         plotting.save_py_fig_to_file(plot_ratio_to_ref_del,
                                      self.__output_file_name + 'ratio_to_ref_delivered')

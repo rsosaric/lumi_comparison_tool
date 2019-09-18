@@ -8,12 +8,14 @@ from tools import lumi_tools as ltools
 from tools import full_run_utilities as frutils
 
 class BestDataAnalysis():
-    def __init__(self, dets_file_labels: list, input_dir: str, c_years: bool = False) -> None:
+    def __init__(self, dets_file_labels: list, input_dir: str, lumi_type: str, c_years: bool = False) -> None:
         print('Executing physics data analysis ...\n')
         mixed_data = True
 
         # dict [int year][str label_ratio] = mean_vale
         self.__ratio_pair_mean_info = {}
+
+        self.__lumi_type = lumi_type
 
         # Class variables
         self.__detector_ratio_label = "Ratios"
@@ -34,7 +36,7 @@ class BestDataAnalysis():
             years = years_and_dir[1]
             for i in range(2, len(years_and_dir), 1):
                 years = years + ',' + years_and_dir[i]
-            ratios12 = Ratios(detcs[0], detcs[1], year=years, c_years=c_years)
+            ratios12 = Ratios(detcs[0], detcs[1], year=years, c_years=c_years, lumi_type=lumi_type)
         else:
             self.__input_dir = input_dir
             if n_files != 2:
@@ -48,7 +50,7 @@ class BestDataAnalysis():
                     print('Please check if default input folder is correctly created: ' + setts.csv_input_base_dir)
                     print('Also check that your .csv file is in the correct year folder: ' + input_dir)
                     raise
-            ratios12 = Ratios(detcs[0], detcs[1])
+            ratios12 = Ratios(detcs[0], detcs[1], lumi_type=lumi_type)
 
         self.__ratios = ratios12
         self.__year = ratios12.year
@@ -157,7 +159,7 @@ class BestDataAnalysis():
             det1 = L(det1_label, base_year_path + '/' + det1_label + ".csv")
             det2 = L(det2_label, base_year_path + '/' + det2_label + ".csv")
 
-            ratio12_temp = Ratios(det1, det2)
+            ratio12_temp = Ratios(det1, det2, lumi_type=self.__lumi_type)
             pair_mean_value = ratio12_temp.nls_ratios_lw_mean
         else:
             try:
@@ -169,7 +171,7 @@ class BestDataAnalysis():
                 det1 = L(det1_label, base_year_path + '/' + det1_label + ".csv")
                 det2 = L(det2_label, base_year_path + '/' + det2_label + ".csv")
 
-                ratio12_temp = Ratios(det1, det2)
+                ratio12_temp = Ratios(det1, det2, lumi_type=self.__lumi_type)
                 pair_mean_value = ratio12_temp.nls_ratios_lw_mean
 
         return pair_mean_value
@@ -215,7 +217,7 @@ class BestDataAnalysis():
 
     def plot_vs_lumi2_by_pair(self):
         vs_lumi2_by_pair = plotting.snsplot_detector_all_and_excluded(self.__ratios.common_data_filtered,
-                                                                       x_data_label=self.__ratios.accumulated_rec_lumi2_label,
+                                                                       x_data_label=self.__ratios.accumulated_lumi2_label,
                                                                        y_data_label=self.__ratios.label_ratio,
                                                                        conditional_label=self.__detector_ratio_label,
                                                                        # conditional_label_extra=self.det2.excluded_label,
@@ -230,7 +232,7 @@ class BestDataAnalysis():
 
     def plot_normalized_vs_lumi2_by_pair(self):
         normalized_vs_lumi2_by_pair = plotting.snsplot_detector_all_and_excluded(self.__ratios.common_data_filtered,
-                                                                       x_data_label=self.__ratios.accumulated_rec_lumi2_label,
+                                                                       x_data_label=self.__ratios.accumulated_lumi2_label,
                                                                        y_data_label=self.__label_ratio_normalized,
                                                                        conditional_label=self.__detector_ratio_label,
                                                                        # conditional_label_extra=self.det2.excluded_label,
