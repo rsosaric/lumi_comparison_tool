@@ -438,8 +438,8 @@ def snsplot_detector_all_and_excluded(data_frame, x_data_label, y_data_label, co
                                          str(data_frame[conditional_label[detector_pair_index]][index_data]))
 
         if nan_found > 0:
-            raise RuntimeWarning("During snsplot_detector_all_and_excluded " + str(nan_found) +
-                                 " nan values have been found in the conditional column")
+            RuntimeWarning("During snsplot_detector_all_and_excluded " + str(nan_found) +
+                           " nan values have been found in the conditional column")
 
         for detector_pair_index in range(0, len(y_data_label)-1):
             data_label = y_data_label[detector_pair_index]

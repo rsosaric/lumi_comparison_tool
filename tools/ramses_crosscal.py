@@ -26,6 +26,14 @@ class RamsesCrossCal:
     __min_ratio = setts_ram.ramses_cal_min_ratio
     __max_ratio = setts_ram.ramses_cal_max_ratio
 
+    # columns for uploading format and link to column name in data frame
+    __upload_result_format = {
+        'run': 'run',
+        'ls': 'ls',
+        'result_avglumi': 'normalized_to_ref_del'
+        # 'result_bxlumi': 'delivered'
+    }
+
     __comment_line = '#Data tag : cross_calibration , Norm tag: None \n' \
                      '#run:fill,ls,time,beamstatus,E(GeV),delivered(hz/ub),recorded(hz/ub),avgpu,source \n'
 
@@ -84,8 +92,10 @@ class RamsesCrossCal:
                 mean_ratio_interp_ch, std_ratio_interp_ch = self.get_ratio_between_channels(self.__channels_data_interpolated[0],
                                                                                             self.__channels_data_interpolated[1],
                                                                                             extra_label="_interpolated")
-
             self.get_calibrated_data(mode=0)
+
+            self.save_calibration_to_upload_format()
+
         else:
             raise AssertionError(
                 "RAMSES cross calibration needs only 2 inputs: ramses_raw_file_path and ref_detector_file_path.")
@@ -259,6 +269,14 @@ class RamsesCrossCal:
         #                              self.__output_file_name + 'ratio_to_ref_norm_csv')
 
         self.__calibrated_data = data
+        ## setting extra columns for calibrated data
+        run_fill_cols = self.__ref_det.data["run:fill"].str.split(":", n=1, expand=True)
+        self.__calibrated_data["run"] = run_fill_cols[0].astype(str).astype(int)
+        self.__calibrated_data["fill"] = run_fill_cols[1].astype(str).astype(int)
+        ls_double = self.__ref_det.data["ls"].str.split(":", n=1, expand=True)
+        self.__calibrated_data["ls"] = ls_double[0].astype(str).astype(int)
+
+
         self.__all_cols_info_calibration = pd.DataFrame()
 
         for col in RamsesCrossCal.__cols_format:
@@ -314,3 +332,15 @@ class RamsesCrossCal:
         plotting.save_py_fig_to_file(plot_ratio_channels_soft,
                                      self.__output_file_name + 'ratio_channels_1_2_soft' + extra_label)
         return mean_med, std_med
+
+    def save_calibration_to_upload_format(self):
+        data_to_upload = pd.DataFrame()
+        labels_dict = RamsesCrossCal.__upload_result_format
+
+        for up_col_name in list(labels_dict):
+            data_to_upload[up_col_name] = self.__calibrated_data[labels_dict[up_col_name]]
+
+        # Save into file
+        to_upload_file = self.__output_dir + "data_to_upload.csv"
+        data_to_upload.to_csv(to_upload_file, index=False, header=False, mode='w')
+
