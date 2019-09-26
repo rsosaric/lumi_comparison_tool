@@ -40,6 +40,10 @@ For minor modification of the analysis (stability, linearity) go first to lumian
 
 use the help: python run.py --help
 
+*********************** using recorded or delivered lumi? ***********************
+
+By default the code uses recorded luminosity from the detectors. If you want to use delivered please use: --lumi_type del
+
 *********************** Analysis of the exclusion of bad zones (runs, fills) ***********************
 For this it are needed two files for each detector: det.csv(selected data) and det_all.csv (all data)
 
@@ -55,3 +59,7 @@ example for 2017: python run.py -p -y 2017 best second
 ** Where best, second should be in this path: csv_input_files/2017/ as best.csv and second.csv
 
 *********************** Ramses(in principle can be used for any other cross calibration) ***********************
+
+For this you need two kind of files: ramses_channels_raw_data.csv (containing time and dose) and csv file from a reference detector: hfet_all.csv
+
+Here one example:  python run.py --ramses_crosscal csv_input_files/ramses_2017_raw/ramses_dataframe_1.csv csv_input_files/ramses_2017_raw/ramses_dataframe_2.csv csv_input_files/2017/hfet_all.csv

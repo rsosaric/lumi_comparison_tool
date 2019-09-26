@@ -340,6 +340,9 @@ class RamsesCrossCal:
         for up_col_name in list(labels_dict):
             data_to_upload[up_col_name] = self.__calibrated_data[labels_dict[up_col_name]]
 
+        data_to_upload.replace([np.inf, -np.inf], np.nan)
+        data_to_upload.dropna(inplace=True)
+
         # Save into file
         to_upload_file = self.__output_dir + "data_to_upload.csv"
         data_to_upload.to_csv(to_upload_file, index=False, header=False, mode='w')
