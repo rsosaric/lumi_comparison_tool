@@ -103,22 +103,19 @@ def check_and_clean_after_merging(pd_df):
 
 
 def get_w_stats(vals_array, w_array, min_val=None, max_val=None):
-    # dropping NaN values:
-    temp_list = []
-    temp_list_w = []
-    if min_val is not None and max_val is not None:
-        for ratio_index in range(0, len(vals_array)):
-            ratio_val = vals_array[ratio_index]
-            if ratio_val >= min_val and ratio_val <= max_val:
-                temp_list.append(ratio_val)
-                temp_list_w.append(w_array[ratio_index])
-    vals_array=np.array(temp_list)
-    w_array=np.array(temp_list_w)
-    w_array = w_array[~np.isnan(w_array)]
-    vals_array = vals_array[~np.isnan(vals_array)]
-    assert len(vals_array) == len(w_array)
+    comb_df = pd.DataFrame()
+    comb_df["values"] = np.array(vals_array)
+    comb_df["weights"] = np.array(w_array)
 
-    w_stats = DescrStatsW(vals_array, weights=w_array)
+    # dropping NaN values:
+    comb_df.dropna(inplace=True)
+
+    # filtering values
+    if min_val is not None and max_val is not None:
+        comb_df = comb_df[(comb_df["values"] >= min_val) &
+                          (comb_df["values"] <= max_val)]
+
+    w_stats = DescrStatsW(comb_df["values"], weights=comb_df["weights"])
 
     return w_stats
 

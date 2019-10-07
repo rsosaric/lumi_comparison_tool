@@ -850,6 +850,10 @@ class DetectorsRatio(L):
         return self.__by_nls_lumi_label
 
     @property
+    def by_nls_lumi_label(self):
+        return self.__by_nls_lumi_label
+
+    @property
     def det1(self):
         return self.__det1
 
@@ -872,6 +876,10 @@ class DetectorsRatio(L):
     @property
     def accumulated_lumi2_label(self):
         return self.__accumulated_lumi2_label
+
+    @property
+    def lumi2_label(self):
+        return self.__label_det2_lumi_to_use
 
     @property
     def year_energy_label(self):

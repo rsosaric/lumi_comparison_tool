@@ -4,6 +4,7 @@ from tools.lumianalysis import LAnalysis as Lumi
 from tools.bestdata import BestDataAnalysis
 from tools.exclusion_mode import exclusion_fill
 from tools.ramses_crosscal import RamsesCrossCal
+from tools.linearityanalysis import LinearityAnalysis
 
 # TODO: develop a proper input option interface here
 p = optparse.OptionParser()
@@ -46,6 +47,8 @@ if options.test:
 if options.physics:
     physics_analysis = BestDataAnalysis(dets_file_labels=args, input_dir=base_input_path, lumi_type=options.lumi_type,
                                         c_years=several_years)
+elif options.lin_an:
+    LinearityAnalysis(dets_file_labels=args, input_dir=base_input_path,lumi_type=options.lumi_type)
 elif options.ramses_crosscal:
     ramses_crosscal_analysis = RamsesCrossCal(ramses_channels_plus_ref=args)
 
@@ -54,7 +57,6 @@ elif options.exclusion:
                    run_stddev_test=options.test, c_years=several_years)
 else:
     lumi_analysis = Lumi(dets_file_labels=args, input_dir=base_input_path, lumi_type=options.lumi_type,
-                         run_linearity_analysis=options.lin_an,
                          mixed_data=options.mixed, run_stddev_test=options.test, c_years=several_years,
                          all_and_excluded_analysis=options.all, exclusion=options.exclusion)
 

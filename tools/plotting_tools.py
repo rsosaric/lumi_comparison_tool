@@ -56,6 +56,9 @@ def hist_from_pandas_frame(data_frame, col_label, nbins, title='', xlabel='', yl
                            weight_label=None,
                            mean=None, stdv=None, err_mean=None, color='#86bf91',
                            label_cms_status=True, energy_year_label='',
+                           mean_float_format="{0:.3f}",
+                           stdv_float_format="{0:.4f}",
+                           mean_err_float_format="{0:.4f}",
                            fig_size_shape='sq'):
     fig_size = get_fig_size(fig_size_shape)
     if x_data_range is None:
@@ -84,20 +87,20 @@ def hist_from_pandas_frame(data_frame, col_label, nbins, title='', xlabel='', yl
     # histogram info
     if stdv:
         if mean:
-            plt.text(setts.pos_leg_1[0], setts.pos_leg_1[1], 'mean: ' + str(float("{0:.3f}".format(mean))), ha='left',
+            plt.text(setts.pos_leg_1[0], setts.pos_leg_1[1], 'mean: ' + str(float(mean_float_format.format(mean))), ha='left',
                      fontsize=setts.leg_font_size, fontweight='light', transform=ratio_hist_ax.transAxes)
-        plt.text(setts.pos_leg_2[0], setts.pos_leg_2[1], r'$\sigma$: ' + str(float("{0:.4f}".format(stdv))), ha='left',
+        plt.text(setts.pos_leg_2[0], setts.pos_leg_2[1], r'$\sigma$: ' + str(float(stdv_float_format.format(stdv))), ha='left',
                  fontsize=setts.leg_font_size, fontweight='light', transform=ratio_hist_ax.transAxes)
         if err_mean:
-            plt.text(setts.pos_leg_3[0], setts.pos_leg_3[1], 'err_mean: ' + str(float("{0:.4f}".format(err_mean))),
+            plt.text(setts.pos_leg_3[0], setts.pos_leg_3[1], 'err_mean: ' + str(float(mean_err_float_format.format(err_mean))),
                      ha='left',
                      fontsize=setts.leg_font_size, fontweight='light', transform=ratio_hist_ax.transAxes)
     elif mean:
-        plt.text(setts.pos_leg_1[0], setts.pos_leg_1[1], 'mean: ' + str(float("{0:.3f}".format(mean))), ha='left',
+        plt.text(setts.pos_leg_1[0], setts.pos_leg_1[1], 'mean: ' + str(float(mean_float_format.format(mean))), ha='left',
                  fontsize=setts.leg_font_size,
                  fontweight='light', transform=ratio_hist_ax.transAxes)
     elif err_mean:
-        plt.text(setts.pos_leg_1[0], setts.pos_leg_1[1], 'err_mean: ' + str(float("{0:.4f}".format(err_mean))),
+        plt.text(setts.pos_leg_1[0], setts.pos_leg_1[1], 'err_mean: ' + str(float(mean_err_float_format.format(err_mean))),
                  ha='left',
                  fontsize=setts.leg_font_size,
                  fontweight='light', transform=ratio_hist_ax.transAxes)
@@ -113,7 +116,10 @@ def hist_from_array(data, nbins, title='', xlabel='', ylabel='', xmin=0.0, xmax=
                     weight=None,
                     mean=None, stdv=None, err_mean=None, color='royalblue',
                     label_cms_status=True, energy_year_label='',
-                    fig_size_shape='sq'):
+                    fig_size_shape='sq',
+                    mean_float_format="{0:.3f}",
+                    stdv_float_format="{0:.4f}",
+                    mean_err_float_format="{0:.4f}"):
     fig_size = get_fig_size(fig_size_shape)
     fig, ax = plt.subplots(figsize=fig_size)
     if weight:
@@ -135,20 +141,20 @@ def hist_from_array(data, nbins, title='', xlabel='', ylabel='', xmin=0.0, xmax=
     # histogram info
     if stdv:
         if mean:
-            plt.text(setts.pos_leg_1[0], setts.pos_leg_1[1], 'mean: ' + str(float("{0:.3f}".format(mean))), ha='left',
+            plt.text(setts.pos_leg_1[0], setts.pos_leg_1[1], 'mean: ' + str(float(mean_float_format.format(mean))), ha='left',
                      fontsize=setts.leg_font_size, fontweight='light', transform=ax.transAxes)
-        plt.text(setts.pos_leg_2[0], setts.pos_leg_2[1], r'$\sigma$: ' + str(float("{0:.4f}".format(stdv))), ha='left',
+        plt.text(setts.pos_leg_2[0], setts.pos_leg_2[1], r'$\sigma$: ' + str(float(stdv_float_format.format(stdv))), ha='left',
                  fontsize=setts.leg_font_size, fontweight='light', transform=ax.transAxes)
         if err_mean:
-            plt.text(setts.pos_leg_3[0], setts.pos_leg_3[1], 'err_mean: ' + str(float("{0:.4f}".format(err_mean))),
+            plt.text(setts.pos_leg_3[0], setts.pos_leg_3[1], 'err_mean: ' + str(float(mean_err_float_format.format(err_mean))),
                      ha='left',
                      fontsize=setts.leg_font_size, fontweight='light', transform=ax.transAxes)
     elif mean:
-        plt.text(setts.pos_leg_1[0], setts.pos_leg_1[1], 'mean: ' + str(float("{0:.3f}".format(mean))), ha='left',
+        plt.text(setts.pos_leg_1[0], setts.pos_leg_1[1], 'mean: ' + str(float(mean_float_format.format(mean))), ha='left',
                  fontsize=setts.leg_font_size,
                  fontweight='light', transform=ax.transAxes)
     elif err_mean:
-        plt.text(setts.pos_leg_1[0], setts.pos_leg_1[1], 'err_mean: ' + str(float("{0:.4f}".format(err_mean))),
+        plt.text(setts.pos_leg_1[0], setts.pos_leg_1[1], 'err_mean: ' + str(float(mean_err_float_format.format(err_mean))),
                  ha='left',
                  fontsize=setts.leg_font_size,
                  fontweight='light', transform=ax.transAxes)
@@ -218,14 +224,15 @@ def scatter_plot_from_pandas_frame(data_frame, x_data_label, y_data_label, title
 #     return data_plot
 def plot_from_fit(x, y, fitted_slope, fitted_slope_err, fitted_intercept, fitted_f,
                   energy_year_label,
-                  xlabel='', ylabel='', y_err=[]):
+                  xlabel='', ylabel='', y_err=[],
+                  markersize=5):
     fig_size_shape = 'sq'
     fig, ax = plt.subplots(figsize=(8, 8))
     if len(y_err) > 0:
         assert len(y_err) == len(x)
-        plt.errorbar(x, y, yerr=y_err, fmt="none")
+        plt.errorbar(x, y, yerr=y_err, markersize=markersize, markerfacecolor='red', fmt='o')
     else:
-        plt.scatter(x, y)
+        plt.scatter(x, y, s=markersize)
     xfine = np.linspace(np.min(x), np.max(x), 100)
     plt.plot(xfine, fitted_f(xfine, a=fitted_slope, b=fitted_intercept), 'r-')
 

@@ -1,7 +1,6 @@
 from tools.luminometer import Luminometer as L
 from tools.detectorsratio import DetectorsRatio as Ratios
 from tools.detectorsratio import MultipleDetectorsRatio as MRatios
-from tools.linearityanalysis import LinearityAnalysis
 import settings as setts
 from tools.by_nls_test import ByNlsTest as BNLS
 from tools import full_run_utilities as frutils
@@ -9,7 +8,7 @@ from tools import full_run_utilities as frutils
 
 class LAnalysis:
     def __init__(self, dets_file_labels: list, input_dir: str, lumi_type: str,
-                 run_linearity_analysis=False, mixed_data=False, run_stddev_test=False, c_years=False,
+                 mixed_data=False, run_stddev_test=False, c_years=False,
                  exclusion=False, all_and_excluded_analysis=False) -> None:
 
         n_files = 0
@@ -81,13 +80,6 @@ class LAnalysis:
                 ratios12.plot_all_and_excluded_by_detc()
 
             ratios12.save_plots()
-
-            if run_linearity_analysis:
-                # Linearity
-                lin_analysis = LinearityAnalysis(ratios12)
-                lin_analysis.plot_hist_sbil()
-                lin_analysis.plot_ratio_vs_all_data_sbil()
-                lin_analysis.save_plots()
 
         elif n_files == 3:
             print("******** 3 detector comparison choose!! ******")

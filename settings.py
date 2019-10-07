@@ -29,7 +29,7 @@ pos_leg_2 = (0.75, 0.90)
 pos_leg_3 = (0.75, 0.85)
 
 # fitting info position in by fill plots
-pos_by_fill_fit_info = (0.52, 0.97)
+pos_by_fill_fit_info = (0.40, 0.96)
 
 # legends position for ratio vs X(time, date, lumi) plots
 leg_vs_plots_pos = 9  # -> 9 for 'center top'
@@ -52,6 +52,7 @@ axis_thicks_case_size = {
 ratio_min = 0.95
 ratio_max = 1.05
 nbins = 300
+nbins_linearity = 150
 
 date_format = "%Y-%m-%d %H:%M"
 
@@ -87,9 +88,18 @@ nls_year = {
 nls_for_lin_year = {
     (2015, 5): 5,
     (2015, 13): 5,
-    (2016, 13): 15,
+    (2016, 13): 5,
     (2017, 13): 15,
     (2018, 13): 15
+}
+
+# limit for the slope values in the linearity analysis: (min slope, max slope) [hz/muB]
+limits_linearity_slopes_year = {
+    (2015, 5): (-0.05, 0.05),
+    (2015, 13): (-0.05, 0.05),
+    (2016, 13): (-0.01, 0.01),
+    (2017, 13): (-0.05, 0.05),
+    (2018, 13): (-0.05, 0.05)
 }
 
 # -*-*-*-*-*-*-*-*-*-*-*- > > > Input, Output < < < -*-*-*-*-*-*-*-*-*-*-*-
