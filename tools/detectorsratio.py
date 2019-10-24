@@ -232,6 +232,7 @@ class DetectorsRatio(L):
             self.__common_data_filtered = pd.merge(self.common_data_filtered, nbx_by_fill_data,
                                                    on='fill', how='left', sort=True)
 
+
     def fill_nls_data(self):
         # compute by Nls ratios
         print ('Computing ' + self.label_ratio + ' by nls ratios ... \n')

@@ -86,8 +86,7 @@ class LinearityAnalysis:
         self.__nbx_label = ratios.det2.nbx_label
         self.__nls_ratio_label = ratios.by_nls_label_ratio
         self.__by_nls_label_ratio_err = ratios.by_nls_label_ratio_err
-        ini_data[self.__sbil_label] = \
-            ini_data[ratios.det2.lumi_rec_label] \
+        ini_data[self.__sbil_label] = ini_data[ratios.det2.lumi_rec_label] \
             * LinearityAnalysis.__linearity_lumi_conversion / ini_data[self.__nbx_label]
         ini_data[self.__nls_sbil_label] = \
             ini_data[ratios.by_nls_lumi_label] \
@@ -351,11 +350,12 @@ class LinearityAnalysis:
     def plot_hist_sbil(self):
         sbil_hist = plotting.hist_from_pandas_frame(data_frame=self.__lin_data,
                                                     col_label=self.__sbil_label,
-                                                    nbins=setts.nbins_linearity,
+                                                    nbins=setts.nbins_sbil_histo,
                                                     xlabel=self.__ratios.det2.name +
                                                            " SBIL [hz/" + r'$\mu$' + "b]",
                                                     ylabel='Counts',
                                                     mean=self.__sbil_mean, stdv=self.__sbil_stdv,
+                                                    xmin=setts.sbil_min, xmax=setts.sbil_max,
                                                     energy_year_label=self.__year_energy_label)
         self.__plt_plots['sbil_hist'] = sbil_hist[0][0].get_figure()
 
