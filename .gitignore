@@ -6,3 +6,4 @@ plots/
 *.png
 *.pyc
 *.txt
+*.DS_Store
