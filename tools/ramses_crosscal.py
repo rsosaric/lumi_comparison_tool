@@ -33,6 +33,12 @@ class RamsesCrossCal:
         'result_avglumi': 'normalized_to_ref_del'
         # 'result_bxlumi': 'delivered'
     }
+    __raw_upload_result_format = {
+        'run': 'run',
+        'ls': 'ls',
+        'result_avglumi': 'dose'
+        # 'result_bxlumi': 'delivered'
+    }
 
     __comment_line = '#Data tag : cross_calibration , Norm tag: None \n' \
                      '#run:fill,ls,time,beamstatus,E(GeV),delivered(hz/ub),recorded(hz/ub),avgpu,source \n'
@@ -47,6 +53,7 @@ class RamsesCrossCal:
             self.__ch_raw_plot_id = 0
             ramses_raw_files_path = []
             self.__channels_data = []
+            self.__time_to_run_ls_dict = {}
 
             ref_detector_file_path = ramses_channels_plus_ref[-1]
             ref_name = ref_detector_file_path.split("/")[-1].replace(".csv", "")
@@ -166,6 +173,7 @@ class RamsesCrossCal:
                 raw_data = self.__channels_data_interpolated[0]
             else:
                 raise AssertionError("Number of channels not implemented")
+
             self.normalized_to_ref(raw_data)
         else:
             raise AssertionError("mode not implemented")
@@ -276,7 +284,6 @@ class RamsesCrossCal:
         ls_double = self.__ref_det.data["ls"].str.split(":", n=1, expand=True)
         self.__calibrated_data["ls"] = ls_double[0].astype(str).astype(int)
 
-
         self.__all_cols_info_calibration = pd.DataFrame()
 
         for col in RamsesCrossCal.__cols_format:
@@ -335,16 +342,28 @@ class RamsesCrossCal:
 
     def save_calibration_to_upload_format(self):
         data_to_upload = pd.DataFrame()
+        raw_data_to_upload = pd.DataFrame()
         labels_dict = RamsesCrossCal.__upload_result_format
+        raw_labels_dict = RamsesCrossCal.__raw_upload_result_format
+
+        self.__calibrated_data.replace([np.inf, -np.inf], np.nan)
+        self.__calibrated_data.dropna(inplace=True)
 
         for up_col_name in list(labels_dict):
             data_to_upload[labels_dict[up_col_name]] = self.__calibrated_data[labels_dict[up_col_name]]
 
-        data_to_upload.replace([np.inf, -np.inf], np.nan)
-        data_to_upload.dropna(inplace=True)
+        for up_col_name in list(raw_labels_dict):
+            raw_data_to_upload[labels_dict[up_col_name]] = self.__calibrated_data[raw_labels_dict[up_col_name]]
 
         # Save into file
         to_upload_file = self.__output_dir + "data_to_upload.csv"
+        to_upload_raw_file = self.__output_dir + "raw_data_to_upload.csv"
 
         data_to_upload.to_csv(to_upload_file, index=False, header=False, mode='w')
+        raw_data_to_upload.to_csv(to_upload_raw_file, index=False, header=False, mode='w')
 
+        affected_runs = np.unique(raw_data_to_upload["run"]).astype(int)
+
+        np.savetxt(self.__output_dir + 'affected_runs.txt', affected_runs, delimiter=',', fmt='%u')
+
+        print(self.__calibrated_data)

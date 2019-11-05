@@ -1,6 +1,7 @@
 # -*-*-*-*-*-*-*-*-*-*-*- > > > General settings < < < -*-*-*-*-*-*-*-*-*-*-*-
-work_status = 'Preliminary'
+# work_status = 'Preliminary'
 # work_status = 'Work in Progress'
+work_status = ""
 experiment = 'CMS'
 csv_input_base_dir = 'csv_input_files/'
 clean_run = False  # if [True]: all needed files will be produced even if they exist
@@ -115,6 +116,7 @@ sbil_max = 10.0
 # -*-*-*-*-*-*-*-*-*-*-*- > > > Input, Output < < < -*-*-*-*-*-*-*-*-*-*-*-
 # plots_formats = ('pdf', 'png')
 plots_formats = 'png'
+# plots_formats = 'pdf'
 dpi_png_plots = 1200
 default_output_dir = 'plots/'
 
