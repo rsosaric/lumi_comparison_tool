@@ -127,7 +127,7 @@ def get_linear_model_from_pd_cols(data: pd.DataFrame, x_col_name: str, y_col_nam
     return sm.OLS(y, x)
 
 
-def convert_detector_name(name : str) -> str:
+def convert_detector_name(name: str) -> str:
     exit_label = name
     if name == "PXL":
         exit_label = "pcc"
@@ -137,6 +137,7 @@ def convert_detector_name(name : str) -> str:
         exit_label = "ram"
 
     return exit_label
+
 
 def keys_exists(element, *keys):
     '''
@@ -154,3 +155,36 @@ def keys_exists(element, *keys):
         except KeyError:
             return False
     return True
+
+
+def get_total_weights(*argv, normalize=True):
+    number_of_weights = len(argv)
+    temp_len = len(argv[0])
+
+    wi_sum = []
+    normalized_weights = []
+    total_weight = []
+
+    for arg in argv:
+        # checking lists sizes
+        if temp_len != len(arg):
+            raise AssertionError("lists don't have the same size")
+        else:
+            wi_sum.append(np.sum(arg))
+
+    assert (len(wi_sum) == number_of_weights)
+
+    for i_w in range(0, number_of_weights):
+        normalized_weights.append(np.true_divide(argv[i_w], wi_sum[i_w]))
+
+    temp_mult = np.multiply(normalized_weights[0], normalized_weights[1])
+    if number_of_weights>2:
+        for i_w in range(2, number_of_weights):
+            temp_mult = np.multiply(temp_mult, normalized_weights[i_w])
+
+    if normalize:
+        sum_normalized_weights_mult = np.sum(temp_mult)
+        temp_mult = np.true_divide(temp_mult, sum_normalized_weights_mult)
+
+    return temp_mult
+

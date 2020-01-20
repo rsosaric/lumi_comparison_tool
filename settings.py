@@ -1,7 +1,7 @@
 # -*-*-*-*-*-*-*-*-*-*-*- > > > General settings < < < -*-*-*-*-*-*-*-*-*-*-*-
 # work_status = 'Preliminary'
-# work_status = 'Work in Progress'
-work_status = ""
+work_status = 'Work in Progress'
+# work_status = ""
 experiment = 'CMS'
 csv_input_base_dir = 'csv_input_files/'
 clean_run = False  # if [True]: all needed files will be produced even if they exist
@@ -112,6 +112,9 @@ limits_linearity_slopes_year = {
 # sbil range for plotting [ub]
 sbil_min = 0.0
 sbil_max = 10.0
+
+# require min number of points to fit
+min_num_data_to_fit = 5
 
 # -*-*-*-*-*-*-*-*-*-*-*- > > > Input, Output < < < -*-*-*-*-*-*-*-*-*-*-*-
 # plots_formats = ('pdf', 'png')

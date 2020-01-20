@@ -59,18 +59,19 @@ def hist_from_pandas_frame(data_frame, col_label, nbins, title='', xlabel='', yl
                            mean_float_format="{0:.3f}",
                            stdv_float_format="{0:.4f}",
                            mean_err_float_format="{0:.4f}",
-                           fig_size_shape='sq'):
+                           fig_size_shape='sq',
+                           normlize=None):
     fig_size = get_fig_size(fig_size_shape)
     if x_data_range is None:
         x_data_range = (xmin, xmax)
     if weight_label:
         ratio_hist = data_frame.hist(bins=nbins, column=col_label, grid=False, weights=data_frame[weight_label],
                                      figsize=fig_size, sharex=True, color=color,
-                                     range=x_data_range)
+                                     range=x_data_range, density=normlize)
     else:
         ratio_hist = data_frame.hist(bins=nbins, column=col_label, grid=False,
                                      figsize=fig_size, sharex=True, color=color,
-                                     range=x_data_range)
+                                     range=x_data_range, density=normlize)
 
     ratio_hist_ax = ratio_hist[0][0]
 
@@ -92,7 +93,7 @@ def hist_from_pandas_frame(data_frame, col_label, nbins, title='', xlabel='', yl
         plt.text(setts.pos_leg_2[0], setts.pos_leg_2[1], r'$\sigma$: ' + str(float(stdv_float_format.format(stdv))), ha='left',
                  fontsize=setts.leg_font_size, fontweight='light', transform=ratio_hist_ax.transAxes)
         if err_mean:
-            plt.text(setts.pos_leg_3[0], setts.pos_leg_3[1], 'err_mean: ' + str(float(mean_err_float_format.format(err_mean))),
+            plt.text(setts.pos_leg_3[0], setts.pos_leg_3[1], 'err: ' + str(float(mean_err_float_format.format(err_mean))),
                      ha='left',
                      fontsize=setts.leg_font_size, fontweight='light', transform=ratio_hist_ax.transAxes)
     elif mean:
@@ -100,7 +101,7 @@ def hist_from_pandas_frame(data_frame, col_label, nbins, title='', xlabel='', yl
                  fontsize=setts.leg_font_size,
                  fontweight='light', transform=ratio_hist_ax.transAxes)
     elif err_mean:
-        plt.text(setts.pos_leg_1[0], setts.pos_leg_1[1], 'err_mean: ' + str(float(mean_err_float_format.format(err_mean))),
+        plt.text(setts.pos_leg_1[0], setts.pos_leg_1[1], 'err: ' + str(float(mean_err_float_format.format(err_mean))),
                  ha='left',
                  fontsize=setts.leg_font_size,
                  fontweight='light', transform=ratio_hist_ax.transAxes)
@@ -146,7 +147,7 @@ def hist_from_array(data, nbins, title='', xlabel='', ylabel='', xmin=0.0, xmax=
         plt.text(setts.pos_leg_2[0], setts.pos_leg_2[1], r'$\sigma$: ' + str(float(stdv_float_format.format(stdv))), ha='left',
                  fontsize=setts.leg_font_size, fontweight='light', transform=ax.transAxes)
         if err_mean:
-            plt.text(setts.pos_leg_3[0], setts.pos_leg_3[1], 'err_mean: ' + str(float(mean_err_float_format.format(err_mean))),
+            plt.text(setts.pos_leg_3[0], setts.pos_leg_3[1], 'err: ' + str(float(mean_err_float_format.format(err_mean))),
                      ha='left',
                      fontsize=setts.leg_font_size, fontweight='light', transform=ax.transAxes)
     elif mean:
@@ -154,7 +155,7 @@ def hist_from_array(data, nbins, title='', xlabel='', ylabel='', xmin=0.0, xmax=
                  fontsize=setts.leg_font_size,
                  fontweight='light', transform=ax.transAxes)
     elif err_mean:
-        plt.text(setts.pos_leg_1[0], setts.pos_leg_1[1], 'err_mean: ' + str(float(mean_err_float_format.format(err_mean))),
+        plt.text(setts.pos_leg_1[0], setts.pos_leg_1[1], 'err: ' + str(float(mean_err_float_format.format(err_mean))),
                  ha='left',
                  fontsize=setts.leg_font_size,
                  fontweight='light', transform=ax.transAxes)

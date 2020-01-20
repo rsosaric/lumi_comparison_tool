@@ -488,6 +488,7 @@ class DetectorsRatio(L):
                                                      # title='by Nls Detectors Ratios Histogram',
                                                      xmin=setts.ratio_min, xmax=setts.ratio_max,
                                                      mean=self.__nls_ratios_mean, stdv=self.__nls_ratios_stdv,
+                                                     err_mean=self.__nls_ratios_lw_mean_error,
                                                      energy_year_label=self.__year_energy_label)
         self.__plt_plots['ratio_nls_hist'] = ratio_hist[0][0].get_figure()
 
@@ -503,6 +504,7 @@ class DetectorsRatio(L):
                                                              xmin=setts.ratio_min, xmax=setts.ratio_max,
                                                              mean=self.__nls_ratios_lw_mean,
                                                              stdv=self.__nls_ratios_lw_stdv,
+                                                             err_mean=self.__nls_ratios_lw_mean_error,
                                                              energy_year_label=self.__year_energy_label,
                                                              weight_label=self.__by_nls_lumi_label)
         self.__plt_plots['nls_ratio_hist_lw'] = ratio_hist_lumi2_w[0][0].get_figure()

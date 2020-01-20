@@ -346,7 +346,7 @@ class RamsesCrossCal:
         labels_dict = RamsesCrossCal.__upload_result_format
         raw_labels_dict = RamsesCrossCal.__raw_upload_result_format
 
-        self.__calibrated_data.replace([np.inf, -np.inf], np.nan)
+        self.__calibrated_data.replace([np.inf, -np.inf], np.nan, inplace=True)
         self.__calibrated_data.dropna(inplace=True)
 
         for up_col_name in list(labels_dict):
@@ -364,6 +364,8 @@ class RamsesCrossCal:
 
         affected_runs = np.unique(raw_data_to_upload["run"]).astype(int)
 
-        np.savetxt(self.__output_dir + 'affected_runs.txt', affected_runs, delimiter=',', fmt='%u')
+        with open(self.__output_dir + 'affected_runs.txt', 'w') as f:
+            for item in affected_runs:
+                f.write(str(item) + ",")
 
         print(self.__calibrated_data)
