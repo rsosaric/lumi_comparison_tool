@@ -45,14 +45,16 @@ class LAnalysis:
                 years = years_and_dir[1]
                 for i in range(2, len(years_and_dir), 1):
                     years = years + ',' + years_and_dir[i]
-                ratios12 = Ratios(detcs[0], detcs[1], year=years, c_years=c_years, lumi_type=lumi_type)
+                ratios12 = Ratios(detcs[0], detcs[1], year=years, c_years=c_years, lumi_type=lumi_type,
+                                  compute_by_run_by_fill=setts.get_by_fill_by_run_plots)
             else:
-                ratios12 = Ratios(detcs[0], detcs[1], lumi_type=lumi_type)
+                ratios12 = Ratios(detcs[0], detcs[1], lumi_type=lumi_type,
+                                  compute_by_run_by_fill=setts.get_by_fill_by_run_plots)
 
             if run_stddev_test:
-                #test = BNLS(detcs[0], detcs[1], array_by_step = 5)
+                # nls vs. Standard deviation test
                 test = BNLS(detcs[0], detcs[1])
-                # Standard deviation test
+
                 test.plot_stddev_vs_nls()
                 test.plot_nls_histograms()
                 test.save_plots()
@@ -68,12 +70,19 @@ class LAnalysis:
             ratios12.plot_nls_ratio_hist_weighted()
 
             # Extra
-            ratios12.plot_nls_ratio_vs_run()
-            ratios12.plot_nls_ratio_vs_fill()
-            ratios12.plot_ratio_vs_run()
-            ratios12.plot_ratio_vs_fill()
-            ratios12.plot_bad_fills()
-            ratios12.plot_bad_runs()
+            if setts.get_extra_plots:
+                ratios12.plot_nls_ratio_vs_run()
+                ratios12.plot_nls_ratio_vs_fill()
+                ratios12.plot_ratio_vs_run()
+                ratios12.plot_ratio_vs_fill()
+                ratios12.plot_bad_fills()
+                ratios12.plot_bad_runs()
+
+            # By fill, by run
+            if setts.get_by_fill_by_run_plots:
+                ratios12.plot_by_fill_ratio_vs_fill()
+                ratios12.plot_by_run_ratio_vs_run()
+                # ratios12.plot_by_run_ratio_vs_run_with_errors()
 
             # all/excluded analysis plots
             if all_and_excluded_analysis:
@@ -100,7 +109,6 @@ class LAnalysis:
             ratios123.plot_ratios_vs_lumi3()
             ratios123.plot_nls_ratios_vs_lumi3()
 
-            # Mine
             # ratios123.plot_nls_ratios_vs_run()
             # ratios123.plot_nls_ratios_vs_fill()
             ratios123.plot_ratios_vs_run()
@@ -111,42 +119,3 @@ class LAnalysis:
 
             # Save plots
             ratios123.save_plots()
-
-# if n_files == 2:
-#
-#     try:
-#         detc1 = L(det1_label, base_input_path + det1_label + ".csv")
-#         detc2 = L(det2_label, base_input_path + det2_label + ".csv")
-#     except IOError as errIO:
-#         print(errIO)
-#         print('Please check if default input folder is correctly created: ' + setts.csv_input_base_dir)
-#         print('Also check that your .csv file is in the correct year folder: ' + base_input_path)
-#         raise
-#
-#     ratios12 = Ratios(detc1, detc2)
-#
-#     # Fill plots
-#     ratios12.plot_nls_ratio_hist()
-#
-#     # Save plots
-#     ratios12.save_plots()
-#
-# elif n_files == 3:
-#     print("******** 3 detector comparison choose!! ******")
-#     det1_label = args[0]
-#     det2_label = args[1]
-#     det3_label = args[2]
-#
-#     try:
-#         detc1 = L(det1_label, base_input_path + det1_label + ".csv")
-#         detc2 = L(det2_label, base_input_path + det2_label + ".csv")
-#         detc3 = L(det3_label, base_input_path + det3_label + ".csv")
-#     except IOError as errIO:
-#         print(errIO)
-#         print('Please check if default input folder is correctly created: ' + setts.csv_input_base_dir)
-#         print('Also check that your .csv file is in the correct year folder: ' + base_input_path)
-#         raise
-#
-#
-# else:
-#     raise IOError('No detectors names entered')

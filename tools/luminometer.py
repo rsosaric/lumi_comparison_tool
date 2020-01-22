@@ -6,7 +6,7 @@ from datetime import datetime
 
 
 class Luminometer:
-    __allowed_detectors = ["PXL", "HFOC", "HFET", "DT", "BCM1F", "PLTZERO", "RAMSES", "BCM1FSI"]
+    __allowed_detectors = ["PXL", "HFOC", "HFET", "DT", "BCM1F", "PLTZERO", "RAMSES", "BCM1FSI", "ZMonitoring"]
     __allowed_detectors_file_labels = ["pcc", "hfoc", "hfet", "dt", "bcm1f", "plt", "ram", "bcm1f_si", "bcm1f_d"]
 
     __lumi_unit = 'fb'
@@ -30,12 +30,23 @@ class Luminometer:
         self.__label_for_excluded = 'excluded'
         self.__label_for_included = 'included'
 
+        rows_to_skip_in_csv = 1
+        rows_to_skip_at_the_end = 5
+
         __csv_file_col_names = ['run:fill', 'ls', 'time', 'beamstatus', 'E(GeV)', self.__lumi_del_label_original_units,
                                 self.__lumi_rec_label_original_units, 'avgpu', self.detector_name_label]
         __not_needed_columns = ['run:fill', 'beamstatus', 'E(GeV)', 'avgpu']
 
         # read data from csv file
-        data_file_pd = pd.read_csv(data_file_name, comment='#', index_col=False, names=__csv_file_col_names)
+        # data_file_pd = pd.read_csv(data_file_name, comment='#', index_col=False, names=__csv_file_col_names)
+        data_file_pd = pd.read_csv(data_file_name, index_col=False, skiprows=rows_to_skip_in_csv,
+                                   skipfooter=rows_to_skip_at_the_end, engine='python')
+
+        data_file_pd.rename(columns={'#run:fill': 'run:fill',
+                                     'delivered(hz/ub)': self.__lumi_del_label_original_units,
+                                     'recorded(hz/ub)': self.__lumi_rec_label_original_units,
+                                     'source': self.detector_name_label}, inplace=True)
+
         run_fill_cols = data_file_pd["run:fill"].str.split(":", n=1, expand=True)
         ls_double = data_file_pd["ls"].str.split(":", n=1, expand=True)
         if split_run_fill_ls_cols:
@@ -43,14 +54,18 @@ class Luminometer:
             data_file_pd["fill"] = run_fill_cols[1].astype(str).astype(int)
             data_file_pd["ls"] = ls_double[0].astype(str).astype(int)
         if remove_extra_cols:
-            data_file_pd.drop(columns=__not_needed_columns, inplace=True)
+            try:
+                data_file_pd.drop(columns=__not_needed_columns, inplace=True)
+            except:
+                print("** Warning! Extra columns not removed!")
 
         year, energy = ltools.get_year_and_energy(run_fill_cols[1][0])
         self.year = year
         self.energy = energy
 
         # Convert lumi to [1/fb], including multiplication by 23.3s
-        self.__lumi_csv_unit = ltools.get_lumi_unit_from_csv(data_file_name)
+        # self.__lumi_csv_unit = ltools.get_lumi_unit_from_csv(data_file_name)
+        self.__lumi_csv_unit = 'hz/ub'
         lumi_convertion_factor = ltools.get_lumi_unit_convertion_factor_to_inv_fb(self.__lumi_csv_unit)
 
         data_file_pd[self.__lumi_del_label] = data_file_pd[
@@ -74,7 +89,16 @@ class Luminometer:
         print('Initialized detector from file: ' + data_file_name)
 
         if full_data_analysis:
-            data_file_pd_all = pd.read_csv(data_file_name.replace(".csv", "_all.csv"), comment='#', index_col=False, names=__csv_file_col_names)
+            # data_file_pd_all = pd.read_csv(data_file_name.replace(".csv", "_all.csv"), comment='#', index_col=False, names=__csv_file_col_names)
+
+            data_file_pd_all = pd.read_csv(data_file_name.replace(".csv", "_all.csv"), index_col=False,
+                                           skiprows=rows_to_skip_in_csv, skipfooter=rows_to_skip_at_the_end,
+                                           engine='python')
+            data_file_pd_all.rename(columns={'#run:fill': 'run:fill',
+                                             'delivered(hz/ub)': self.__lumi_del_label_original_units,
+                                             'recorded(hz/ub)': self.__lumi_rec_label_original_units,
+                                             'source': self.detector_name_label}, inplace=True)
+
             run_fill_cols_all = data_file_pd_all["run:fill"].str.split(":", n=1, expand=True)
             ls_double_all = data_file_pd_all["ls"].str.split(":", n=1, expand=True)
             data_file_pd_all["run"] = run_fill_cols_all[0].astype(str).astype(int)

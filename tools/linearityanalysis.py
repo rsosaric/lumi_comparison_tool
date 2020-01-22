@@ -17,7 +17,7 @@ def lin_func(x, a, b):
 class LinearityAnalysis:
     __conversion_fb_to_ub = 1000000000.0 / setts.xLS
     __linearity_lumi_conversion = __conversion_fb_to_ub
-    
+
     def __init__(self, dets_file_labels: list, input_dir: str, lumi_type: str) -> None:
 
         self.__label_col_fill = "fill"
@@ -65,7 +65,7 @@ class LinearityAnalysis:
             self.__min_allowed_slope = None
             self.__max_allowed_slope = None
 
-        ratios = ratios12 = Ratios(detcs[0], detcs[1], lumi_type=lumi_type, nls=self.__nls)
+        ratios = Ratios(detcs[0], detcs[1], lumi_type=lumi_type, nls=self.__nls)
 
         assert (self.__nls == ratios.nls)
 

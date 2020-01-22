@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+
 plt.rcParams.update({'figure.max_open_warning': 0})
 import settings as setts
 import tools.lumi_tools as ltools
@@ -16,9 +17,9 @@ __year_energy_label_pos_sq = setts.year_energy_label_pos_sq
 __year_energy_label_pos_nsq = setts.year_energy_label_pos_nsq
 
 
-def save_py_fig_to_file(fig, output_name,plot_dpi=None):
+def save_py_fig_to_file(fig, output_name, plot_dpi=None):
     if plot_dpi is not None:
-        fig.savefig(output_name,dpi=plot_dpi)
+        fig.savefig(output_name, dpi=plot_dpi)
     else:
         fig.savefig(output_name)
     plt.close(fig)
@@ -32,7 +33,7 @@ def save_plots(names_and_plots, output_name):
         if type(setts.plots_formats) == tuple or type(setts.plots_formats) == list:
             for plot_format in setts.plots_formats:
                 plot_full_path = output_name + plot_name + '.' + plot_format
-                if plot_format=="png":
+                if plot_format == "png":
                     save_py_fig_to_file(plot_object, plot_full_path, plot_dpi=setts.dpi_png_plots)
                 else:
                     save_py_fig_to_file(plot_object, plot_full_path)
@@ -47,7 +48,6 @@ def save_plots(names_and_plots, output_name):
             print('saved plot: ' + plot_full_path)
         else:
             raise IOError("No format information for saving plots have been provided! check settings.py")
-
 
 
 # TODO: set histo range for same binning
@@ -76,8 +76,10 @@ def hist_from_pandas_frame(data_frame, col_label, nbins, title='', xlabel='', yl
     ratio_hist_ax = ratio_hist[0][0]
 
     ratio_hist_ax.set_title(title)
-    ratio_hist_ax.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size[fig_size_shape])
-    ratio_hist_ax.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size[fig_size_shape])
+    ratio_hist_ax.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight,
+                             size=setts.axis_case_size[fig_size_shape])
+    ratio_hist_ax.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight,
+                             size=setts.axis_case_size[fig_size_shape])
 
     plt.xticks(fontsize=setts.axis_thicks_case_size[fig_size_shape])
     plt.yticks(fontsize=setts.axis_thicks_case_size[fig_size_shape])
@@ -88,16 +90,20 @@ def hist_from_pandas_frame(data_frame, col_label, nbins, title='', xlabel='', yl
     # histogram info
     if stdv:
         if mean:
-            plt.text(setts.pos_leg_1[0], setts.pos_leg_1[1], 'mean: ' + str(float(mean_float_format.format(mean))), ha='left',
+            plt.text(setts.pos_leg_1[0], setts.pos_leg_1[1], 'mean: ' + str(float(mean_float_format.format(mean))),
+                     ha='left',
                      fontsize=setts.leg_font_size, fontweight='light', transform=ratio_hist_ax.transAxes)
-        plt.text(setts.pos_leg_2[0], setts.pos_leg_2[1], r'$\sigma$: ' + str(float(stdv_float_format.format(stdv))), ha='left',
+        plt.text(setts.pos_leg_2[0], setts.pos_leg_2[1], r'$\sigma$: ' + str(float(stdv_float_format.format(stdv))),
+                 ha='left',
                  fontsize=setts.leg_font_size, fontweight='light', transform=ratio_hist_ax.transAxes)
         if err_mean:
-            plt.text(setts.pos_leg_3[0], setts.pos_leg_3[1], 'err: ' + str(float(mean_err_float_format.format(err_mean))),
+            plt.text(setts.pos_leg_3[0], setts.pos_leg_3[1],
+                     'err: ' + str(float(mean_err_float_format.format(err_mean))),
                      ha='left',
                      fontsize=setts.leg_font_size, fontweight='light', transform=ratio_hist_ax.transAxes)
     elif mean:
-        plt.text(setts.pos_leg_1[0], setts.pos_leg_1[1], 'mean: ' + str(float(mean_float_format.format(mean))), ha='left',
+        plt.text(setts.pos_leg_1[0], setts.pos_leg_1[1], 'mean: ' + str(float(mean_float_format.format(mean))),
+                 ha='left',
                  fontsize=setts.leg_font_size,
                  fontweight='light', transform=ratio_hist_ax.transAxes)
     elif err_mean:
@@ -131,8 +137,10 @@ def hist_from_array(data, nbins, title='', xlabel='', ylabel='', xmin=0.0, xmax=
                  color=color)
 
     ax.set_title(title)
-    ax.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size[fig_size_shape])
-    ax.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size[fig_size_shape])
+    ax.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight,
+                  size=setts.axis_case_size[fig_size_shape])
+    ax.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight,
+                  size=setts.axis_case_size[fig_size_shape])
     plt.xticks(fontsize=setts.axis_thicks_case_size[fig_size_shape])
     plt.yticks(fontsize=setts.axis_thicks_case_size[fig_size_shape])
 
@@ -142,16 +150,20 @@ def hist_from_array(data, nbins, title='', xlabel='', ylabel='', xmin=0.0, xmax=
     # histogram info
     if stdv:
         if mean:
-            plt.text(setts.pos_leg_1[0], setts.pos_leg_1[1], 'mean: ' + str(float(mean_float_format.format(mean))), ha='left',
+            plt.text(setts.pos_leg_1[0], setts.pos_leg_1[1], 'mean: ' + str(float(mean_float_format.format(mean))),
+                     ha='left',
                      fontsize=setts.leg_font_size, fontweight='light', transform=ax.transAxes)
-        plt.text(setts.pos_leg_2[0], setts.pos_leg_2[1], r'$\sigma$: ' + str(float(stdv_float_format.format(stdv))), ha='left',
+        plt.text(setts.pos_leg_2[0], setts.pos_leg_2[1], r'$\sigma$: ' + str(float(stdv_float_format.format(stdv))),
+                 ha='left',
                  fontsize=setts.leg_font_size, fontweight='light', transform=ax.transAxes)
         if err_mean:
-            plt.text(setts.pos_leg_3[0], setts.pos_leg_3[1], 'err: ' + str(float(mean_err_float_format.format(err_mean))),
+            plt.text(setts.pos_leg_3[0], setts.pos_leg_3[1],
+                     'err: ' + str(float(mean_err_float_format.format(err_mean))),
                      ha='left',
                      fontsize=setts.leg_font_size, fontweight='light', transform=ax.transAxes)
     elif mean:
-        plt.text(setts.pos_leg_1[0], setts.pos_leg_1[1], 'mean: ' + str(float(mean_float_format.format(mean))), ha='left',
+        plt.text(setts.pos_leg_1[0], setts.pos_leg_1[1], 'mean: ' + str(float(mean_float_format.format(mean))),
+                 ha='left',
                  fontsize=setts.leg_font_size,
                  fontweight='light', transform=ax.transAxes)
     elif err_mean:
@@ -194,8 +206,10 @@ def scatter_plot_from_pandas_frame(data_frame, x_data_label, y_data_label, title
         plot = data_frame.plot(x=x_data_label, y=y_data_label, style=plot_style, figsize=fig_size,
                                markersize=marker_size, legend=None, ax=ax)
     plot.set_title(title)
-    plot.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size[fig_size_shape])
-    plot.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size[fig_size_shape])
+    plot.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight,
+                    size=setts.axis_case_size[fig_size_shape])
+    plot.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight,
+                    size=setts.axis_case_size[fig_size_shape])
 
     plt.xticks(fontsize=setts.axis_thicks_case_size[fig_size_shape])
     plt.yticks(fontsize=setts.axis_thicks_case_size[fig_size_shape])
@@ -237,8 +251,10 @@ def plot_from_fit(x, y, fitted_slope, fitted_slope_err, fitted_intercept, fitted
     xfine = np.linspace(np.min(x), np.max(x), 100)
     plt.plot(xfine, fitted_f(xfine, a=fitted_slope, b=fitted_intercept), 'r-')
 
-    ax.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size[fig_size_shape])
-    ax.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size[fig_size_shape])
+    ax.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight,
+                  size=setts.axis_case_size[fig_size_shape])
+    ax.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight,
+                  size=setts.axis_case_size[fig_size_shape])
 
     plt.xticks(fontsize=setts.axis_thicks_case_size[fig_size_shape])
     plt.yticks(fontsize=setts.axis_thicks_case_size[fig_size_shape])
@@ -252,6 +268,43 @@ def plot_from_fit(x, y, fitted_slope, fitted_slope_err, fitted_intercept, fitted
              r' $\pm$ ' + str(float("{0:.4f}".format(fitted_slope_err))),
              ha='left',
              fontsize=setts.leg_font_size, fontweight='bold', transform=ax.transAxes)
+
+    return fig
+
+
+def plot_scatter_and_errors(data_frame, y_data_label, x_data_label, err_y_data_label,
+                            energy_year_label,
+                            xlabel='', ylabel='',
+                            markersize=5,
+                            ymin=None, ymax=None):
+    x = data_frame[x_data_label]
+    y = data_frame[y_data_label]
+    y_err = data_frame[err_y_data_label]
+
+    fig_size_shape = 'nsq'
+    fig_size = get_fig_size(fig_size_shape)
+    fig, ax = plt.subplots(figsize=fig_size)
+
+    if len(y_err) > 0:
+        assert len(y_err) == len(x)
+        plt.errorbar(x, y, yerr=y_err, markersize=markersize, markerfacecolor='red', fmt='o')
+    else:
+        plt.scatter(x, y, s=markersize)
+
+    if ymin is not None:
+        if ymax is not None:
+            plt.ylim(ymin, ymax)
+
+    ax.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight,
+                  size=setts.axis_case_size[fig_size_shape])
+    ax.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight,
+                  size=setts.axis_case_size[fig_size_shape])
+
+    plt.xticks(fontsize=setts.axis_thicks_case_size[fig_size_shape])
+    plt.yticks(fontsize=setts.axis_thicks_case_size[fig_size_shape])
+
+    add_extra_text(ax, fig_size_shape, energy_year_label=energy_year_label,
+                   experiment=setts.experiment, work_status=setts.work_status)
 
     return fig
 
@@ -277,12 +330,13 @@ def hist_list_from_pandas_frame(list_nls_data, nbins, title='', xlabel='', ylabe
     for hist_name in list(list_nls_data):
         if all_nls_weights.empty:
             list_nls_data[hist_name].hist(bins=nbins, alpha=1, ax=ax, label=hist_name, grid=False, figsize=fig_size,
-                                            range=x_data_range, histtype=histtype, stacked=stacked, fill=fill)
+                                          range=x_data_range, histtype=histtype, stacked=stacked, fill=fill)
 
         else:
-            list_nls_data[hist_name].dropna().hist(bins=nbins, alpha=1, ax=ax, label=hist_name, grid=False, figsize=fig_size,
-                                                    range=x_data_range, histtype=histtype, stacked=stacked, fill=fill,
-                                                    weights=all_nls_weights[hist_name].dropna())
+            list_nls_data[hist_name].dropna().hist(bins=nbins, alpha=1, ax=ax, label=hist_name, grid=False,
+                                                   figsize=fig_size,
+                                                   range=x_data_range, histtype=histtype, stacked=stacked, fill=fill,
+                                                   weights=all_nls_weights[hist_name].dropna())
 
     if legend_labels is None:
         print("No legend set")
@@ -293,11 +347,13 @@ def hist_list_from_pandas_frame(list_nls_data, nbins, title='', xlabel='', ylabe
         else:
             legend_labels_list = legend_labels
         ax.legend(legend_labels_list, ncol=1,
-                    markerscale=leg_marker_sc, fontsize=leg_text_s, loc=legend_position)
+                  markerscale=leg_marker_sc, fontsize=leg_text_s, loc=legend_position)
 
     ax.set_title(title)
-    ax.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size[fig_size_shape])
-    ax.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size[fig_size_shape])
+    ax.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight,
+                  size=setts.axis_case_size[fig_size_shape])
+    ax.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight,
+                  size=setts.axis_case_size[fig_size_shape])
 
     plt.xticks(fontsize=setts.axis_thicks_case_size[fig_size_shape])
     plt.yticks(fontsize=setts.axis_thicks_case_size[fig_size_shape])
@@ -313,9 +369,9 @@ def hist_list_from_pandas_frame(list_nls_data, nbins, title='', xlabel='', ylabe
 
 
 def plot_bad_fill_info(data_frame, x_data_label, y_data_label, z_data_label, title='', xlabel='', ylabel='',
-                                   ymin=0.0, ymax=0.0, label_cms_status=True,
-                                   energy_year_label='', mean=None, stdv=None,
-                                   fig_size_shape='nsq', ratio_acceptance=0.01, filePath='', txtfileName="NoName"):
+                       ymin=0.0, ymax=0.0, label_cms_status=True,
+                       energy_year_label='', mean=None, stdv=None,
+                       fig_size_shape='nsq', ratio_acceptance=0.01, filePath='', txtfileName="NoName"):
     fig_size = get_fig_size(fig_size_shape)
     fig, ax = plt.subplots(figsize=fig_size)
 
@@ -325,16 +381,16 @@ def plot_bad_fill_info(data_frame, x_data_label, y_data_label, z_data_label, tit
 
     data = pd.DataFrame()
 
-    for i in range(0,len(x_data_list), 1):
+    for i in range(0, len(x_data_list), 1):
         if str(x_data_list[i]) in data.keys():
-            data[str(x_data_list[i])][0] = data[str(x_data_list[i])][0] + y_data_list[i]*z_data_list[i]
+            data[str(x_data_list[i])][0] = data[str(x_data_list[i])][0] + y_data_list[i] * z_data_list[i]
             data[str(x_data_list[i])][1] = data[str(x_data_list[i])][1] + z_data_list[i]
         else:
-            data[str(x_data_list[i])] = (y_data_list[i]*z_data_list[i], z_data_list[i])
+            data[str(x_data_list[i])] = (y_data_list[i] * z_data_list[i], z_data_list[i])
 
     total_lumi = 0
     for i in list(data):
-        data[i][0] = data[i][0]/data[i][1]
+        data[i][0] = data[i][0] / data[i][1]
         total_lumi = total_lumi + data[i][1]
 
     x_data_reduced = []
@@ -347,20 +403,21 @@ def plot_bad_fill_info(data_frame, x_data_label, y_data_label, z_data_label, tit
         x_data_reduced.append(int(i))
         y_data_mean.append(data[i][0])
         z_data_acum.append(data[i][1])
-        ey.append(1000*data[i][1]/total_lumi)
-        colors.append(100*data[i][1]/total_lumi)
+        ey.append(1000 * data[i][1] / total_lumi)
+        colors.append(100 * data[i][1] / total_lumi)
 
-    lumi_porcent = max(colors)*setts.lumisensitivity
-    limratioUP = mean + stdv*ratio_acceptance
-    limratioDOWN = mean - stdv*ratio_acceptance
+    lumi_porcent = max(colors) * setts.lumisensitivity
+    limratioUP = mean + stdv * ratio_acceptance
+    limratioDOWN = mean - stdv * ratio_acceptance
 
     bad_fills = []
     bad_fillsPos = []
 
-    for i in range(0,len(x_data_reduced), 1):
-        if (y_data_mean[i] > limratioUP or y_data_mean[i] < limratioDOWN) and (100*z_data_acum[i]/total_lumi) > lumi_porcent:
+    for i in range(0, len(x_data_reduced), 1):
+        if (y_data_mean[i] > limratioUP or y_data_mean[i] < limratioDOWN) and (
+                100 * z_data_acum[i] / total_lumi) > lumi_porcent:
             bad_fills.append(x_data_reduced[i])
-            bad_fillsPos.append((x_data_reduced[i],y_data_mean[i]))
+            bad_fillsPos.append((x_data_reduced[i], y_data_mean[i]))
 
     print(x_data_label + "s to analize", bad_fills)
     ##write file:
@@ -401,11 +458,12 @@ def plot_bad_fill_info(data_frame, x_data_label, y_data_label, z_data_label, tit
 
 
 ## All/excluded plots
-def snsplot_detector_all_and_excluded(data_frame, x_data_label, y_data_label, conditional_label, title='', xlabel='', ylabel='',
-                                      ymin=None, ymax=None, xmin=None, xmax=None, xlabel_rotation = None,
-                                      label_cms_status=True, energy_year_label='', fig_size_shape='nsq', use_pts_white_border=False,
+def snsplot_detector_all_and_excluded(data_frame, x_data_label, y_data_label, conditional_label, title='', xlabel='',
+                                      ylabel='',
+                                      ymin=None, ymax=None, xmin=None, xmax=None, xlabel_rotation=None,
+                                      label_cms_status=True, energy_year_label='', fig_size_shape='nsq',
+                                      use_pts_white_border=False,
                                       marker_size=5, leg_col=None):
-
     fig_size = get_fig_size(fig_size_shape)
     fig, ax = plt.subplots(figsize=fig_size)
 
@@ -434,37 +492,44 @@ def snsplot_detector_all_and_excluded(data_frame, x_data_label, y_data_label, co
             for detector_pair_index in range(0, len(y_data_label)):
                 if data_frame[conditional_label[detector_pair_index]][index_data] == "included":
                     detcs__data[y_data_label[detector_pair_index]]["x"].append(data_frame[x_data_label][index_data])
-                    detcs__data[y_data_label[detector_pair_index]]["y"].append(data_frame[y_data_label[detector_pair_index]][index_data])
+                    detcs__data[y_data_label[detector_pair_index]]["y"].append(
+                        data_frame[y_data_label[detector_pair_index]][index_data])
                 elif data_frame[conditional_label[detector_pair_index]][index_data] == "excluded":
-                    detcs_excld_data[y_data_label[detector_pair_index]]["x"].append(data_frame[x_data_label][index_data])
-                    detcs_excld_data[y_data_label[detector_pair_index]]["y"].append(data_frame[y_data_label[detector_pair_index]][index_data])
+                    detcs_excld_data[y_data_label[detector_pair_index]]["x"].append(
+                        data_frame[x_data_label][index_data])
+                    detcs_excld_data[y_data_label[detector_pair_index]]["y"].append(
+                        data_frame[y_data_label[detector_pair_index]][index_data])
                 elif str(data_frame[conditional_label[detector_pair_index]][index_data]) == 'nan':
                     nan_found += 1
                     continue
                 else:
-                    raise AssertionError("something wrong!: data_frame[conditional_label[detector_pair_index]][index_data] = " +
-                                         str(data_frame[conditional_label[detector_pair_index]][index_data]))
+                    raise AssertionError(
+                        "something wrong!: data_frame[conditional_label[detector_pair_index]][index_data] = " +
+                        str(data_frame[conditional_label[detector_pair_index]][index_data]))
 
         if nan_found > 0:
             RuntimeWarning("During snsplot_detector_all_and_excluded " + str(nan_found) +
                            " nan values have been found in the conditional column")
 
-        for detector_pair_index in range(0, len(y_data_label)-1):
+        for detector_pair_index in range(0, len(y_data_label) - 1):
             data_label = y_data_label[detector_pair_index]
             label_in_plot = data_label.split("_")[-1]
-            sns.scatterplot(y=detcs__data[data_label]["y"], x=detcs__data[data_label]["x"], color=colors[detector_pair_index], ax=ax, s=marker_size, linewidth=0,
+            sns.scatterplot(y=detcs__data[data_label]["y"], x=detcs__data[data_label]["x"],
+                            color=colors[detector_pair_index], ax=ax, s=marker_size, linewidth=0,
                             marker=markers[detector_pair_index], label=label_in_plot)
-            sns.scatterplot(y=detcs_excld_data[data_label]["y"], x=detcs_excld_data[data_label]["x"], color=excluded_color,
-                            ax=ax, s=marker_size, linewidth=0, marker=markers[detector_pair_index], label=label_in_plot + " excl.")
+            sns.scatterplot(y=detcs_excld_data[data_label]["y"], x=detcs_excld_data[data_label]["x"],
+                            color=excluded_color,
+                            ax=ax, s=marker_size, linewidth=0, marker=markers[detector_pair_index],
+                            label=label_in_plot + " excl.")
         plt.legend(ncol=2)
     else:
         if not use_pts_white_border:
-            sns.scatterplot(x=x_data_label, y=y_data_label, hue = conditional_label, data = data_frame,
-                                   ax=ax, s=marker_size, linewidth=0)
+            sns.scatterplot(x=x_data_label, y=y_data_label, hue=conditional_label, data=data_frame,
+                            ax=ax, s=marker_size, linewidth=0)
         else:
-            sns.scatterplot(x=x_data_label, y=y_data_label, hue=conditional_label, style=conditional_style, data=data_frame,
-                                   ax=ax, s=marker_size)
-
+            sns.scatterplot(x=x_data_label, y=y_data_label, hue=conditional_label, style=conditional_style,
+                            data=data_frame,
+                            ax=ax, s=marker_size)
 
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
@@ -482,8 +547,10 @@ def snsplot_detector_all_and_excluded(data_frame, x_data_label, y_data_label, co
                        experiment=setts.experiment, work_status=setts.work_status)
 
     ax.set_title(title)
-    ax.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size[fig_size_shape])
-    ax.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size[fig_size_shape])
+    ax.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight,
+                  size=setts.axis_case_size[fig_size_shape])
+    ax.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight,
+                  size=setts.axis_case_size[fig_size_shape])
 
     plt.xticks(fontsize=setts.axis_thicks_case_size[fig_size_shape])
     plt.yticks(fontsize=setts.axis_thicks_case_size[fig_size_shape])
@@ -498,16 +565,13 @@ def snsplot_detector_all_and_excluded(data_frame, x_data_label, y_data_label, co
     if leg_col is not None:
         plt.legend(ncol=leg_col)
 
-
     return fig
-
 
 
 def snsplot_hist_all_and_excluded(data_frame, x_data_label, conditional_label, bins, xmin, xmax,
                                   title='', xlabel='', ylabel='',
                                   ymin=None, ymax=None,
                                   label_cms_status=True, energy_year_label='', fig_size_shape='sq'):
-
     fig_size = get_fig_size(fig_size_shape)
     fig, ax = plt.subplots(figsize=fig_size)
 
@@ -541,8 +605,10 @@ def snsplot_hist_all_and_excluded(data_frame, x_data_label, conditional_label, b
                        experiment=setts.experiment, work_status=setts.work_status)
 
     ax.set_title(title)
-    ax.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size[fig_size_shape])
-    ax.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight, size=setts.axis_case_size[fig_size_shape])
+    ax.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight,
+                  size=setts.axis_case_size[fig_size_shape])
+    ax.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight,
+                  size=setts.axis_case_size[fig_size_shape])
 
     plt.xticks(fontsize=setts.axis_thicks_case_size[fig_size_shape])
     plt.yticks(fontsize=setts.axis_thicks_case_size[fig_size_shape])

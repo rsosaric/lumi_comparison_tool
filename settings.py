@@ -5,6 +5,8 @@ work_status = 'Work in Progress'
 experiment = 'CMS'
 csv_input_base_dir = 'csv_input_files/'
 clean_run = False  # if [True]: all needed files will be produced even if they exist
+get_extra_plots = False
+get_by_fill_by_run_plots = False
 # -*-*-*-*-*-*-*-*-*-*-*- > > > Plotting settings < < < -*-*-*-*-*-*-*-*-*-*-*-
 
 cms_label_pos_sq = (0.008, 1.02)
@@ -54,6 +56,11 @@ axis_thicks_case_size = {
 # ratio_max = 1.40
 ratio_min = 0.95
 ratio_max = 1.05
+# ratio_min = 0.70
+# ratio_max = 1.30
+ratio_interval_reduction_factor = 0.10
+ratio_min_reduced = ratio_min + ratio_interval_reduction_factor
+ratio_max_reduced = ratio_max - ratio_interval_reduction_factor
 nbins = 300
 nbins_linearity = 150
 nbins_sbil_histo = 50
@@ -136,6 +143,11 @@ lumisensitivity = 0.05                  # Multiplicity of the total luminosity p
 
 # -*-*-*-*-*-*-*-*-*-*-*- > > > all/excluded < < < -*-*-*-*-*-*-*-*-*-*-*-
 by_nls_exclusion_threshold = 50.  # percent of excluded points in the nls interval
+
+
+# -*-*-*-*-*-*-*-*-*-*-*- > > > tests options < < < -*-*-*-*-*-*-*-*-*-*-*-
+nls_list_to_test = (5, 10, 15, 50, 100, 150, 200, 400)
+# nls_list_to_test = (5, 10, 15, 50, 70, 100, 150)
 
 # -*-*-*-*-*-*-*-*-*-*-*- > > > Other Settings and helpers < < < -*-*-*-*-*-*-*-*-*-*-*-
 class bcolors:

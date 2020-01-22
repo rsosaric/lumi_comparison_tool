@@ -54,6 +54,7 @@ def get_lumi_unit_from_csv(file_path):
     header_line_array = header_line.split(',')
     if header_line_array[0] == '#run:fill':
         lumi_header = header_line_array[5]
+        print(lumi_header.split('(')[1].split(')')[0])
         return lumi_header.split('(')[1].split(')')[0]
     else:
         raise AssertionError('header line not found!')

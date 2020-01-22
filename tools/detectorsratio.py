@@ -9,8 +9,9 @@ import tools.plotting_tools as plotting
 class DetectorsRatio(L):
 
     def __init__(self, det1: L, det2: L, year: str = None, energy: str = None,
-                 fill_nls_data: bool = True, fill_stats=True, load_all_data = False, c_years = False,
-                 nls=None, only_stats: bool = False, lumi_type='rec') -> None:
+                 fill_nls_data: bool = True, fill_stats=True, c_years=False,
+                 nls=None, only_stats: bool = False, lumi_type: str = 'rec',
+                 compute_by_run_by_fill: bool = False) -> None:
 
         self.__detcs = (det1, det2)
         self.__only_stats = only_stats
@@ -65,7 +66,8 @@ class DetectorsRatio(L):
 
         # column labels for dataframes
         if c_years:
-            self.output_dir = setts.default_output_dir + year.replace(',', '-') + '/' + det1.name + '-' + det2.name + '/'
+            self.output_dir = setts.default_output_dir + year.replace(',',
+                                                                      '-') + '/' + det1.name + '-' + det2.name + '/'
             if (year == "2016,2017,2018"):
                 year_label = "full RunII"
             else:
@@ -84,6 +86,19 @@ class DetectorsRatio(L):
         self.__by_nls_lumi_label2 = self.__label_det2_lumi_to_use + '_by_' + str(self.__nls) + 'nls'
         self.__by_nls_label_ratio_err = self.__by_nls_label_ratio + '_err'
         self.__by_nls_lumi_label = 'by_' + str(self.__nls) + 'nls_lumi_' + self.__label_ratio
+
+        if compute_by_run_by_fill:
+            self.__by_run_lumi_label1 = self.__label_det1_lumi_to_use + '_by_run'
+            self.__by_run_lumi_label2 = self.__label_det2_lumi_to_use + '_by_run'
+            self.__by_fill_lumi_label1 = self.__label_det1_lumi_to_use + '_by_fill'
+            self.__by_fill_lumi_label2 = self.__label_det2_lumi_to_use + '_by_fill'
+            self.__by_run_label_ratio = 'by_run_' + self.__label_ratio
+            self.__by_fill_label_ratio = 'by_fill_' + self.__label_ratio
+            self.__by_run_label_ratio_err = self.__by_run_label_ratio + '_err'
+            self.__by_fill_label_ratio_err = self.__by_fill_label_ratio + '_err'
+            self.__by_run_lumi_label = 'by_run_lumi_' + self.__label_ratio
+            self.__by_fill_lumi_label = 'by_fill_lumi_' + self.__label_ratio
+
         self.__accumulated_lumi1_label = self.__label_det1_lumi_to_use + '_accumulated'
         self.__accumulated_lumi2_label = self.__label_det2_lumi_to_use + '_accumulated'
         self.__by_nls_accumulated_lumi1_label = self.__by_nls_lumi_label1 + '_accumulated'
@@ -91,20 +106,22 @@ class DetectorsRatio(L):
         self.__ratio_excluded_label = 'Exclusion info (' + self.__label_ratio + ')'
 
         # contains only: fully included, partially excluded, partially included
-        self.__by_nls_exclusion_info_label = 'Exclusion info (' + self.__label_ratio + ')(' +  str(self.__nls) + ' nls)'
+        self.__by_nls_exclusion_info_label = 'Exclusion info (' + self.__label_ratio + ')(' + str(self.__nls) + ' nls)'
 
         # contains only: included, excluded
         self.__by_nls_binary_exclusion_info_label = 'by nls exclusion (' + self.__label_ratio + ')'
 
         # contains percent of exclusion
-        self.__by_nls_exclusion_percent_label = 'Exclusion percent (' + self.__label_ratio + ')(' +  str(self.__nls) + ' nls)'
+        self.__by_nls_exclusion_percent_label = 'Exclusion percent (' + self.__label_ratio + ')(' + str(
+            self.__nls) + ' nls)'
 
         keys_for_merging = ['ls', 'time', 'run', 'fill']
-        print ("Merging " + det1.name + " and " + det2.name + " ...")
+        print("Merging " + det1.name + " and " + det2.name + " ...")
         common_data_in = pd.merge(det1.data, det2.data, on=keys_for_merging, how='outer')
 
         # Computing single ls ratio
-        common_data_in[self.label_ratio] = common_data_in[self.__label_det1_lumi_to_use] / common_data_in[self.__label_det2_lumi_to_use]
+        common_data_in[self.label_ratio] = common_data_in[self.__label_det1_lumi_to_use] / common_data_in[
+            self.__label_det2_lumi_to_use]
 
         # Adding cumulative luminosity column
         common_data_in[self.accumulated_lumi2_label] = common_data_in[self.__label_det2_lumi_to_use].cumsum()
@@ -150,28 +167,39 @@ class DetectorsRatio(L):
             print("Merging " + det1.name + " and " + det2.name + " (all data) ... \n")
             common_data_in_all = pd.merge(det1.all_data, det2.all_data, on=keys_for_merging, how='outer')
 
-            common_data_in_all[det1.excluded_label] = common_data_in_all[det1.excluded_label].fillna(det1.label_for_excluded)
-            common_data_in_all[det2.excluded_label] = common_data_in_all[det2.excluded_label].fillna(det2.label_for_excluded)
+            common_data_in_all[det1.excluded_label] = common_data_in_all[det1.excluded_label].fillna(
+                det1.label_for_excluded)
+            common_data_in_all[det2.excluded_label] = common_data_in_all[det2.excluded_label].fillna(
+                det2.label_for_excluded)
 
-            common_data_in_all[self.label_ratio] = common_data_in_all[self.__label_det1_lumi_to_use] / common_data_in_all[self.__label_det2_lumi_to_use]
+            common_data_in_all[self.label_ratio] = common_data_in_all[self.__label_det1_lumi_to_use] / \
+                                                   common_data_in_all[self.__label_det2_lumi_to_use]
 
             ratio_excluded_label_list = []
             for index, row in common_data_in_all.iterrows():
-                if row[det1.excluded_label] != det1.label_for_excluded and row[det2.excluded_label] != det2.label_for_excluded:
+                if row[det1.excluded_label] != det1.label_for_excluded and row[
+                    det2.excluded_label] != det2.label_for_excluded:
                     ratio_excluded_label_list.append("included")
-                elif row[det1.excluded_label] == det1.label_for_excluded and row[det2.excluded_label] == det2.label_for_excluded:
+                elif row[det1.excluded_label] == det1.label_for_excluded and row[
+                    det2.excluded_label] == det2.label_for_excluded:
                     ratio_excluded_label_list.append("both excluded")
-                elif row[det1.excluded_label] == det1.label_for_excluded and row[det2.excluded_label] != det2.label_for_excluded:
+                elif row[det1.excluded_label] == det1.label_for_excluded and row[
+                    det2.excluded_label] != det2.label_for_excluded:
                     ratio_excluded_label_list.append("only " + det1.name + " excluded")
-                elif row[det1.excluded_label] != det1.label_for_excluded and row[det2.excluded_label] == det2.label_for_excluded:
+                elif row[det1.excluded_label] != det1.label_for_excluded and row[
+                    det2.excluded_label] == det2.label_for_excluded:
                     ratio_excluded_label_list.append("only " + det2.name + " excluded")
                 else:
-                    raise ValueError("None of the required [if] conditions fulfilled! row info: " + row[det1.excluded_label] + ", " + row[det2.excluded_label])
+                    raise ValueError(
+                        "None of the required [if] conditions fulfilled! row info: " + row[det1.excluded_label] + ", " +
+                        row[det2.excluded_label])
 
             common_data_in_all[self.__ratio_excluded_label] = np.array(ratio_excluded_label_list)
 
-            common_data_in_all[self.accumulated_lumi2_label] = common_data_in_all[self.__label_det2_lumi_to_use].cumsum()
-            common_data_in_all[self.accumulated_lumi1_label] = common_data_in_all[self.__label_det1_lumi_to_use].cumsum()
+            common_data_in_all[self.accumulated_lumi2_label] = common_data_in_all[
+                self.__label_det2_lumi_to_use].cumsum()
+            common_data_in_all[self.accumulated_lumi1_label] = common_data_in_all[
+                self.__label_det1_lumi_to_use].cumsum()
 
             ltools.add_date_column(common_data_in_all)
 
@@ -182,6 +210,9 @@ class DetectorsRatio(L):
             self.fill_nls_data()
             if self.all_data_analysis_included:
                 self.fill_nls_all_data()
+        if compute_by_run_by_fill:
+            self.fill_by_period_data('run')
+            self.fill_by_period_data('fill')
 
         self.__common_data_filtered_no_nan = self.__common_data_filtered.dropna()
 
@@ -232,10 +263,9 @@ class DetectorsRatio(L):
             self.__common_data_filtered = pd.merge(self.common_data_filtered, nbx_by_fill_data,
                                                    on='fill', how='left', sort=True)
 
-
     def fill_nls_data(self):
         # compute by Nls ratios
-        print ('Computing ' + self.label_ratio + ' by nls ratios ... \n')
+        print('Computing ' + self.label_ratio + ' by nls ratios ... \n')
 
         nls = self.__nls
         inls = 0
@@ -277,7 +307,6 @@ class DetectorsRatio(L):
                 all_range_lumi_in_nls = sum_lumi2
                 all_range_nls_err = by_nls_ratios_mean_err
 
-
                 inls = 0
                 sum_lumi1 = 0.0
                 sum_lumi2 = 0.0
@@ -292,12 +321,92 @@ class DetectorsRatio(L):
         data_to_use[self.__by_nls_label_ratio_err] = np.array(all_range_nls_err_array)
         data_to_use[self.__by_nls_lumi_label] = np.array(all_range_lumi_in_nls_array)
 
+    def fill_by_period_data(self, period: str):
+        # Currently period can be only run or fill
+        # compute by x ratios
+        print('Computing ' + self.label_ratio + ' by ' + period + ' ratios ... \n')
+
+        sum_lumi1 = 0.0
+        sum_lumi2 = 0.0
+        by_period_ratios_array = []
+
+        all_range_by_period_array = []
+        all_range_by_period_err_array = []
+        all_range_lumi_in_period_array = []
+
+        data_to_use = self.common_data_filtered
+        data_len = len(data_to_use)
+
+        new_period_flag = False
+        old_period = data_to_use[period][0]
+        inls = 0
+
+        all_range_by_period = np.nan
+        all_range_lumi_by_period = np.nan
+        all_range_by_period_err = np.nan
+
+        for index_data in range(0, len(data_to_use)):
+
+            this_period = data_to_use[period][index_data]
+            eof_reached = (index_data == data_len - 1)
+
+            if old_period != this_period:
+                new_period_flag = True
+
+            if new_period_flag or eof_reached:
+                if eof_reached and not new_period_flag:
+                    sum_lumi1 += data_to_use[self.__label_det1_lumi_to_use][index_data]
+                    sum_lumi2 += data_to_use[self.__label_det2_lumi_to_use][index_data]
+                    by_period_ratios_array.append(data_to_use[self.label_ratio][index_data])
+                # print("------->>> " + str(old_period))
+                # print("sum_lumi1: " + str(sum_lumi1))
+                # print("sum_lumi2: " + str(sum_lumi2))
+                # print("ratios: ", by_period_ratios_array)
+                by_period_ratio = sum_lumi1 / sum_lumi2
+                by_period_ratios_stdv = np.array(by_period_ratios_array).std()
+                by_period_ratios_mean_err = by_period_ratios_stdv / np.sqrt(inls)
+
+                all_range_by_period = by_period_ratio
+                all_range_lumi_by_period = sum_lumi2
+                all_range_by_period_err = by_period_ratios_mean_err
+
+            all_range_by_period_array.append(all_range_by_period)
+            all_range_by_period_err_array.append(all_range_by_period_err)
+            all_range_lumi_in_period_array.append(all_range_lumi_by_period)
+
+            # resetting new period flag
+            if new_period_flag:
+                new_period_flag = False
+                by_period_ratios_array = []
+                inls = 0
+
+            sum_lumi1 += data_to_use[self.__label_det1_lumi_to_use][index_data]
+            sum_lumi2 += data_to_use[self.__label_det2_lumi_to_use][index_data]
+            by_period_ratios_array.append(data_to_use[self.label_ratio][index_data])
+            old_period = this_period
+            inls += 1
+
+        if period == "run":
+            by_period_label_ratio = self.__by_run_label_ratio
+            by_period_label_ratio_err = self.__by_run_label_ratio_err
+            by_period_lumi_label = self.__by_run_lumi_label
+        elif period == "fill":
+            by_period_label_ratio = self.__by_fill_label_ratio
+            by_period_label_ratio_err = self.__by_fill_label_ratio_err
+            by_period_lumi_label = self.__by_fill_lumi_label
+        else:
+            raise AssertionError("period option not available!!")
+
+        data_to_use[by_period_label_ratio] = np.array(all_range_by_period_array)
+        data_to_use[by_period_label_ratio_err] = np.array(all_range_by_period_err_array)
+        data_to_use[by_period_lumi_label] = np.array(all_range_lumi_in_period_array)
+
     def fill_nls_all_data(self):
         # compute by Nls ratios
         if not self.all_data_analysis_included:
             raise AssertionError("It is impossible running this function without loading _all.csv data")
 
-        print ('Computing ' + self.label_ratio + '(all data) by nls ratios ... \n')
+        print('Computing ' + self.label_ratio + '(all data) by nls ratios ... \n')
 
         nls = self.__nls
         inls = 0
@@ -349,8 +458,7 @@ class DetectorsRatio(L):
                 all_range_lumi_in_nls = sum_lumi2
                 all_range_nls_err = by_nls_ratios_mean_err
 
-
-                exclusion_percent = number_of_excluded_points_in_nls * 100./inls
+                exclusion_percent = number_of_excluded_points_in_nls * 100. / inls
                 if exclusion_percent == 0:
                     exclusion_decision_label = "fully included"
                     binary_exclusion_decision_label = "included"
@@ -360,7 +468,6 @@ class DetectorsRatio(L):
                 else:
                     exclusion_decision_label = "partially included"
                     binary_exclusion_decision_label = "included"
-
 
                 inls = 0
                 sum_lumi1 = 0.0
@@ -382,7 +489,6 @@ class DetectorsRatio(L):
         data_to_use[self.__by_nls_exclusion_info_label] = np.array(by_nls_exclusion_info_list)
         data_to_use[self.__by_nls_binary_exclusion_info_label] = np.array(by_nls_exclusion_binary_info_list)
         data_to_use[self.__by_nls_exclusion_percent_label] = np.array(by_nls_exclusion_percent_list)
-
 
     def fill_stats(self):
         data = self.common_data_filtered
@@ -411,7 +517,6 @@ class DetectorsRatio(L):
         self.__nls_ratios_lw_mean_error = nls_lw_stats.std_mean
         self.__nls_ratios_lw_stdv = nls_lw_stats.std
 
-
         # Filling stats DF arrays:
         stats_names.append("ratios_unfiltered_mean")
         stats_values.append(self.__ratios_unfiltered_mean)
@@ -439,19 +544,17 @@ class DetectorsRatio(L):
         stats_values.append(self.__nls_ratios_lw_stdv)
 
         self.__stats_DF = pd.DataFrame()
-        for col_id in range(0,len(stats_names)):
-            self.__stats_DF[stats_names[col_id]]=[stats_values[col_id]]
+        for col_id in range(0, len(stats_names)):
+            self.__stats_DF[stats_names[col_id]] = [stats_values[col_id]]
         self.save_stats_to_file()
-
 
     # TODO: implement def fill_equal_lumi_data(self):
 
     def save_stats_to_file(self):
-        #stats_file = open(self.output_dir + "stats.csv")
+        # stats_file = open(self.output_dir + "stats.csv")
         ltools.check_and_create_folder(self.output_dir, creation_info=False)
         self.__stats_DF.to_csv(index=False, path_or_buf=self.output_dir + "stats.csv")
-        #stats_file.close()
-
+        # stats_file.close()
 
     def plot_ratio_hist(self):
         ratio_hist = plotting.hist_from_pandas_frame(data_frame=self.__common_data_filtered, col_label=self.label_ratio,
@@ -508,9 +611,6 @@ class DetectorsRatio(L):
                                                              energy_year_label=self.__year_energy_label,
                                                              weight_label=self.__by_nls_lumi_label)
         self.__plt_plots['nls_ratio_hist_lw'] = ratio_hist_lumi2_w[0][0].get_figure()
-
-    # TODO: stability plots (double axis config)
-    # TODO: binning, nls tests plots
 
     def plot_ratio_vs_time(self):
         ratio_vs_time = plotting.scatter_plot_from_pandas_frame(data_frame=self.__common_data_filtered,
@@ -598,6 +698,42 @@ class DetectorsRatio(L):
                                                                 energy_year_label=self.__year_energy_label)
         self.__plt_plots['by_nls_ratio_vs_fill'] = ratio_vs_fill.get_figure()
 
+    def plot_by_fill_ratio_vs_fill(self):
+        by_fill_ratio_vs_fill = plotting.scatter_plot_from_pandas_frame(data_frame=self.common_data_filtered,
+                                                                        y_data_label=self.__by_fill_label_ratio,
+                                                                        x_data_label='fill',
+                                                                        xlabel="Fill Number",
+                                                                        ylabel=self.__label_ratio + " ratios per Fill",
+                                                                        ymin=setts.ratio_min_reduced,
+                                                                        ymax=setts.ratio_max_reduced,
+                                                                        energy_year_label=self.__year_energy_label,
+                                                                        marker_size=3.0)
+        self.__plt_plots['by_fill_ratio_vs_fill'] = by_fill_ratio_vs_fill.get_figure()
+
+    def plot_by_run_ratio_vs_run(self):
+        by_run_ratio_vs_run = plotting.scatter_plot_from_pandas_frame(data_frame=self.common_data_filtered,
+                                                                      y_data_label=self.__by_run_label_ratio,
+                                                                      x_data_label='run',
+                                                                      xlabel="Run Number",
+                                                                      ylabel=self.__label_ratio + " ratios per Run",
+                                                                      ymin=setts.ratio_min_reduced,
+                                                                      ymax=setts.ratio_max_reduced,
+                                                                      energy_year_label=self.__year_energy_label,
+                                                                      marker_size=3.0)
+        self.__plt_plots['by_run_ratio_vs_run'] = by_run_ratio_vs_run.get_figure()
+
+    def plot_by_run_ratio_vs_run_with_errors(self):
+        by_run_ratio_vs_run_with_errors = plotting.plot_scatter_and_errors(data_frame=self.common_data_filtered,
+                                                                           y_data_label=self.__by_run_label_ratio,
+                                                                           x_data_label='run',
+                                                                           err_y_data_label=self.__by_run_label_ratio_err,
+                                                                           xlabel="Run Number",
+                                                                           ylabel=self.__label_ratio + " ratios per Run",
+                                                                           ymin=setts.ratio_min_reduced,
+                                                                           max=setts.ratio_max_reduced,
+                                                                           energy_year_label=self.__year_energy_label)
+        self.__plt_plots['by_run_ratio_vs_run_with_errors'] = by_run_ratio_vs_run_with_errors
+
     def plot_ratio_vs_run(self):
         ratio_vs_run = plotting.scatter_plot_from_pandas_frame(data_frame=self.common_data_filtered,
                                                                y_data_label=self.label_ratio,
@@ -625,14 +761,14 @@ class DetectorsRatio(L):
         ratio_vs_fill = plotting.plot_bad_fill_info(data_frame=self.common_data_filtered_no_nan, x_data_label='fill',
                                                     y_data_label=self.label_ratio,
                                                     z_data_label=self.__label_det2_lumi_to_use,
-                                                    xlabel= 'Fill Number', ylabel=self.__label_ratio + " ratios",
+                                                    xlabel='Fill Number', ylabel=self.__label_ratio + " ratios",
                                                     mean=self.__nls_ratios_lw_mean,
                                                     stdv=self.__nls_ratios_lw_stdv,
                                                     ratio_acceptance=setts.bad_ratio_to_plot_stdv_factor,
                                                     filePath=self.output_dir + 'txt/',
-                                                    ymin=self.__nls_ratios_lw_mean-3*setts.bad_ratio_to_plot_stdv_factor
+                                                    ymin=self.__nls_ratios_lw_mean - 3 * setts.bad_ratio_to_plot_stdv_factor
                                                          * self.__nls_ratios_lw_stdv,
-                                                    ymax=self.__nls_ratios_lw_mean+3*setts.bad_ratio_to_plot_stdv_factor
+                                                    ymax=self.__nls_ratios_lw_mean + 3 * setts.bad_ratio_to_plot_stdv_factor
                                                          * self.__nls_ratios_lw_stdv,
                                                     energy_year_label=self.__year_energy_label,
                                                     txtfileName='Bad_fills')
@@ -642,42 +778,43 @@ class DetectorsRatio(L):
         ratio_vs_run = plotting.plot_bad_fill_info(data_frame=self.common_data_filtered_no_nan, x_data_label='run',
                                                    y_data_label=self.label_ratio,
                                                    z_data_label=self.__label_det2_lumi_to_use,
-                                                   xlabel= 'Run Number', ylabel=self.__label_ratio + " ratios",
+                                                   xlabel='Run Number', ylabel=self.__label_ratio + " ratios",
                                                    mean=self.__nls_ratios_lw_mean,
                                                    stdv=self.__nls_ratios_lw_stdv,
                                                    ratio_acceptance=setts.bad_ratio_to_plot_stdv_factor,
                                                    filePath=self.output_dir + 'txt/',
-                                                   ymin=self.__nls_ratios_lw_mean-3*setts.bad_ratio_to_plot_stdv_factor * self.__nls_ratios_lw_stdv,
-                                                   ymax=self.__nls_ratios_lw_mean+3*setts.bad_ratio_to_plot_stdv_factor * self.__nls_ratios_lw_stdv,
+                                                   ymin=self.__nls_ratios_lw_mean - 3 * setts.bad_ratio_to_plot_stdv_factor * self.__nls_ratios_lw_stdv,
+                                                   ymax=self.__nls_ratios_lw_mean + 3 * setts.bad_ratio_to_plot_stdv_factor * self.__nls_ratios_lw_stdv,
                                                    energy_year_label=self.__year_energy_label,
                                                    txtfileName='Bad_runs')
         self.__plt_plots['by_ratio_vs_run_bad_runs'] = ratio_vs_run
 
     # All/excluded data analysis plots
     def __plot_all_and_excluded(self, det_index):
-        if type(det_index)==int and det_index<=1:
+        if type(det_index) == int and det_index <= 1:
             det = self.__detcs[det_index]
-            suffix_plot_name = det.excluded_label.replace(" ","_").replace(":","")
+            suffix_plot_name = det.excluded_label.replace(" ", "_").replace(":", "")
             scatter_all_and_excluded_lumi2 = plotting.snsplot_detector_all_and_excluded(self.__data_all,
-                                                                                  x_data_label=self.accumulated_lumi2_label,
-                                                                                  y_data_label=self.label_ratio,
-                                                                                  conditional_label=det.excluded_label,
-                                                                                  xlabel="Integrated luminosity [$" +
-                                                                                         self.lumi_unit + "^{-1}$]",
-                                                                                  ylabel=self.__label_ratio + " ratios",
-                                                                                  ymin=setts.ratio_min, ymax=setts.ratio_max,
-                                                                                  energy_year_label=self.__year_energy_label)
+                                                                                        x_data_label=self.accumulated_lumi2_label,
+                                                                                        y_data_label=self.label_ratio,
+                                                                                        conditional_label=det.excluded_label,
+                                                                                        xlabel="Integrated luminosity [$" +
+                                                                                               self.lumi_unit + "^{-1}$]",
+                                                                                        ylabel=self.__label_ratio + " ratios",
+                                                                                        ymin=setts.ratio_min,
+                                                                                        ymax=setts.ratio_max,
+                                                                                        energy_year_label=self.__year_energy_label)
             self.__sns_plots['all_and_excluded_vs_lum2_' + suffix_plot_name] = scatter_all_and_excluded_lumi2
 
             scatter_all_and_excluded_run = plotting.snsplot_detector_all_and_excluded(self.__data_all,
-                                                                                  x_data_label="run",
-                                                                                  y_data_label=self.label_ratio,
-                                                                                  conditional_label=det.excluded_label,
-                                                                                  xlabel="Run",
-                                                                                  ylabel=self.__label_ratio + " ratios",
-                                                                                  ymin=setts.ratio_min,
-                                                                                  ymax=setts.ratio_max,
-                                                                                  energy_year_label=self.__year_energy_label)
+                                                                                      x_data_label="run",
+                                                                                      y_data_label=self.label_ratio,
+                                                                                      conditional_label=det.excluded_label,
+                                                                                      xlabel="Run",
+                                                                                      ylabel=self.__label_ratio + " ratios",
+                                                                                      ymin=setts.ratio_min,
+                                                                                      ymax=setts.ratio_max,
+                                                                                      energy_year_label=self.__year_energy_label)
             self.__sns_plots['all_and_excluded_vs_run_' + suffix_plot_name] = scatter_all_and_excluded_run
         else:
             raise AssertionError("Index must be 0 or 1")
@@ -692,7 +829,7 @@ class DetectorsRatio(L):
                                                                                            x_data_label="run",
                                                                                            y_data_label=self.label_ratio,
                                                                                            conditional_label=self.__ratio_excluded_label,
-                                                                                           #conditional_label_extra=self.det2.excluded_label,
+                                                                                           # conditional_label_extra=self.det2.excluded_label,
                                                                                            xlabel="Run",
                                                                                            ylabel=self.__label_ratio + " ratios",
                                                                                            ymin=setts.ratio_min,
@@ -701,67 +838,62 @@ class DetectorsRatio(L):
             self.__sns_plots['all_and_excluded_vs_run_combined'] = scatter_all_and_excluded_run_comb
 
             scatter_all_and_excluded_vs_lumi2_comb = plotting.snsplot_detector_all_and_excluded(self.__data_all,
-                                                                                           x_data_label=self.accumulated_lumi2_label,
-                                                                                           y_data_label=self.label_ratio,
-                                                                                           conditional_label=self.__ratio_excluded_label,
-                                                                                           # conditional_label_extra=self.det2.excluded_label,
-                                                                                           xlabel="Integrated luminosity [$" +
-                                                                                                  self.lumi_unit + "^{-1}$]",
-                                                                                           ylabel=self.__label_ratio + " ratios",
-                                                                                           ymin=setts.ratio_min,
-                                                                                           ymax=setts.ratio_max,
-                                                                                           energy_year_label=self.__year_energy_label)
-            self.__sns_plots['all_and_excluded_vs_lumi2_combined'] = scatter_all_and_excluded_vs_lumi2_comb
-
-            scatter_all_and_excluded_vs_date_comb = plotting.snsplot_detector_all_and_excluded(self.__data_all,
-                                                                                                x_data_label='date',
+                                                                                                x_data_label=self.accumulated_lumi2_label,
                                                                                                 y_data_label=self.label_ratio,
                                                                                                 conditional_label=self.__ratio_excluded_label,
                                                                                                 # conditional_label_extra=self.det2.excluded_label,
-                                                                                                xlabel="Date",
+                                                                                                xlabel="Integrated luminosity [$" +
+                                                                                                       self.lumi_unit + "^{-1}$]",
                                                                                                 ylabel=self.__label_ratio + " ratios",
                                                                                                 ymin=setts.ratio_min,
                                                                                                 ymax=setts.ratio_max,
-                                                                                                xmin=self.__data_all['date'][0],
-                                                                                                xmax=self.__data_all['date'][len(self.__data_all) - 1],
-                                                                                                xlabel_rotation=30,
                                                                                                 energy_year_label=self.__year_energy_label)
+            self.__sns_plots['all_and_excluded_vs_lumi2_combined'] = scatter_all_and_excluded_vs_lumi2_comb
+
+            scatter_all_and_excluded_vs_date_comb = plotting.snsplot_detector_all_and_excluded(self.__data_all,
+                                                                                               x_data_label='date',
+                                                                                               y_data_label=self.label_ratio,
+                                                                                               conditional_label=self.__ratio_excluded_label,
+                                                                                               # conditional_label_extra=self.det2.excluded_label,
+                                                                                               xlabel="Date",
+                                                                                               ylabel=self.__label_ratio + " ratios",
+                                                                                               ymin=setts.ratio_min,
+                                                                                               ymax=setts.ratio_max,
+                                                                                               xmin=
+                                                                                               self.__data_all['date'][
+                                                                                                   0],
+                                                                                               xmax=
+                                                                                               self.__data_all['date'][
+                                                                                                   len(
+                                                                                                       self.__data_all) - 1],
+                                                                                               xlabel_rotation=30,
+                                                                                               energy_year_label=self.__year_energy_label)
             self.__sns_plots['all_and_excluded_vs_date_combined'] = scatter_all_and_excluded_vs_date_comb
 
         scatter_all_and_excluded_vs_date_comb_by_nls = plotting.snsplot_detector_all_and_excluded(self.__data_all,
-                                                                                           x_data_label='date',
-                                                                                           y_data_label=self.by_nls_label_ratio,
-                                                                                           conditional_label=self.by_nls_exclusion_info_label,
-                                                                                           # conditional_label_extra=self.det2.excluded_label,
-                                                                                           xlabel="Date",
-                                                                                           ylabel=self.__label_ratio + " ratios in "
-                                                                                                  + str(self.__nls) + ' LS',
-                                                                                           ymin=setts.ratio_min, ymax=setts.ratio_max,
-                                                                                           xmin=self.__data_all['date'][0],
-                                                                                           xmax=self.__data_all['date'][len(self.__data_all) - 1],
-                                                                                           xlabel_rotation=30,
-                                                                                           energy_year_label=self.__year_energy_label)
-        self.__sns_plots['all_and_excluded_by_nls_vs_date_combined'] = scatter_all_and_excluded_vs_date_comb_by_nls
-
-        scatter_all_and_excluded_vs_lumi2_comb_by_nls = plotting.snsplot_detector_all_and_excluded(self.__data_all,
-                                                                                                  x_data_label=self.accumulated_lumi2_label,
+                                                                                                  x_data_label='date',
                                                                                                   y_data_label=self.by_nls_label_ratio,
                                                                                                   conditional_label=self.by_nls_exclusion_info_label,
                                                                                                   # conditional_label_extra=self.det2.excluded_label,
-                                                                                                  xlabel="Integrated luminosity [$" +
-                                                                                                         self.lumi_unit + "^{-1}$]",
+                                                                                                  xlabel="Date",
                                                                                                   ylabel=self.__label_ratio + " ratios in "
                                                                                                          + str(
                                                                                                       self.__nls) + ' LS',
                                                                                                   ymin=setts.ratio_min,
                                                                                                   ymax=setts.ratio_max,
+                                                                                                  xmin=self.__data_all[
+                                                                                                      'date'][0],
+                                                                                                  xmax=self.__data_all[
+                                                                                                      'date'][len(
+                                                                                                      self.__data_all) - 1],
+                                                                                                  xlabel_rotation=30,
                                                                                                   energy_year_label=self.__year_energy_label)
-        self.__sns_plots['all_and_excluded_by_nls_vs_lumi2_combined'] = scatter_all_and_excluded_vs_lumi2_comb_by_nls
+        self.__sns_plots['all_and_excluded_by_nls_vs_date_combined'] = scatter_all_and_excluded_vs_date_comb_by_nls
 
-        scatter_all_and_excluded_percent_vs_lumi2_comb_by_nls = plotting.snsplot_detector_all_and_excluded(self.__data_all,
+        scatter_all_and_excluded_vs_lumi2_comb_by_nls = plotting.snsplot_detector_all_and_excluded(self.__data_all,
                                                                                                    x_data_label=self.accumulated_lumi2_label,
                                                                                                    y_data_label=self.by_nls_label_ratio,
-                                                                                                   conditional_label=self.by_nls_exclusion_percent_label,
+                                                                                                   conditional_label=self.by_nls_exclusion_info_label,
                                                                                                    # conditional_label_extra=self.det2.excluded_label,
                                                                                                    xlabel="Integrated luminosity [$" +
                                                                                                           self.lumi_unit + "^{-1}$]",
@@ -771,50 +903,68 @@ class DetectorsRatio(L):
                                                                                                    ymin=setts.ratio_min,
                                                                                                    ymax=setts.ratio_max,
                                                                                                    energy_year_label=self.__year_energy_label)
-        self.__sns_plots['all_and_excluded_percent_by_nls_vs_lumi2_combined'] = scatter_all_and_excluded_percent_vs_lumi2_comb_by_nls
+        self.__sns_plots['all_and_excluded_by_nls_vs_lumi2_combined'] = scatter_all_and_excluded_vs_lumi2_comb_by_nls
+
+        scatter_all_and_excluded_percent_vs_lumi2_comb_by_nls = plotting.snsplot_detector_all_and_excluded(
+            self.__data_all,
+            x_data_label=self.accumulated_lumi2_label,
+            y_data_label=self.by_nls_label_ratio,
+            conditional_label=self.by_nls_exclusion_percent_label,
+            # conditional_label_extra=self.det2.excluded_label,
+            xlabel="Integrated luminosity [$" +
+                   self.lumi_unit + "^{-1}$]",
+            ylabel=self.__label_ratio + " ratios in "
+                   + str(
+                self.__nls) + ' LS',
+            ymin=setts.ratio_min,
+            ymax=setts.ratio_max,
+            energy_year_label=self.__year_energy_label)
+        self.__sns_plots[
+            'all_and_excluded_percent_by_nls_vs_lumi2_combined'] = scatter_all_and_excluded_percent_vs_lumi2_comb_by_nls
 
         scatter_all_and_excluded_vs_run_comb_by_nls = plotting.snsplot_detector_all_and_excluded(self.__data_all,
-                                                                                                   x_data_label='run',
-                                                                                                   y_data_label=self.by_nls_label_ratio,
-                                                                                                   conditional_label=self.by_nls_exclusion_info_label,
-                                                                                                   # conditional_label_extra=self.det2.excluded_label,
-                                                                                                   xlabel="Run",
-                                                                                                   ylabel=self.__label_ratio + " ratios in "
-                                                                                                          + str(
-                                                                                                       self.__nls) + ' LS',
-                                                                                                   ymin=setts.ratio_min,
-                                                                                                   ymax=setts.ratio_max,
-                                                                                                   energy_year_label=self.__year_energy_label)
+                                                                                                 x_data_label='run',
+                                                                                                 y_data_label=self.by_nls_label_ratio,
+                                                                                                 conditional_label=self.by_nls_exclusion_info_label,
+                                                                                                 # conditional_label_extra=self.det2.excluded_label,
+                                                                                                 xlabel="Run",
+                                                                                                 ylabel=self.__label_ratio + " ratios in "
+                                                                                                        + str(
+                                                                                                     self.__nls) + ' LS',
+                                                                                                 ymin=setts.ratio_min,
+                                                                                                 ymax=setts.ratio_max,
+                                                                                                 energy_year_label=self.__year_energy_label)
         self.__sns_plots['all_and_excluded_by_nls_vs_run_combined'] = scatter_all_and_excluded_vs_run_comb_by_nls
 
         # all/excluded histograms
         scatter_all_and_excluded_hist = plotting.snsplot_hist_all_and_excluded(self.__data_all,
-                                                                                      x_data_label=self.label_ratio,
-                                                                                      conditional_label=self.ratio_excluded_label,
+                                                                               x_data_label=self.label_ratio,
+                                                                               conditional_label=self.ratio_excluded_label,
+                                                                               # conditional_label_extra=self.det2.excluded_label,
+                                                                               xlabel=self.__label_ratio + " ratios",
+                                                                               ylabel="Counts",
+                                                                               xmin=setts.ratio_min,
+                                                                               xmax=setts.ratio_max,
+                                                                               bins=setts.nbins,
+                                                                               energy_year_label=self.__year_energy_label)
+        self.__sns_plots['all_and_excluded_hist'] = scatter_all_and_excluded_hist
+
+        scatter_all_and_excluded_hist_by_nls = plotting.snsplot_hist_all_and_excluded(self.__data_all,
+                                                                                      x_data_label=self.by_nls_label_ratio,
+                                                                                      conditional_label=self.by_nls_exclusion_info_label,
                                                                                       # conditional_label_extra=self.det2.excluded_label,
-                                                                                      xlabel=self.__label_ratio + " ratios",
+                                                                                      xlabel=self.__label_ratio + " ratios in " + str(
+                                                                                          self.__nls) + ' LS',
                                                                                       ylabel="Counts",
                                                                                       xmin=setts.ratio_min,
                                                                                       xmax=setts.ratio_max,
                                                                                       bins=setts.nbins,
                                                                                       energy_year_label=self.__year_energy_label)
-        self.__sns_plots['all_and_excluded_hist'] = scatter_all_and_excluded_hist
-
-        scatter_all_and_excluded_hist_by_nls = plotting.snsplot_hist_all_and_excluded(self.__data_all,
-                                                                                     x_data_label=self.by_nls_label_ratio,
-                                                                                     conditional_label=self.by_nls_exclusion_info_label,
-                                                                                     # conditional_label_extra=self.det2.excluded_label,
-                                                                                     xlabel=self.__label_ratio + " ratios in " + str(self.__nls) + ' LS',
-                                                                                     ylabel="Counts",
-                                                                                     xmin=setts.ratio_min,
-                                                                                     xmax=setts.ratio_max,
-                                                                                     bins=setts.nbins,
-                                                                                     energy_year_label=self.__year_energy_label)
         self.__sns_plots['all_and_excluded_by_nls_hist'] = scatter_all_and_excluded_hist_by_nls
 
     def save_plots(self):
         if self.__only_stats:
-            print ("Only stats mode. Plots won't be produced")
+            print("Only stats mode. Plots won't be produced")
         else:
             print('\n\n Saving plots:')
             plotting.save_plots(self.plt_plots, self.output_dir)
@@ -1047,7 +1197,7 @@ class MultipleDetectorsRatio:
                                 + '-' + det3.name + '/'
             self.__year_energy_label = str(self.energy) + 'TeV(' + str(self.year) + ')'
 
-        #Checking all_data_analysis_included for all detectors
+        # Checking all_data_analysis_included for all detectors
         self.__all_data_analysis_included = True
         for det in self.__dets:
             if not det.all_data_analysis_included:
@@ -1101,7 +1251,7 @@ class MultipleDetectorsRatio:
         ltools.check_and_clean_after_merging(merge_tmp)
 
         self.__combined_data = merge_tmp
-        #print(list(merge_tmp))
+        # print(list(merge_tmp))
 
         self.__plt_plots = {}
         self.__sns_plots = {}
@@ -1173,19 +1323,18 @@ class MultipleDetectorsRatio:
     def plot_all_and_excluded_vs_lumi2(self):
         print('creating all_and_excluded_vs_lumi2 plot ...')
         all_and_excluded_vs_lumi2 = plotting.snsplot_detector_all_and_excluded(self.__all_data,
-                                                                             x_data_label=self.__lumi3_col_name,
-                                                                             y_data_label=self.__nls_ratio_col_names,
-                                                                             conditional_label=self.__exclusion_info_labels,
-                                                                             # conditional_label_extra=self.det2.excluded_label,
-                                                                             xlabel="Integrated luminosity [$" +
-                                                                                    self.__lumi_unit + "^{-1}$]",
-                                                                             ylabel="ratios in " + str(self.__nls) + ' LS',
-                                                                             ymin=setts.ratio_min,
-                                                                             ymax=setts.ratio_max,
-                                                                             energy_year_label=self.__year_energy_label)
+                                                                               x_data_label=self.__lumi3_col_name,
+                                                                               y_data_label=self.__nls_ratio_col_names,
+                                                                               conditional_label=self.__exclusion_info_labels,
+                                                                               # conditional_label_extra=self.det2.excluded_label,
+                                                                               xlabel="Integrated luminosity [$" +
+                                                                                      self.__lumi_unit + "^{-1}$]",
+                                                                               ylabel="ratios in " + str(
+                                                                                   self.__nls) + ' LS',
+                                                                               ymin=setts.ratio_min,
+                                                                               ymax=setts.ratio_max,
+                                                                               energy_year_label=self.__year_energy_label)
         self.__sns_plots["all_and_excluded_vs_lumi2"] = all_and_excluded_vs_lumi2
-
-
 
     # TODO: create combined hists plot
 
