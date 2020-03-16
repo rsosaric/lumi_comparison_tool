@@ -76,9 +76,9 @@ def hist_from_pandas_frame(data_frame, col_label, nbins, title='', xlabel='', yl
     ratio_hist_ax = ratio_hist[0][0]
 
     ratio_hist_ax.set_title(title)
-    ratio_hist_ax.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight,
+    ratio_hist_ax.set_xlabel(xlabel, labelpad=setts.axis_labelpad_x, weight=setts.axis_weight,
                              size=setts.axis_case_size[fig_size_shape])
-    ratio_hist_ax.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight,
+    ratio_hist_ax.set_ylabel(ylabel, labelpad=setts.axis_labelpad_y, weight=setts.axis_weight,
                              size=setts.axis_case_size[fig_size_shape])
 
     plt.xticks(fontsize=setts.axis_thicks_case_size[fig_size_shape])
@@ -183,7 +183,7 @@ def scatter_plot_from_pandas_frame(data_frame, x_data_label, y_data_label, title
                                    ymin=0.0, ymax=0.0, color='#86bf91', label_cms_status=True,
                                    energy_year_label='', legend_labels=None, legend_position=setts.leg_vs_plots_pos,
                                    leg_marker_sc=setts.leg_vs_plots_marker_scale,
-                                   marker_size=0.7,
+                                   marker_size=1.0,
                                    leg_text_s=setts.leg_vs_plots_text_s,
                                    plot_style='o',
                                    fig_size_shape='nsq'):

@@ -82,6 +82,8 @@ class LAnalysis:
             if setts.get_by_fill_by_run_plots:
                 ratios12.plot_by_fill_ratio_vs_fill()
                 ratios12.plot_by_run_ratio_vs_run()
+                ratios12.plot_by_run_hist_weighted()
+                ratios12.plot_by_run_hist()
                 # ratios12.plot_by_run_ratio_vs_run_with_errors()
 
             # all/excluded analysis plots
@@ -108,6 +110,7 @@ class LAnalysis:
 
             ratios123.plot_ratios_vs_lumi3()
             ratios123.plot_nls_ratios_vs_lumi3()
+            ratios123.plot_nls_ratios_vs_lumi3_only2()
 
             # ratios123.plot_nls_ratios_vs_run()
             # ratios123.plot_nls_ratios_vs_fill()

@@ -6,7 +6,8 @@ from datetime import datetime
 
 
 class Luminometer:
-    __allowed_detectors = ["PXL", "HFOC", "HFET", "DT", "BCM1F", "PLTZERO", "RAMSES", "BCM1FSI", "ZMonitoring"]
+    __allowed_detectors = ["PXL", "HFOC", "HFET", "DT", "BCM1F", "PLTZERO", "RAMSES", "BCM1FSI", "ZMonitoring",
+                           "ZCounts", "ZCountsBB", "ZCountsBB_MC", "ZCountsEE_MC", "ZCounts_MC", "ZCountsEE", "zcounts"]
     __allowed_detectors_file_labels = ["pcc", "hfoc", "hfet", "dt", "bcm1f", "plt", "ram", "bcm1f_si", "bcm1f_d"]
 
     __lumi_unit = 'fb'
@@ -30,22 +31,45 @@ class Luminometer:
         self.__label_for_excluded = 'excluded'
         self.__label_for_included = 'included'
 
-        rows_to_skip_in_csv = 1
-        rows_to_skip_at_the_end = 5
-
         __csv_file_col_names = ['run:fill', 'ls', 'time', 'beamstatus', 'E(GeV)', self.__lumi_del_label_original_units,
                                 self.__lumi_rec_label_original_units, 'avgpu', self.detector_name_label]
         __not_needed_columns = ['run:fill', 'beamstatus', 'E(GeV)', 'avgpu']
 
         # read data from csv file
         # data_file_pd = pd.read_csv(data_file_name, comment='#', index_col=False, names=__csv_file_col_names)
+
+        # Get number of commented lines and find header commented line
+        rows_to_skip_in_csv = setts.rows_to_skip_in_csv
+        rows_to_skip_at_the_end = setts.rows_to_skip_at_the_end
+
+        self.__rec_info_in_file = False
+        self.__del_info_in_file = False
+
         data_file_pd = pd.read_csv(data_file_name, index_col=False, skiprows=rows_to_skip_in_csv,
                                    skipfooter=rows_to_skip_at_the_end, engine='python')
 
-        data_file_pd.rename(columns={'#run:fill': 'run:fill',
-                                     'delivered(hz/ub)': self.__lumi_del_label_original_units,
-                                     'recorded(hz/ub)': self.__lumi_rec_label_original_units,
-                                     'source': self.detector_name_label}, inplace=True)
+        if 'delivered(hz/ub)' in data_file_pd.columns and 'recorded(hz/ub)' in data_file_pd.columns:
+            self.__rec_info_in_file = True
+            self.__del_info_in_file = True
+            data_file_pd.rename(columns={'#run:fill': 'run:fill',
+                                         'delivered(hz/ub)': self.__lumi_del_label_original_units,
+                                         'recorded(hz/ub)': self.__lumi_rec_label_original_units,
+                                         'source': self.detector_name_label}, inplace=True)
+        elif 'recorded(hz/ub)' in data_file_pd.columns:
+            print("**** WARNING: Reading only recorded. delivered lumi not found in the input file!")
+            self.__rec_info_in_file = True
+            data_file_pd.rename(columns={'#run:fill': 'run:fill',
+                                         'recorded(hz/ub)': self.__lumi_rec_label_original_units,
+                                         'source': self.detector_name_label}, inplace=True)
+        elif 'delivered(hz/ub)' in data_file_pd.columns:
+            print("**** WARNING: Reading only recorded. recorded lumi not found in the input file!")
+            self.__del_info_in_file = True
+            data_file_pd.rename(columns={'#run:fill': 'run:fill',
+                                         'delivered(hz/ub)': self.__lumi_del_label_original_units,
+                                         'source': self.detector_name_label}, inplace=True)
+        else:
+            raise AssertionError("*** ERROR: No luminosity values found. At least a column with delivered(hz/ub) "
+                                 "or recorded(hz/ub) must be included in the input file!")
 
         run_fill_cols = data_file_pd["run:fill"].str.split(":", n=1, expand=True)
         ls_double = data_file_pd["ls"].str.split(":", n=1, expand=True)
@@ -68,14 +92,18 @@ class Luminometer:
         self.__lumi_csv_unit = 'hz/ub'
         lumi_convertion_factor = ltools.get_lumi_unit_convertion_factor_to_inv_fb(self.__lumi_csv_unit)
 
-        data_file_pd[self.__lumi_del_label] = data_file_pd[
-                                                  self.__lumi_del_label_original_units] * lumi_convertion_factor
-        data_file_pd[self.__lumi_rec_label] = data_file_pd[
-                                                  self.__lumi_rec_label_original_units] * lumi_convertion_factor
+        columns_names_to_remove = []
+        if self.__del_info_in_file:
+            data_file_pd[self.__lumi_del_label] = data_file_pd[
+                                                      self.__lumi_del_label_original_units] * lumi_convertion_factor
+            columns_names_to_remove.append(self.__lumi_del_label_original_units)
+        if self.__rec_info_in_file:
+            data_file_pd[self.__lumi_rec_label] = data_file_pd[
+                                                      self.__lumi_rec_label_original_units] * lumi_convertion_factor
+            columns_names_to_remove.append(self.__lumi_rec_label_original_units)
 
         if remove_extra_cols:
-            data_file_pd.drop(columns=[self.__lumi_del_label_original_units, self.__lumi_del_label_original_units],
-                              inplace=True)
+            data_file_pd.drop(columns=columns_names_to_remove, inplace=True)
 
         # TODO: Find if timestamp is for UTC or some CERN time
         # ltools.add_date_column(data_file_pd)
@@ -94,10 +122,21 @@ class Luminometer:
             data_file_pd_all = pd.read_csv(data_file_name.replace(".csv", "_all.csv"), index_col=False,
                                            skiprows=rows_to_skip_in_csv, skipfooter=rows_to_skip_at_the_end,
                                            engine='python')
-            data_file_pd_all.rename(columns={'#run:fill': 'run:fill',
-                                             'delivered(hz/ub)': self.__lumi_del_label_original_units,
-                                             'recorded(hz/ub)': self.__lumi_rec_label_original_units,
-                                             'source': self.detector_name_label}, inplace=True)
+            if 'delivered(hz/ub)' in data_file_pd_all.columns and 'recorded(hz/ub)' in data_file_pd_all.columns:
+                data_file_pd_all.rename(columns={'#run:fill': 'run:fill',
+                                                 'delivered(hz/ub)': self.__lumi_del_label_original_units,
+                                                 'recorded(hz/ub)': self.__lumi_rec_label_original_units,
+                                                 'source': self.detector_name_label}, inplace=True)
+            elif 'recorded(hz/ub)' in data_file_pd_all.columns:
+                print("**** WARNING: Reading only recorded. delivered lumi not found in the input file!")
+                data_file_pd_all.rename(columns={'#run:fill': 'run:fill',
+                                                 'delivered(hz/ub)': self.__lumi_del_label_original_units,
+                                                 'recorded(hz/ub)': self.__lumi_rec_label_original_units,
+                                                 'source': self.detector_name_label}, inplace=True)
+            else:
+                raise AssertionError("*** ERROR: No luminosity values found. At least a column with delivered(hz/ub) "
+                                     "or recorded(hz/ub) must be included in the input file!")
+
 
             run_fill_cols_all = data_file_pd_all["run:fill"].str.split(":", n=1, expand=True)
             ls_double_all = data_file_pd_all["ls"].str.split(":", n=1, expand=True)

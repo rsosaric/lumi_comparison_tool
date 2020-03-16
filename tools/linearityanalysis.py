@@ -265,7 +265,7 @@ class LinearityAnalysis:
                                                   xmax=self.__max_allowed_slope,
                                                   mean_float_format="{0:.4f}"
                                                   )
-
+        
         slope_hist_lw = plotting.hist_from_pandas_frame(data_frame=self.__by_fill_df,
                                                         col_label=self.__label_col_slopes,
                                                         nbins=setts.nbins_linearity,

@@ -7,6 +7,9 @@ csv_input_base_dir = 'csv_input_files/'
 clean_run = False  # if [True]: all needed files will be produced even if they exist
 get_extra_plots = False
 get_by_fill_by_run_plots = False
+# skipping lines when reading input file
+rows_to_skip_in_csv = 1
+rows_to_skip_at_the_end = 5
 # -*-*-*-*-*-*-*-*-*-*-*- > > > Plotting settings < < < -*-*-*-*-*-*-*-*-*-*-*-
 
 cms_label_pos_sq = (0.008, 1.02)
@@ -41,6 +44,8 @@ leg_vs_plots_marker_scale = 7  # -> marker_in_legend/...in_plot scale
 
 # axis configuration:
 axis_labelpad = 20
+axis_labelpad_x = 20
+axis_labelpad_y = 8
 axis_weight = 'bold'
 
 axis_case_size = {
@@ -56,12 +61,16 @@ axis_thicks_case_size = {
 # ratio_max = 1.40
 ratio_min = 0.95
 ratio_max = 1.05
-# ratio_min = 0.70
-# ratio_max = 1.30
-ratio_interval_reduction_factor = 0.10
+# ratio_min = 0.90
+# ratio_max = 1.10
+# ratio_min = 0.80
+# ratio_max = 1.20
+ratio_interval_reduction_factor = 0.0
 ratio_min_reduced = ratio_min + ratio_interval_reduction_factor
 ratio_max_reduced = ratio_max - ratio_interval_reduction_factor
 nbins = 300
+nbins_by_run = 150
+nbins_by_fill = 50
 nbins_linearity = 150
 nbins_sbil_histo = 50
 
@@ -76,7 +85,7 @@ rangeFillYearly = {
     (2015, 5): [4634, 4647],
     (2015, 13): [3829, 4720],
     (2016, 13): [4856, 5575],
-    (2017, 5): [6381, 6398],
+    (2017, 5): [6380, 6398],
     (2017, 13): [5698, 6417],
     (2018, 13): [6570, 7407]
 }
@@ -113,6 +122,7 @@ limits_linearity_slopes_year = {
     (2015, 13): (-0.05, 0.05),
     (2016, 13): (-0.01, 0.01),
     (2017, 13): (-0.01, 0.01),
+    (2017, 5): (-0.01, 0.01),
     (2018, 13): (-0.05, 0.05)
 }
 
