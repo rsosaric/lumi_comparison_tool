@@ -4,19 +4,20 @@ import pandas as pd
 import settings as setts
 from tools import lumi_tools as ltools
 import tools.plotting_tools as plotting
-
+import warnings
 
 class DetectorsRatio(L):
 
     def __init__(self, det1: L, det2: L, year: str = None, energy: str = None,
                  fill_nls_data: bool = True, fill_stats=True, c_years=False,
                  nls=None, only_stats: bool = False, lumi_type: str = 'rec',
-                 compute_by_run_by_fill: bool = False) -> None:
+                 compute_by_run_by_fill: bool = False, fill_norm_ratios: bool = False) -> None:
 
         self.__detcs = (det1, det2)
         self.__only_stats = only_stats
         self.__compute_by_run_by_fill = compute_by_run_by_fill
         self.__stats_DF = None
+        self.__normalized_data_filled = False
 
         if lumi_type == 'rec':
             self.__label_det1_lumi_to_use = det1.lumi_rec_label
@@ -81,7 +82,9 @@ class DetectorsRatio(L):
             self.__year_energy_label = str(self.energy) + 'TeV(' + str(self.year) + ')'
 
         self.__label_ratio = det1.name + '/' + det2.name
+        self.__label_ratio_norm = det1.name + '/' + det2.name + "_norm"
         self.__by_nls_label_ratio = 'by_' + str(self.__nls) + 'nls_' + self.__label_ratio
+        self.__by_nls_label_ratio_norm = 'by_' + str(self.__nls) + 'nls_' + self.__label_ratio + "_norm"
         self.__lumi_unit = det2.lumi_unit
         self.__det1 = det1
         self.__det2 = det2
@@ -89,6 +92,7 @@ class DetectorsRatio(L):
         self.__by_nls_lumi_label2 = self.__label_det2_lumi_to_use + '_by_' + str(self.__nls) + 'nls'
         self.__by_nls_label_ratio_err = self.__by_nls_label_ratio + '_err'
         self.__by_nls_lumi_label = 'by_' + str(self.__nls) + 'nls_lumi_' + self.__label_ratio
+        self.__by_nls_lumi_label_norm = 'by_' + str(self.__nls) + 'nls_lumi_' + self.__label_ratio + "_norm"
 
         if compute_by_run_by_fill:
             self.__by_run_lumi_label1 = self.__label_det1_lumi_to_use + '_by_run'
@@ -217,8 +221,6 @@ class DetectorsRatio(L):
             self.fill_by_period_data('run')
             self.fill_by_period_data('fill')
 
-        self.__common_data_filtered_no_nan = self.__common_data_filtered.dropna()
-
         # -> Initializing stats vars
         # single ls ratios
         self.__ratios_mean = None
@@ -251,6 +253,11 @@ class DetectorsRatio(L):
         if fill_stats:
             self.fill_stats()
 
+        if fill_norm_ratios:
+            self.fill_normalized_detector_ratios()
+
+        self.__common_data_filtered_no_nan = self.__common_data_filtered.dropna()
+
         # Initializing other variables:
         self.__plt_plots = {}
         self.__sns_plots = {}
@@ -279,7 +286,7 @@ class DetectorsRatio(L):
 
     def fill_nls_data(self):
         # compute by Nls ratios
-        print('Computing ' + self.label_ratio + ' by nls ratios ... \n')
+        print('Computing ' + self.label_ratio + ' by nls ratios ...')
 
         nls = self.__nls
         inls = 0
@@ -338,7 +345,7 @@ class DetectorsRatio(L):
     def fill_by_period_data(self, period: str):
         # Currently period can be only run or fill
         # compute by x ratios
-        print('Computing ' + self.label_ratio + ' by ' + period + ' ratios ... \n')
+        print('Computing ' + self.label_ratio + ' by ' + period + ' ratios ...')
 
         sum_lumi1 = 0.0
         sum_lumi2 = 0.0
@@ -420,7 +427,7 @@ class DetectorsRatio(L):
         if not self.all_data_analysis_included:
             raise AssertionError("It is impossible running this function without loading _all.csv data")
 
-        print('Computing ' + self.label_ratio + '(all data) by nls ratios ... \n')
+        print('Computing ' + self.label_ratio + '(all data) by nls ratios ...')
 
         nls = self.__nls
         inls = 0
@@ -505,32 +512,31 @@ class DetectorsRatio(L):
         data_to_use[self.__by_nls_exclusion_percent_label] = np.array(by_nls_exclusion_percent_list)
 
     def fill_stats(self):
-        data = self.common_data_filtered
+        print("Computing " + self.label_ratio + " statistics ...")
+        data_to_use = self.common_data_filtered
         stats_names = []
         stats_values = []
-
         # non_weighted_stats
-        self.__ratios_unfiltered_mean = self.__common_data[self.label_ratio].mean()
-        self.__ratios_mean = self.__common_data_filtered[self.label_ratio].mean()
-        self.__ratios_unfiltered_stdv = self.__common_data[self.label_ratio].std()
-        self.__ratios_stdv = self.__common_data_filtered[self.label_ratio].std()
-
-        self.__nls_ratios_mean = self.__common_data_filtered[self.by_nls_label_ratio].mean()
-        self.__nls_ratios_stdv = self.__common_data_filtered[self.by_nls_label_ratio].std()
-
-        lw_stats = ltools.get_w_stats(data[self.label_ratio], data[self.__label_det2_lumi_to_use],
+        self.__ratios_unfiltered_mean = data_to_use[self.label_ratio].mean()
+        self.__ratios_mean = data_to_use[self.label_ratio].mean()
+        self.__ratios_unfiltered_stdv = data_to_use[self.label_ratio].std()
+        self.__ratios_stdv = data_to_use[self.label_ratio].std()
+        self.__nls_ratios_mean = data_to_use[self.by_nls_label_ratio].mean()
+        self.__nls_ratios_stdv = data_to_use[self.by_nls_label_ratio].std()
+        lw_stats = ltools.get_w_stats(data_to_use[self.label_ratio], data_to_use[self.__label_det2_lumi_to_use],
                                       min_val=setts.ratio_min, max_val=setts.ratio_max)
-        nls_lw_stats = ltools.get_w_stats(data[self.by_nls_label_ratio], data[self.by_nls_lumi_label],
+        nls_lw_stats = ltools.get_w_stats(data_to_use[self.by_nls_label_ratio], data_to_use[self.by_nls_lumi_label],
                                           min_val=setts.ratio_min, max_val=setts.ratio_max)
-
         if self.__compute_by_run_by_fill:
-            self.__by_run_ratios_mean = self.__common_data_filtered[self.__by_run_label_ratio].mean()
-            self.__by_run_ratios_stdv = self.__common_data_filtered[self.__by_run_label_ratio].std()
-            self.__by_fill_ratios_mean = self.__common_data_filtered[self.__by_fill_label_ratio].mean()
-            self.__by_fill_ratios_stdv = self.__common_data_filtered[self.__by_fill_label_ratio].std()
-            by_run_lw_stats = ltools.get_w_stats(data[self.__by_run_label_ratio], data[self.__by_run_lumi_label],
+            self.__by_run_ratios_mean = data_to_use[self.__by_run_label_ratio].mean()
+            self.__by_run_ratios_stdv = data_to_use[self.__by_run_label_ratio].std()
+            self.__by_fill_ratios_mean = data_to_use[self.__by_fill_label_ratio].mean()
+            self.__by_fill_ratios_stdv = data_to_use[self.__by_fill_label_ratio].std()
+            by_run_lw_stats = ltools.get_w_stats(data_to_use[self.__by_run_label_ratio],
+                                                 data_to_use[self.__by_run_lumi_label],
                                                  min_val=setts.ratio_min, max_val=setts.ratio_max)
-            by_fill_lw_stats = ltools.get_w_stats(data[self.__by_fill_label_ratio], data[self.__by_fill_lumi_label],
+            by_fill_lw_stats = ltools.get_w_stats(data_to_use[self.__by_fill_label_ratio],
+                                                  data_to_use[self.__by_fill_lumi_label],
                                                   min_val=setts.ratio_min, max_val=setts.ratio_max)
             self.__by_run_lw_mean = by_run_lw_stats.mean
             self.__by_run_lw_mean_error = by_run_lw_stats.std_mean
@@ -542,7 +548,6 @@ class DetectorsRatio(L):
         self.__ratios_lw_mean = lw_stats.mean
         self.__ratios_lw_mean_error = lw_stats.std_mean
         self.__ratios_lw_stdv = lw_stats.std
-
         self.__nls_ratios_lw_mean = nls_lw_stats.mean
         self.__nls_ratios_lw_mean_error = nls_lw_stats.std_mean
         self.__nls_ratios_lw_stdv = nls_lw_stats.std
@@ -577,6 +582,28 @@ class DetectorsRatio(L):
         for col_id in range(0, len(stats_names)):
             self.__stats_DF[stats_names[col_id]] = [stats_values[col_id]]
         self.save_stats_to_file()
+
+    def fill_normalized_detector_ratios(self):
+        print("Adding " + self.label_ratio + " normalized data ...")
+        # pd.options.mode.chained_assignment = None
+        data_to_use = self.__common_data_filtered
+        ratio_mean_factor = self.__ratios_mean
+        by_nls_ratio_mean_factor = self.__nls_ratios_mean
+
+        ratios = []
+        nls_ratios = []
+
+        for index_data in range(0, len(data_to_use)):
+            ratios.append(data_to_use[self.__label_ratio][index_data]/ratio_mean_factor)
+            nls_ratios.append(data_to_use[self.__by_nls_label_ratio][index_data]/by_nls_ratio_mean_factor)
+
+        data_to_use[self.__label_ratio_norm] = np.array(ratios)
+        data_to_use[self.__by_nls_label_ratio_norm] = np.array(nls_ratios)
+
+        # data_to_use[self.__label_ratio_norm] = data_to_use[self.__label_ratio] / ratio_mean_factor
+        # data_to_use[self.__by_nls_label_ratio_norm] = data_to_use[self.__by_nls_label_ratio] / by_nls_ratio_mean_factor
+
+        self.__normalized_data_filled = True
 
     # TODO: implement def fill_equal_lumi_data(self):
 
@@ -615,13 +642,13 @@ class DetectorsRatio(L):
         ratio_hist = plotting.hist_from_pandas_frame(data_frame=self.common_data_filtered,
                                                      col_label=self.by_nls_label_ratio,
                                                      nbins=setts.nbins,
-                                                     xlabel=self.__label_ratio + " ratios in " + str(
-                                                         self.__nls) + ' LS',
+                                                     xlabel=self.__label_ratio + " ratio (" + str(
+                                                         self.__nls) + ' LS)',
                                                      ylabel='Counts',
                                                      # title='by Nls Detectors Ratios Histogram',
                                                      xmin=setts.ratio_min, xmax=setts.ratio_max,
                                                      mean=self.__nls_ratios_mean, stdv=self.__nls_ratios_stdv,
-                                                     err_mean=self.__nls_ratios_lw_mean_error,
+                                                     # err_mean=self.__nls_ratios_lw_mean_error,
                                                      energy_year_label=self.__year_energy_label)
         self.__plt_plots['ratio_nls_hist'] = ratio_hist[0][0].get_figure()
 
@@ -641,6 +668,25 @@ class DetectorsRatio(L):
                                                              energy_year_label=self.__year_energy_label,
                                                              weight_label=self.__by_nls_lumi_label)
         self.__plt_plots['nls_ratio_hist_lw'] = ratio_hist_lumi2_w[0][0].get_figure()
+
+    def plot_nls_ratio_hist_weighted_norm(self):
+        if self.__normalized_data_filled:
+            ratio_hist_lumi2_w = plotting.hist_from_pandas_frame(data_frame=self.__common_data_filtered_no_nan,
+                                                                 col_label=self.__by_nls_label_ratio_norm,
+                                                                 nbins=setts.nbins,
+                                                                 xlabel=self.__label_ratio + " ratios in " + str(
+                                                                     self.__nls) + ' LS',
+                                                                 ylabel="Integrated luminosity [$" +
+                                                                        self.lumi_unit + "^{-1}$]",
+                                                                 # title='Detectors Ratios Histogram (lumi weighted)',
+                                                                 xmin=setts.ratio_min, xmax=setts.ratio_max,
+                                                                 stdv=self.__nls_ratios_lw_stdv,
+                                                                 # err_mean=self.__nls_ratios_lw_mean_error,
+                                                                 energy_year_label=self.__year_energy_label,
+                                                                 weight_label=self.__by_nls_lumi_label)
+            self.__plt_plots['normalized_nls_ratio_hist_lw'] = ratio_hist_lumi2_w[0][0].get_figure()
+        else:
+            warnings.warn("No normalized data has been filled. Plot normalized_nls_ratio_hist_lw won't be produced")
 
     def plot_ratio_vs_time(self):
         ratio_vs_time = plotting.scatter_plot_from_pandas_frame(data_frame=self.__common_data_filtered,
@@ -716,6 +762,21 @@ class DetectorsRatio(L):
                                                                ymin=setts.ratio_min, ymax=setts.ratio_max,
                                                                energy_year_label=self.__year_energy_label)
         self.__plt_plots['by_nls_ratio_vs_run'] = ratio_vs_run.get_figure()
+
+    def plot_nls_ratio_vs_lumi2_norm(self):
+        if self.__normalized_data_filled:
+            ratio_vs_lumi = plotting.scatter_plot_from_pandas_frame(data_frame=self.common_data_filtered_no_nan,
+                                                                    y_data_label=self.__by_nls_label_ratio_norm,
+                                                                    x_data_label=self.accumulated_lumi2_label,
+                                                                    xlabel="Integrated luminosity [$" +
+                                                                           self.lumi_unit + "^{-1}$]",
+                                                                    ylabel=self.__label_ratio + " ratios in " +
+                                                                           str(self.__nls) + ' LS',
+                                                                    ymin=setts.ratio_min, ymax=setts.ratio_max,
+                                                                    energy_year_label=self.__year_energy_label)
+            self.__plt_plots['normalized_by_nls_ratio_vs_lumi2'] = ratio_vs_lumi.get_figure()
+        else:
+            warnings.warn("No normalized data has been filled. Plot normalized_by_nls_ratio_vs_lumi2 won't be produced")
 
     def plot_nls_ratio_vs_fill(self):
         ratio_vs_fill = plotting.scatter_plot_from_pandas_frame(data_frame=self.common_data_filtered,
@@ -1065,6 +1126,10 @@ class DetectorsRatio(L):
         return self.__by_nls_lumi_label
 
     @property
+    def by_nls_label_ratio_norm(self):
+        return self.__by_nls_label_ratio_norm
+
+    @property
     def det1(self):
         return self.__det1
 
@@ -1215,7 +1280,8 @@ class DetectorsRatio(L):
 # TODO: make numb of detectors automatic
 class MultipleDetectorsRatio:
     def __init__(self, det1: L, det2: L, det3: L, lumi_type: str,
-                 year: str = None, energy: str = None, c_years=False) -> None:
+                 year: str = None, energy: str = None, c_years=False,
+                 nls: int = None, fill_norm_ratios: bool = False) -> None:
 
         self.__dets = [det1, det2, det3]
         number_of_dets = len(self.__dets)
@@ -1269,15 +1335,17 @@ class MultipleDetectorsRatio:
             for j in range(i + 1, number_of_dets):
                 print('Setting ' + str(self.__dets[i].name) + '/' + str(self.__dets[j].name) + ' ...')
                 self.__ratios.append(DetectorsRatio(self.__dets[i], self.__dets[j],
-                                                    lumi_type=lumi_type))
+                                                    lumi_type=lumi_type, fill_norm_ratios=fill_norm_ratios))
 
         self.__ref_ratio = self.__ratios[len(self.__ratios) - 1]
         self.__nls = self.__ref_ratio.nls
 
         self.__nls_ratio_col_names = []
+        self.__nls_norm_ratio_col_names = []
         self.__ratio_plotting_labels = []
         for i_ratio in self.__ratios:
             self.__nls_ratio_col_names.append(i_ratio.by_nls_label_ratio)
+            self.__nls_norm_ratio_col_names.append(i_ratio.by_nls_label_ratio_norm)
             self.__ratio_plotting_labels.append(i_ratio.label_ratio)
         self.__lumi3_col_name = self.__ref_ratio.accumulated_lumi2_label
         self.__ratio_col_names = self.__ratio_plotting_labels
@@ -1286,7 +1354,8 @@ class MultipleDetectorsRatio:
 
         # TODO: Make this automatic for the number of detectors
         if len(self.__dets) == 3:
-            merge_tmp = pd.merge(self.__ratios[0].common_data_filtered, self.__ratios[1].common_data_filtered,
+            merge_tmp = pd.merge(self.__ratios[0].common_data_filtered,
+                                 self.__ratios[1].common_data_filtered,
                                  on=keys_for_merging,
                                  how='outer').merge(self.__ratios[2].common_data_filtered,
                                                     on=keys_for_merging, how='outer')
@@ -1378,6 +1447,21 @@ class MultipleDetectorsRatio:
                                                                       legend_labels=[self.__ratio_plotting_labels[1],
                                                                                      self.__ratio_plotting_labels[2]])
         self.__plt_plots['nls_ratios_vs_lumi3_only2'] = nls_ratios_vs_lumi3.get_figure()
+
+    def plot_nls_ratios_vs_lumi3_only2_norm(self):
+        print('creating nls_ratios_vs_lumi3_only2_norm plot ...')
+        nls_ratios_vs_lumi3 = plotting.scatter_plot_from_pandas_frame(data_frame=self.combined_data,
+                                                                      y_data_label=[self.__nls_norm_ratio_col_names[1],
+                                                                                    self.__nls_norm_ratio_col_names[2]],
+                                                                      x_data_label=self.__lumi3_col_name,
+                                                                      ylabel="ratios in " + str(self.__nls) + ' LS',
+                                                                      xlabel="Integrated luminosity [$" +
+                                                                             self.__lumi_unit + "^{-1}$]",
+                                                                      ymin=setts.ratio_min, ymax=setts.ratio_max,
+                                                                      energy_year_label=self.__year_energy_label,
+                                                                      legend_labels=[self.__ratio_plotting_labels[1],
+                                                                                     self.__ratio_plotting_labels[2]])
+        self.__plt_plots['normalized_nls_ratios_vs_lumi3_only2'] = nls_ratios_vs_lumi3.get_figure()
 
     def plot_ratios_vs_run(self):
         print('creating ratios_vs_run plot ...')

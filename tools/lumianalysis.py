@@ -9,7 +9,7 @@ from tools import full_run_utilities as frutils
 class LAnalysis:
     def __init__(self, dets_file_labels: list, input_dir: str, lumi_type: str,
                  mixed_data=False, run_stddev_test=False, c_years=False,
-                 exclusion=False, all_and_excluded_analysis=False) -> None:
+                 exclusion=False, all_and_excluded_analysis=False, nls_def: int = None) -> None:
 
         n_files = 0
 
@@ -46,10 +46,12 @@ class LAnalysis:
                 for i in range(2, len(years_and_dir), 1):
                     years = years + ',' + years_and_dir[i]
                 ratios12 = Ratios(detcs[0], detcs[1], year=years, c_years=c_years, lumi_type=lumi_type,
-                                  compute_by_run_by_fill=setts.get_by_fill_by_run_plots)
+                                  compute_by_run_by_fill=setts.get_by_fill_by_run_plots, nls=nls_def,
+                                  fill_norm_ratios=setts.get_normalized_plots)
             else:
                 ratios12 = Ratios(detcs[0], detcs[1], lumi_type=lumi_type,
-                                  compute_by_run_by_fill=setts.get_by_fill_by_run_plots)
+                                  compute_by_run_by_fill=setts.get_by_fill_by_run_plots, nls=nls_def,
+                                  fill_norm_ratios=setts.get_normalized_plots)
 
             if run_stddev_test:
                 # nls vs. Standard deviation test
@@ -68,6 +70,10 @@ class LAnalysis:
             ratios12.plot_nls_ratio_hist()
             ratios12.plot_ratio_hist_weighted()
             ratios12.plot_nls_ratio_hist_weighted()
+
+            if setts.get_normalized_plots:
+                ratios12.plot_nls_ratio_hist_weighted_norm()
+                ratios12.plot_nls_ratio_vs_lumi2_norm()
 
             # Extra
             if setts.get_extra_plots:
@@ -100,9 +106,11 @@ class LAnalysis:
                 years = years_and_dir[1]
                 for i in range(2, len(years_and_dir), 1):
                     years = years + ',' + years_and_dir[i]
-                ratios123 = MRatios(detcs[0], detcs[1], detcs[2], year=years, c_years=c_years, lumi_type=lumi_type)
+                MRatios(detcs[0], detcs[1], detcs[2], year=years, c_years=c_years, lumi_type=lumi_type,
+                        fill_norm_ratios=setts.get_normalized_plots)
             else:
-                ratios123 = MRatios(detcs[0], detcs[1], detcs[2], lumi_type=lumi_type)
+                ratios123 = MRatios(detcs[0], detcs[1], detcs[2], lumi_type=lumi_type,
+                                    fill_norm_ratios=setts.get_normalized_plots)
 
             # Fill plots
             ratios123.plot_nls_ratios_vs_date()
@@ -119,6 +127,9 @@ class LAnalysis:
 
             if all_and_excluded_analysis:
                 ratios123.plot_all_and_excluded_vs_lumi2()
+
+            if setts.get_normalized_plots:
+                ratios123.plot_nls_ratios_vs_lumi3_only2_norm()
 
             # Save plots
             ratios123.save_plots()

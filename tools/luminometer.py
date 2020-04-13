@@ -18,7 +18,7 @@ class Luminometer:
     def __init__(self, name: str, data_file_name: str, full_data_analysis: bool = False,
                  mixed_data=False, remove_extra_cols: bool = True, split_run_fill_ls_cols: bool = True) -> None:
         # name contains detector name+possible calibration tag. Example:pcc18v3
-        self.name = name
+        self.name = name.upper()
         self.__all_data_analysis_included = full_data_analysis
         self.__mixed_data = mixed_data
         self.__lumi_unit = Luminometer.__lumi_unit

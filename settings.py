@@ -1,12 +1,13 @@
 # -*-*-*-*-*-*-*-*-*-*-*- > > > General settings < < < -*-*-*-*-*-*-*-*-*-*-*-
-# work_status = 'Preliminary'
-work_status = 'Work in Progress'
+work_status = 'Preliminary'
+# work_status = 'Work in Progress'
 # work_status = ""
 experiment = 'CMS'
 csv_input_base_dir = 'csv_input_files/'
-clean_run = False  # if [True]: all needed files will be produced even if they exist
+clean_run = True  # Currently only used in best data comparison if [True]: all needed files will be produced even if they exist.
 get_extra_plots = False
 get_by_fill_by_run_plots = False
+get_normalized_plots = True
 # skipping lines when reading input file
 rows_to_skip_in_csv = 1
 rows_to_skip_at_the_end = 5
@@ -57,18 +58,29 @@ axis_thicks_case_size = {
     'nsq': 13
 }
 
-# ratio_min = 0.60
-# ratio_max = 1.40
+# ratio_min = 0.995
+# ratio_max = 1.005
+
+# ratio_min = 0.98
+# ratio_max = 1.02
+
 ratio_min = 0.95
 ratio_max = 1.05
+
 # ratio_min = 0.90
 # ratio_max = 1.10
+
 # ratio_min = 0.80
 # ratio_max = 1.20
+
+# ratio_min = 0.60
+# ratio_max = 1.40
+
+
 ratio_interval_reduction_factor = 0.0
 ratio_min_reduced = ratio_min + ratio_interval_reduction_factor
 ratio_max_reduced = ratio_max - ratio_interval_reduction_factor
-nbins = 300
+nbins = 200
 nbins_by_run = 150
 nbins_by_fill = 50
 nbins_linearity = 150
@@ -87,6 +99,7 @@ rangeFillYearly = {
     (2016, 13): [4856, 5575],
     (2017, 5): [6380, 6398],
     (2017, 13): [5698, 6417],
+    (2018, 5): [7427, 7492],
     (2018, 13): [6570, 7407]
 }
 
@@ -105,6 +118,7 @@ nls_year = {
     (2016, 13): 50,
     (2017, 5): 15,
     (2017, 13): 50,
+    (2018, 5): 20,
     (2018, 13): 50
 }
 nls_for_lin_year = {
@@ -156,8 +170,9 @@ by_nls_exclusion_threshold = 50.  # percent of excluded points in the nls interv
 
 
 # -*-*-*-*-*-*-*-*-*-*-*- > > > tests options < < < -*-*-*-*-*-*-*-*-*-*-*-
-nls_list_to_test = (5, 10, 15, 50, 100, 150, 200, 400)
+# nls_list_to_test = (5, 10, 15, 50, 100, 150, 200, 400)
 # nls_list_to_test = (5, 10, 15, 50, 70, 100, 150)
+nls_list_to_test = (1, 5, 10, 15, 30, 50)
 
 # -*-*-*-*-*-*-*-*-*-*-*- > > > Other Settings and helpers < < < -*-*-*-*-*-*-*-*-*-*-*-
 class bcolors:

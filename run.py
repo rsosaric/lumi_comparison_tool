@@ -24,6 +24,7 @@ p.add_option("-e", "--exclusion", action="store_true", help="Find bad detector b
 p.add_option("--ramses_crosscal", action="store_true", help="RAMSES cross-calibration", dest="ramses_crosscal", default=False)
 p.add_option("--lumi_type", type="string", help="Use rec(recorded) or del(delivered) lumi for the analysis",
              dest="lumi_type", default='rec')
+p.add_option("--nls", type="string", help="by nls granularity", dest="nls", default=None)
 
 (options, args) = p.parse_args()
 
@@ -43,6 +44,10 @@ else:
 if options.test:
     print("Tests ON!")
 
+if options.nls:
+    options.nls = int(options.nls)
+else:
+    print("No nls value was given. Taking nls value from settings.")
 
 if options.physics:
     physics_analysis = BestDataAnalysis(dets_file_labels=args, input_dir=base_input_path, lumi_type=options.lumi_type,
@@ -58,5 +63,6 @@ elif options.exclusion:
 else:
     lumi_analysis = Lumi(dets_file_labels=args, input_dir=base_input_path, lumi_type=options.lumi_type,
                          mixed_data=options.mixed, run_stddev_test=options.test, c_years=several_years,
-                         all_and_excluded_analysis=options.all, exclusion=options.exclusion)
+                         all_and_excluded_analysis=options.all, exclusion=options.exclusion,
+                         nls_def=options.nls)
 
