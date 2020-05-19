@@ -6,12 +6,15 @@ import settings as setts
 import numpy as np
 import pandas as pd
 from scipy.optimize import curve_fit
+from lmfit import Model
 import matplotlib.pyplot as plt
-import statsmodels.api as sm
 
 
 def lin_func(x, a, b):
     return a * x + b
+
+
+lin_model = Model(lin_func)
 
 
 class LinearityAnalysis:
@@ -99,10 +102,18 @@ class LinearityAnalysis:
 
         self.__year_energy_label = ratios.year_energy_label
         self.__label_ratio = ratios.label_ratio
+        self.__label_norm_by_fill_ratio = self.__label_ratio + "_by_fill_norm"
+        self.__label_norm_by_nls_by_fill_ratio = self.__label_ratio + "by_nls_by_fill_norm"
         self.__label_lumi = ratios.lumi2_label
 
+        # Contains the data for each fill
         self.__by_fill_data = {}
+        # Contains the data properties (mean, slope, etc) for each fill
         self.__by_fill_df = pd.DataFrame()
+        # mean and by nls mean for each fill
+        self.__by_fill_means = {}
+        self.__label_mean_by_fill = self.__label_ratio + "_mean_by_fill"
+        self.__label_by_nls_mean_by_fill = self.__label_ratio + "by_nls_mean_by_fill"
         self.__by_fill_df_all = pd.DataFrame()
         self.__by_fill_lumi = []
         self.__by_fill_stats = {}
@@ -123,6 +134,7 @@ class LinearityAnalysis:
         self.__by_fill_nls_slopes_mean_totalw = None
         self.__by_fill_nls_slopes_stdv_totalw = None
         self.__excluded_fills_in_running = []
+        self.__good_fills = []
 
         self.__by_run_data = {}
         self.__by_run_mean = {}
@@ -130,11 +142,15 @@ class LinearityAnalysis:
 
         self.create_by_run_data()
         self.create_by_fill_data()
+        self.get_normalize_by_fill_data()
+        self.fit_all_data()
 
         # print(self.__by_fill_df)
 
         self.plot_hist_sbil()
         self.plot_ratio_vs_all_data_sbil()
+        self.plot_by_fill_norm_ratio_vs_all_data_sbil()
+        self.plot_by_nls_by_fill_norm_ratio_vs_all_data_sbil()
         self.save_plots()
 
     def create_by_fill_data(self):
@@ -149,10 +165,15 @@ class LinearityAnalysis:
             self.__by_fill_data[fill] = self.__lin_data[self.__lin_data['fill'] == fill]
             # get stats for each fill
             self.__by_fill_stats[fill] = Stats(self.__by_fill_data[fill])
+            mean_ratio = self.__by_fill_stats[fill].mean[self.__label_ratio]
+            mean_by_nls_ratio = self.__by_fill_stats[fill].mean[self.__nls_ratio_label]
+            stdv_ratio = self.__by_fill_stats[fill].stdv[self.__label_ratio]
+
+            self.__by_fill_means[fill] = {self.__label_mean_by_fill: mean_ratio,
+                                          self.__label_by_nls_mean_by_fill: mean_by_nls_ratio}
+
             # remove outliers
             if setts.remove_outliers_in_lin_by_fill:
-                mean_ratio = self.__by_fill_stats[fill].mean[self.__label_ratio]
-                stdv_ratio = self.__by_fill_stats[fill].stdv[self.__label_ratio]
                 min_ratio_val = mean_ratio - setts.allowed_ratio_stdv_factor * stdv_ratio
                 max_ratio_val = mean_ratio + setts.allowed_ratio_stdv_factor * stdv_ratio
 
@@ -172,17 +193,21 @@ class LinearityAnalysis:
                 exclude_fill = True
 
             # Fitting
-            if exclude_fill != True:
+            if not exclude_fill:
                 fitted_data_ini = len(self.__by_fill_slopes)
                 self.fill_fitting(fill)
                 fitted_data_changed = len(self.__by_fill_slopes)
+
                 if fitted_data_changed == fitted_data_ini + 1:
                     good_fills.append(fill)
                     self.__by_fill_lumi.append(np.sum(self.__by_fill_data[fill][self.__label_lumi]))
                 else:
                     print("     -->> Fill " + str(fill) + " not included in final results.")
+            else:
+                print("     -->> Fill " + str(fill) + " not included in final results.")
 
         if len(good_fills) == len(self.__by_fill_lumi) and len(good_fills) == len(self.__by_fill_slopes):
+            self.__good_fills = good_fills
             self.__by_fill_df[self.__label_col_fill] = good_fills
             self.__by_fill_df[self.__label_col_fill_lumi] = self.__by_fill_lumi
             self.__by_fill_df[self.__label_col_slopes] = self.__by_fill_slopes
@@ -193,8 +218,9 @@ class LinearityAnalysis:
             self.__by_fill_df.replace([np.inf, -np.inf], np.nan, inplace=True)
             self.__by_fill_df.dropna(inplace=True)
 
-            self.__by_fill_df[self.__label_col_total_w] = ltools.get_total_weights(self.__by_fill_df[self.__label_col_fill_lumi],
-                                                                                   self.__by_fill_df[self.__label_col_nls_slopes_err])
+            self.__by_fill_df[self.__label_col_total_w] = ltools.get_total_weights(
+                self.__by_fill_df[self.__label_col_fill_lumi],
+                self.__by_fill_df[self.__label_col_nls_slopes_err])
         else:
             raise AssertionError("ERROR in create_by_fill_data(): lengths of good_fills, by_fill_slopes and "
                                  "by_fill_lumi do not match! ")
@@ -265,7 +291,7 @@ class LinearityAnalysis:
                                                   xmax=self.__max_allowed_slope,
                                                   mean_float_format="{0:.4f}"
                                                   )
-        
+
         slope_hist_lw = plotting.hist_from_pandas_frame(data_frame=self.__by_fill_df,
                                                         col_label=self.__label_col_slopes,
                                                         nbins=setts.nbins_linearity,
@@ -347,8 +373,68 @@ class LinearityAnalysis:
             self.__by_run_mean[run] = stats.mean[self.__label_ratio]
             self.__by_run_std[run] = stats.stdv[self.__label_ratio]
 
+    def get_normalize_by_fill_data(self):
+        print('Normalizing all fills data ...')
+        norm_ratios = []
+        norm_nls_ratios = []
+
+        for index_data in range(0, len(self.__lin_data)):
+            fill = self.__lin_data['fill'][index_data]
+
+            mean = self.__by_fill_means[fill][self.__label_mean_by_fill]
+            mean_nls = self.__by_fill_means[fill][self.__label_by_nls_mean_by_fill]
+            norm_ratios.append(self.__lin_data[self.__label_ratio][index_data]/mean)
+            norm_nls_ratios.append(self.__lin_data[self.__nls_ratio_label][index_data]/mean_nls)
+
+        self.__lin_data[self.__label_norm_by_fill_ratio] = np.array(norm_ratios)
+        self.__lin_data[self.__label_norm_by_nls_by_fill_ratio] = np.array(norm_nls_ratios)
+
     # do this in detectors ratios
     # def correct_by_run_instabilities(self):
+
+    def fit_all_data(self) -> None:
+        if len(self.__lin_data[self.__label_norm_by_nls_by_fill_ratio]) == 0:
+            raise AssertionError("norm_by_nls_by_fill_ratio data is needed")
+
+        to_fit_data_nls = pd.DataFrame()
+
+        to_fit_data_nls["x_nls"] = self.__lin_data[self.__nls_sbil_label]
+        to_fit_data_nls["y_nls"] = self.__lin_data[self.__nls_ratio_label]
+        to_fit_data_nls["ey_nls"] = self.__lin_data[self.__by_nls_label_ratio_err]
+
+        to_fit_data_nls.dropna(inplace=True)
+
+        # Extra exclusion for by nls
+        min_ratio_val = setts.ratio_min
+        max_ratio_val = setts.ratio_max
+        to_fit_data_nls = to_fit_data_nls[
+            (to_fit_data_nls["y_nls"] >= min_ratio_val) &
+            (to_fit_data_nls["y_nls"] <= max_ratio_val) &
+            (to_fit_data_nls["ey_nls"] > 0.0)]
+
+        x = to_fit_data_nls["x_nls"]
+        y = to_fit_data_nls["y_nls"]
+        ey = to_fit_data_nls["ey_nls"]
+
+        result_fit = lin_model.fit(y, x=x, a=1, b=1, weights=1.0/ey)
+
+        slope = result_fit.params['a'].value
+        slope_err = result_fit.params['a'].stderr
+        intercept = result_fit.params['b'].value
+        chi2 = result_fit.redchi
+
+        nls_fig = plotting.plot_from_fit(x, y, y_err=ey,
+                                         fitted_slope=slope, chi2=chi2,
+                                         fitted_slope_err=slope_err,
+                                         fitted_intercept=intercept,
+                                         fitted_f=lin_func,
+                                         xlabel="SBIL [hz/" + r'$\mu$' + "b]",
+                                         ylabel=self.__label_ratio + " ratios in " +
+                                                str(self.__nls) + ' LS',
+                                         energy_year_label=self.__year_energy_label)
+
+        nls_fig.savefig(self.__output_dir + "all_by_nls_data_fit")
+        plt.close(nls_fig)
 
     def fill_fitting(self, fill: int) -> None:
         print("Processing fill: " + str(fill))
@@ -372,7 +458,8 @@ class LinearityAnalysis:
         max_ratio_val = setts.ratio_max
         to_fit_data_nls = to_fit_data_nls[
             (to_fit_data_nls["y_nls"] >= min_ratio_val) &
-            (to_fit_data_nls["y_nls"] <= max_ratio_val)]
+            (to_fit_data_nls["y_nls"] <= max_ratio_val) &
+            (to_fit_data_nls["ey_nls"] > 0.0)]
 
         x_nls = to_fit_data_nls["x_nls"]
         y_nls = to_fit_data_nls["y_nls"]
@@ -380,31 +467,37 @@ class LinearityAnalysis:
         x = to_fit_data["x"]
         y = to_fit_data["y"]
 
-        popt, pcov = curve_fit(lin_func, x, y)
-        slope = popt[0]
-        slope_err = np.sqrt(pcov[0, 0])
-        intercept = popt[1]
-        # intercept_err = np.sqrt(pcov[1, 1])
+        # popt, pcov = curve_fit(lin_func, x, y)
+        result_fit = lin_model.fit(y, x=x, a=1, b=1)
 
-        # get chi2
-        # chi_squared = numpy.sum(((lin_func(x, *popt)-y)/xerror)**2)
+        slope = result_fit.params['a'].value
+        slope_err = result_fit.params['a'].stderr
+        intercept = result_fit.params['b'].value
+        chi2 = result_fit.redchi
 
-        assert(len(x_nls) == len(y_nls) == len(ey_nls))
+        assert (len(x_nls) == len(y_nls) == len(ey_nls))
         if len(x_nls) >= setts.min_num_data_to_fit:
-            nls_popt, nls_pcov = curve_fit(lin_func, x_nls, y_nls, sigma=ey_nls)
-            nls_slope = nls_popt[0]
-            nls_slope_err = np.sqrt(nls_pcov[0, 0])
-            nls_intercept = nls_popt[1]
+            # nls_popt, nls_pcov = curve_fit(lin_func, x_nls, y_nls, sigma=ey_nls)
+            # nls_slope = nls_popt[0]
+            # nls_slope_err = np.sqrt(nls_pcov[0, 0])
+            # nls_intercept = nls_popt[1]
             # nls_intercept_err = np.sqrt(nls_pcov[1, 1])
 
+            result_nls_fit = lin_model.fit(y_nls, x=x_nls, a=1, b=1, weights=1.0 / ey_nls)
+            # print(result.fit_report())
+            nls_slope = result_nls_fit.params['a'].value
+            nls_slope_err = result_nls_fit.params['a'].stderr
+            nls_intercept = result_nls_fit.params['b'].value
+            nls_chi2 = result_nls_fit.redchi
+
             fig = plotting.plot_from_fit(x, y, fitted_slope=slope, fitted_intercept=intercept,
-                                         fitted_slope_err=slope_err,
+                                         fitted_slope_err=slope_err, chi2=chi2,
                                          fitted_f=lin_func, xlabel="SBIL [hz/" + r'$\mu$' + "b]",
                                          ylabel=self.__label_ratio + " ratio",
                                          energy_year_label=self.__year_energy_label)
 
             nls_fig = plotting.plot_from_fit(x_nls, y_nls, y_err=ey_nls,
-                                             fitted_slope=nls_slope,
+                                             fitted_slope=nls_slope, chi2=nls_chi2,
                                              fitted_slope_err=nls_slope_err,
                                              fitted_intercept=nls_intercept,
                                              fitted_f=lin_func,
@@ -448,6 +541,28 @@ class LinearityAnalysis:
                                                                          energy_year_label=self.__year_energy_label,
                                                                          fig_size_shape='sq')
         self.__plt_plots['ratio_vs_all_data_sbil'] = ratio_vs_all_data_sbil.get_figure()
+
+    def plot_by_fill_norm_ratio_vs_all_data_sbil(self):
+        ratio_vs_all_data_sbil = plotting.scatter_plot_from_pandas_frame(data_frame=self.__lin_data,
+                                                                         y_data_label=self.__label_norm_by_fill_ratio,
+                                                                         x_data_label=self.__sbil_label,
+                                                                         xlabel="SBIL [hz/" + r'$\mu$' + "b]",
+                                                                         ylabel=self.__label_ratio + " ratios",
+                                                                         ymin=setts.ratio_min, ymax=setts.ratio_max,
+                                                                         energy_year_label=self.__year_energy_label,
+                                                                         fig_size_shape='sq')
+        self.__plt_plots['by_fill_norm_ratio_vs_all_data_sbil'] = ratio_vs_all_data_sbil.get_figure()
+
+    def plot_by_nls_by_fill_norm_ratio_vs_all_data_sbil(self):
+        ratio_vs_all_data_sbil = plotting.scatter_plot_from_pandas_frame(data_frame=self.__lin_data,
+                                                                         y_data_label=self.__label_norm_by_nls_by_fill_ratio,
+                                                                         x_data_label=self.__sbil_label,
+                                                                         xlabel="SBIL [hz/" + r'$\mu$' + "b]",
+                                                                         ylabel=self.__label_ratio + " ratios",
+                                                                         ymin=setts.ratio_min, ymax=setts.ratio_max,
+                                                                         energy_year_label=self.__year_energy_label,
+                                                                         fig_size_shape='sq')
+        self.__plt_plots['by_nls_by_fill_norm_ratio_vs_all_data_sbil'] = ratio_vs_all_data_sbil.get_figure()
 
     # def plot_linear_fit_by_fill(self, fill, model_fit):
     #     fill_fit_plot = plotting.plot_from_fit(self.__by_fill_data[fill], model_fit=model_fit,

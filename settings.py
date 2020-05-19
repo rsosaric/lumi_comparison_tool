@@ -7,7 +7,7 @@ csv_input_base_dir = 'csv_input_files/'
 clean_run = True  # Currently only used in best data comparison if [True]: all needed files will be produced even if they exist.
 get_extra_plots = False
 get_by_fill_by_run_plots = False
-get_normalized_plots = True
+get_normalized_plots = False
 # skipping lines when reading input file
 rows_to_skip_in_csv = 1
 rows_to_skip_at_the_end = 5
@@ -37,6 +37,7 @@ pos_leg_3 = (0.75, 0.85)
 
 # fitting info position in by fill plots
 pos_by_fill_fit_info = (0.40, 0.96)
+pos_by_fill_fit_chi2_info = (0.60, 0.90)
 
 # legends position for ratio vs X(time, date, lumi) plots
 leg_vs_plots_pos = 9  # -> 9 for 'center top'

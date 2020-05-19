@@ -188,3 +188,7 @@ def get_total_weights(*argv, normalize=True):
         temp_mult = np.true_divide(temp_mult, sum_normalized_weights_mult)
 
     return temp_mult
+
+
+def save_columns_from_pandas_to_file(data, cols, path):
+    data[cols].to_csv(path)

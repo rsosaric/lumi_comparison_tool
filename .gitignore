@@ -1,6 +1,7 @@
 *.csv
 ._*
 plots/
+plots_bpm/
 .idea/
 *.pdf
 *.png

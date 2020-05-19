@@ -1,17 +1,15 @@
 from tools.luminometer import Luminometer as L
 from tools.detectorsratio import DetectorsRatio as Ratios
-from tools.detectorsratio import MultipleDetectorsRatio as MRatios
 import settings as setts
 from tools.by_nls_test import ByNlsTest as BNLS
 from tools import full_run_utilities as frutils
+from tools.multiratios import MultipleDetectorsRatio as MRatios
 
 
 class LAnalysis:
     def __init__(self, dets_file_labels: list, input_dir: str, lumi_type: str,
                  mixed_data=False, run_stddev_test=False, c_years=False,
                  exclusion=False, all_and_excluded_analysis=False, nls_def: int = None) -> None:
-
-        n_files = 0
 
         if c_years:
             years_and_dir = input_dir.split(',')
@@ -98,22 +96,23 @@ class LAnalysis:
 
             ratios12.save_plots()
 
-        elif n_files == 3:
-            print("******** 3 detector comparison choose!! ******")
+        elif n_files >= 3:
+            print("******** multiple detector comparison!! ******")
 
             if c_years:
                 years_and_dir = input_dir.split(',')
                 years = years_and_dir[1]
                 for i in range(2, len(years_and_dir), 1):
                     years = years + ',' + years_and_dir[i]
-                MRatios(detcs[0], detcs[1], detcs[2], year=years, c_years=c_years, lumi_type=lumi_type,
-                        fill_norm_ratios=setts.get_normalized_plots)
+                ratios123 = MRatios(detcs, year=years, c_years=c_years, lumi_type=lumi_type,
+                                    fill_norm_ratios=setts.get_normalized_plots)
             else:
-                ratios123 = MRatios(detcs[0], detcs[1], detcs[2], lumi_type=lumi_type,
+                ratios123 = MRatios(detcs, lumi_type=lumi_type,
                                     fill_norm_ratios=setts.get_normalized_plots)
 
             # Fill plots
             ratios123.plot_nls_ratios_vs_date()
+            ratios123.plot_nls_ratios_vs_date_only2()
             ratios123.plot_ratios_vs_date()
 
             ratios123.plot_ratios_vs_lumi3()

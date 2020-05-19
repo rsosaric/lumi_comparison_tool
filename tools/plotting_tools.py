@@ -1,12 +1,13 @@
 import matplotlib.pyplot as plt
-
-plt.rcParams.update({'figure.max_open_warning': 0})
 import settings as setts
 import tools.lumi_tools as ltools
 from statsmodels.graphics.api import abline_plot
 import seaborn as sns
 import numpy as np
 import pandas as pd
+import pickle as pck
+
+plt.rcParams.update({'figure.max_open_warning': 0})
 
 __cms_label_pos_sq = setts.cms_label_pos_sq
 __cms_label_pos_nsq = setts.cms_label_pos_nsq
@@ -25,11 +26,16 @@ def save_py_fig_to_file(fig, output_name, plot_dpi=None):
     plt.close(fig)
 
 
-def save_plots(names_and_plots, output_name):
+def save_plots(names_and_plots, output_name, save_pickle=False):
     ltools.check_and_create_folder(output_name)
     plot_names = list(names_and_plots)
     for plot_name in plot_names:
         plot_object = names_and_plots[plot_name]
+
+        # saving figure as pickle
+        if save_pickle:
+            save_plot_as_pickle(plot_object, output_name + plot_name + '.pickle')
+
         if type(setts.plots_formats) == tuple or type(setts.plots_formats) == list:
             for plot_format in setts.plots_formats:
                 plot_full_path = output_name + plot_name + '.' + plot_format
@@ -180,13 +186,15 @@ def hist_from_array(data, nbins, title='', xlabel='', ylabel='', xmin=0.0, xmax=
 
 
 def scatter_plot_from_pandas_frame(data_frame, x_data_label, y_data_label, title='', xlabel='', ylabel='',
-                                   ymin=0.0, ymax=0.0, color='#86bf91', label_cms_status=True,
+                                   ymin=None, ymax=None, xmin=None, xmax=None,
+                                   color='#86bf91', label_cms_status=True,
                                    energy_year_label='', legend_labels=None, legend_position=setts.leg_vs_plots_pos,
                                    leg_marker_sc=setts.leg_vs_plots_marker_scale,
                                    marker_size=1.0,
                                    leg_text_s=setts.leg_vs_plots_text_s,
                                    plot_style='o',
-                                   fig_size_shape='nsq'):
+                                   fig_size_shape='nsq',
+                                   ncol_legend=None):
     fig_size = get_fig_size(fig_size_shape)
     if xlabel == '':
         xlabel = x_data_label
@@ -194,19 +202,23 @@ def scatter_plot_from_pandas_frame(data_frame, x_data_label, y_data_label, title
         ylabel = y_data_label
     fig, ax = plt.subplots()
     if type(y_data_label) == list:
-        plot = data_frame.plot(x=x_data_label, y=y_data_label, style='o', figsize=fig_size,
+        plot = data_frame.plot(x=x_data_label, y=y_data_label, style=plot_style, figsize=fig_size,
                                markersize=marker_size, ax=ax)
         if legend_labels is None:
             legend_labels = y_data_label
         else:
             assert len(legend_labels) == len(y_data_label)
-        ax.legend(legend_labels, ncol=len(legend_labels),
+
+        if not ncol_legend:
+            ncol_legend = len(legend_labels)
+
+        ax.legend(legend_labels, ncol=ncol_legend,
                   markerscale=leg_marker_sc, fontsize=leg_text_s, loc=legend_position)
     else:
         plot = data_frame.plot(x=x_data_label, y=y_data_label, style=plot_style, figsize=fig_size,
                                markersize=marker_size, legend=None, ax=ax)
     plot.set_title(title)
-    plot.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight,
+    plot.set_ylabel(ylabel, labelpad=setts.axis_labelpad - 15, weight=setts.axis_weight,
                     size=setts.axis_case_size[fig_size_shape])
     plot.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight,
                     size=setts.axis_case_size[fig_size_shape])
@@ -224,8 +236,11 @@ def scatter_plot_from_pandas_frame(data_frame, x_data_label, y_data_label, title
     # else:
     #     raise Warning('nsq_fig_size not optimized')
 
-    if ymin != 0 and ymax != 0:
+    if ymin and ymax:
         plt.ylim(ymin, ymax)
+
+    if xmin and xmax:
+        plt.xlim(xmin, xmax)
 
     return plot
 
@@ -238,7 +253,7 @@ def scatter_plot_from_pandas_frame(data_frame, x_data_label, y_data_label, title
 #
 #     return data_plot
 def plot_from_fit(x, y, fitted_slope, fitted_slope_err, fitted_intercept, fitted_f,
-                  energy_year_label,
+                  energy_year_label, chi2=None,
                   xlabel='', ylabel='', y_err=[],
                   markersize=5):
     fig_size_shape = 'sq'
@@ -268,6 +283,11 @@ def plot_from_fit(x, y, fitted_slope, fitted_slope_err, fitted_intercept, fitted
              r' $\pm$ ' + str(float("{0:.4f}".format(fitted_slope_err))),
              ha='left',
              fontsize=setts.leg_font_size, fontweight='bold', transform=ax.transAxes)
+    if chi2:
+        plt.text(setts.pos_by_fill_fit_chi2_info[0], setts.pos_by_fill_fit_chi2_info[1],
+                 r"$\chi^2/dof$ = " + str(float("{0:.2f}".format(chi2))),
+                 ha='left',
+                 fontsize=setts.leg_font_size, fontweight='bold', transform=ax.transAxes)
 
     return fig
 
@@ -618,6 +638,20 @@ def snsplot_hist_all_and_excluded(data_frame, x_data_label, conditional_label, b
     return fig
 
 
+def snsplot_line_plot_from_pandas_cols(data_frame, x_data_label, y_data_label,
+                                       title='', xlabel='', fig_size=(12, 4),
+                                       xmin='', xmax='', ylabel='', ymin=None, ymax=None):
+    fig, ax = plt.subplots(figsize=fig_size)
+    sns.lineplot(ax=ax, data=data_frame, x=x_data_label, y=y_data_label)
+
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+
+    plt.legend()
+
+    return fig
+
+
 def add_extra_text(ax, plot_frame_ratio, energy_year_label='', experiment='', work_status=''):
     if plot_frame_ratio == 'nsq':
         plt.text(__year_energy_label_pos_nsq[0], __year_energy_label_pos_nsq[1], str(energy_year_label), ha='left',
@@ -654,3 +688,13 @@ def sns_regresion_plot(data, x_data_label, y_data_label):
 
 def get_fig_size(shape: str) -> tuple:
     return setts.fig_sizes[shape]
+
+
+def save_plot_as_pickle(figure_to_save, out_path):
+    with open(out_path, 'wb') as out_file:
+        pck.dump(figure_to_save, out_file)
+
+
+def load_plot_from_pickle(input_file):
+    fig_handle = pck.load(open(input_file, 'rb'))
+    return fig_handle
