@@ -137,7 +137,6 @@ class Luminometer:
                 raise AssertionError("*** ERROR: No luminosity values found. At least a column with delivered(hz/ub) "
                                      "or recorded(hz/ub) must be included in the input file!")
 
-
             run_fill_cols_all = data_file_pd_all["run:fill"].str.split(":", n=1, expand=True)
             ls_double_all = data_file_pd_all["ls"].str.split(":", n=1, expand=True)
             data_file_pd_all["run"] = run_fill_cols_all[0].astype(str).astype(int)

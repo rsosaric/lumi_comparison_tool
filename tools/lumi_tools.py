@@ -190,5 +190,9 @@ def get_total_weights(*argv, normalize=True):
     return temp_mult
 
 
+def get_weighted_average(values, w_for_values):
+    return np.average(values, weights=w_for_values)
+
+
 def save_columns_from_pandas_to_file(data, cols, path):
     data[cols].to_csv(path)

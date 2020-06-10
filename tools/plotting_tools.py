@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from matplotlib.ticker import MaxNLocator
 import settings as setts
 import tools.lumi_tools as ltools
 from statsmodels.graphics.api import abline_plot
@@ -296,7 +297,8 @@ def plot_scatter_and_errors(data_frame, y_data_label, x_data_label, err_y_data_l
                             energy_year_label,
                             xlabel='', ylabel='',
                             markersize=5,
-                            ymin=None, ymax=None):
+                            ymin=None, ymax=None,
+                            use_integers_in_x_axis=False):
     x = data_frame[x_data_label]
     y = data_frame[y_data_label]
     y_err = data_frame[err_y_data_label]
@@ -325,6 +327,9 @@ def plot_scatter_and_errors(data_frame, y_data_label, x_data_label, err_y_data_l
 
     add_extra_text(ax, fig_size_shape, energy_year_label=energy_year_label,
                    experiment=setts.experiment, work_status=setts.work_status)
+
+    if use_integers_in_x_axis:
+        ax.xaxis.set_major_locator(MaxNLocator(integer=True))
 
     return fig
 

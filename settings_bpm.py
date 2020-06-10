@@ -8,6 +8,11 @@ conf_label_zero_time = "zero_time"
 conf_label_special_time_intervals = "special_time_intervals"
 conf_label_y_range = "y_range"
 conf_label_y_diff_range = "y_diff_range"
+conf_label_length_scale = "length_scale"
+conf_label_beam_deflection = "beam_deflection"
+conf_label_special_col_sign = "special col sign"  # it can be used to invert input data column sign or scale it
+conf_label_deep_studies = "deep_studies"
+conf_label_compute_offsets = "compute offsets"
 
 l_min_plot = -100.
 l_max_plot = 100.
@@ -16,7 +21,7 @@ l_diff_max_plot = 20.
 l_diff_zoom_min_plot = -5.
 l_diff_zoom_max_plot = 5.
 
-save_figures_as_pickle = True
+save_figures_as_pickle = False
 
 col_pos_offset_array = {
     "B1_H": 0,
@@ -27,6 +32,30 @@ col_pos_offset_array = {
 
 config_dict = {
     "DOROS": {
+        4266: {
+            conf_label_data_file_path: "DOROS_Fill4266_Timber.csv",
+            conf_label_offset_values: [[-87.8, -157.85, -291.55, -457.7],
+                                       [-84.05, -162.2, -281.85, -461.7]],
+            conf_label_offset_time: [1440462850, 1440472132],
+            conf_label_min_time: 1440462850,
+            conf_label_max_time: 1440480981,
+
+            conf_label_special_time_intervals: [[5, 95]],
+
+            conf_label_length_scale: [0.9959, 0.9949],
+            conf_label_beam_deflection: "beamData/extra_corrections/deflectioncorrection4266.csv",
+
+            conf_label_y_range: [-650., 650.],
+            conf_label_y_diff_range: [-15., 15.],
+
+            conf_label_special_col_sign: {
+                "B1_H_L": -1, "B1_H_R": -1, "B2_H_R": -1
+            },
+
+            conf_label_deep_studies: True,
+            conf_label_compute_offsets: True
+
+        },
         4954: {
             conf_label_data_file_path: "DOROS_Fill4954_Timber.csv",
             conf_label_offset_values: [[204.35, -25.65, 68.65, -231.2], [206.9, -20.55, 67.45, -229],
@@ -34,6 +63,9 @@ config_dict = {
             conf_label_offset_time: [1464336119, 1464348464, 1464350758],
             conf_label_min_time: 1464336193,
             conf_label_max_time: 1464353223,
+            # conf_label_length_scale: [0.9968, 0.9967],
+            # conf_label_beam_deflection: "beamData/extra_corrections/deflectioncorrection4266.csv",
+
             # conf_label_zero_time: 1464335770,
 
             # conf_label_special_time_intervals: [[75, 100], [110, 180], [180, 215]]
@@ -76,11 +108,33 @@ config_dict = {
             conf_label_min_time: 1542211800,
             conf_label_max_time: 1542233400,
             # conf_label_zero_time: 1542211800
+        },
+        7483: {
+            conf_label_data_file_path: "DOROS_Fill7483_Timber.csv",
+            conf_label_offset_values: [[340.70, -1641.80, 164.00, -1696.40], [342.00, -1642.80, 164.00, -1696.40],
+                                       [341.95, -1642.75, 165.20, -1697.00], [343.30, -1630.35, 164.40, -1692.55],
+                                       [343.40, -1630.40, 163.45, -1693.05]],
+            conf_label_offset_time: [1543463700, 1543463894, 1543464276, 1543466092, 1543466233],
+            conf_label_min_time: 1543463700,
+            conf_label_max_time: 1543467300
         }
 
     },
 
     "Nominal": {
+        4266: {
+            conf_label_data_file_path: "vdm_Nominal_Fill4266_n02.csv",
+            conf_label_length_scale: [0.9968, 0.9967],
+            # conf_label_beam_deflection: "beamData/extra_corrections/deflectioncorrection4266.csv",
+
+            conf_label_min_time: 1440462850,
+            conf_label_max_time: 1440480981,
+            # conf_label_zero_time: 1464335770,
+            conf_label_special_time_intervals: [[5, 95]],
+
+            conf_label_y_range: [-650., 650.],
+            conf_label_y_diff_range: [-7., 7.]
+        },
         4954: {
             conf_label_data_file_path: "vdm_Nominal_Fill4954_n02.csv",
             # conf_label_special_time_intervals: [[75, 100], [110, 180], [180, 215]],
@@ -105,7 +159,13 @@ config_dict = {
             conf_label_min_time: 1542211800,
             conf_label_max_time: 1542233400,
             # conf_label_zero_time: 1542211800
-        }
+        },
+        7483: {
+            conf_label_data_file_path: "vdm_Nominal_Fill7483_n01.csv",
+
+            conf_label_min_time: 1543463700,
+            conf_label_max_time: 1543467300
+        },
 
     },
 

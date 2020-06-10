@@ -131,6 +131,15 @@ nls_for_lin_year = {
     (2018, 13): 15
 }
 
+points_in_summary_lin_year = {
+    (2015, 5): 4,
+    (2015, 13): 4,
+    (2016, 13): 5,
+    (2017, 5): 4,
+    (2017, 13): 5,
+    (2018, 13): 5
+}
+
 # limit for the slope values in the linearity analysis: (min slope, max slope) [hz/muB]
 limits_linearity_slopes_year = {
     (2015, 5): (-0.05, 0.05),

@@ -35,13 +35,21 @@ class BPM:
         __arcBPM_name: 1.
     }
     __scale_time = 0.016666667
+    __cols_b1_names = (__col_b1h, __col_b1v)
+    __cols_b2_names = (__col_b2h, __col_b2v)
+    __cols_b1_names_LR = (__col_b1hL, __col_b1vL, __col_b1hR, __col_b1vR)
+    __cols_b2_names_LR = (__col_b2hL, __col_b2vL, __col_b2hR, __col_b2vR)
 
     __cols_to_be_position_scaled = (__col_b1h, __col_b1v, __col_b2h, __col_b2v,
                                     __col_b1hR, __col_b1vR, __col_b2hR, __col_b2vR,
                                     __col_b1hL, __col_b1vL, __col_b2hL, __col_b2vL)
 
     __ref_col_names = (__col_b1h, __col_b1v, __col_b2h, __col_b2v)
+    __ref_col_names_LR = (__col_b1hR, __col_b1vR, __col_b2hR, __col_b2vR,
+                          __col_b1hL, __col_b1vL, __col_b2hL, __col_b2vL)
     __ref_col_diff_suffix_label = '_diff'
+    __ref_col_lscale_suffix_label = '_lscale'
+    __ref_col_deflection_suffix_label = '_deflection'
 
     __col_names_to_read = {
         __doros_name: {"sec": __col_time,
@@ -60,6 +68,11 @@ class BPM:
                          "set_nominal_B2sepPlane": __col_b2v}
     }
 
+    __col_deflection_ini_time = 'timestamp_start'
+    __col_deflection_end_time = 'timestamp_end'
+    __col_deflection_correction_x = 'correction_x'
+    __col_deflection_correction_y = 'correction_y'
+
     def __init__(self, name: str, fill: int, data_file_name: str = None,
                  get_only_data: bool = False, nominal_data=None) -> None:
         self.name = name
@@ -77,14 +90,37 @@ class BPM:
         self.__offsets = {}
         self.__min_timestamp = None
         self.__max_timestamp = None
+        self.__do_deep_studies = False
+        self.__offsets_time_split = []
+
+        # column names
+        self.__ref_col_lscale_names = []
+        self.__ref_col_lscale_names_LR = []
+        self.__ref_col_diff_names = []
+        self.__ref_col_diff_names_LR = []
+        self.__ref_col_diff_names_b1_LR = []
+        self.__ref_col_diff_names_b2_LR = []
+        self.__ref_col_lscale_diff_names = []
+        self.__ref_col_lscale_diff_names_LR = []
+        self.__ref_col_lscale_diff_names_b1_LR = []
+        self.__ref_col_lscale_diff_names_b2_LR = []
+        self.__ref_col_deflection_diff_names = []
+        self.__ref_col_deflection_diff_names_LR = []
+        self.__ref_col_lscale_and_deflection_diff_names = []
+        self.__ref_col_lscale_and_deflection_diff_names_LR = []
+        self.__ref_col_deflection_and_lscale_diff_names = []
+        self.__ref_col_deflection_and_lscale_diff_names_LR = []
+        self.__ref_col_lscale_names_b1_LR = []
+        self.__ref_col_lscale_names_b2_LR = []
+        self.__ref_col_deflection_diff_names_b1_LR = []
+        self.__ref_col_deflection_diff_names_b2_LR = []
+        self.fill_col_names()
 
         if self.name == BPM.__nominal_name:
             self.__is_nominal = True
             self.__interpolation_to_nominal_time = None
-            self.__ref_col_diff_names = []
         else:
             self.__is_nominal = False
-            self.__ref_col_diff_names = [s + BPM.__ref_col_diff_suffix_label for s in BPM.__ref_col_names]
             self.__nominal_det = nominal_data
             self.__nominal_data = nominal_data.data
             self.__interpolation_to_nominal_time = pd.DataFrame()
@@ -99,6 +135,14 @@ class BPM:
         elif data_file_name:
             self.__path_to_data.append(data_file_name)
 
+        self.__settings = setts.config_dict[self.name][fill]
+        self.__settings_list = list(self.__settings)
+
+        if setts.conf_label_deep_studies in self.__settings_list:
+            if self.__settings[setts.conf_label_deep_studies]:
+                self.__do_deep_studies = True
+                print("Deep studies will be performed.")
+
         self.__y_range = None
         self.__y_diff_range = None
 
@@ -111,6 +155,16 @@ class BPM:
             self.__y_diff_range = setts.config_dict[self.name][fill][setts.conf_label_y_diff_range]
         else:
             self.__y_diff_range = [setts.l_diff_zoom_min_plot, setts.l_diff_zoom_max_plot]
+
+        if setts.conf_label_beam_deflection in self.__settings_list and not self.__is_nominal:
+            self.__apply_deflection = True
+        else:
+            self.__apply_deflection = False
+
+        if setts.conf_label_length_scale in self.__settings_list:
+            self.__apply_lscale = True
+        else:
+            self.__apply_lscale = False
 
         print("Analysing " + self.name + " using data: " + str(self.__path_to_data))
         in_data = pd.DataFrame()
@@ -141,12 +195,24 @@ class BPM:
             self.__zero_time = setts.config_dict[self.name][fill][setts.conf_label_zero_time]
 
         self.__in_data_def_format = self.covert_cols_to_default_format(in_data)
+
+        self.__in_data_def_format = self.apply_offsets(self.__in_data_def_format)
         # print(self.__in_data_def_format)
 
+        self.__base_cols = list(BPM.__ref_col_names)
         if not self.__is_nominal:
             self.get_interpolation_to_nominal_time()
-            self.get_nominal_diff()
+            if self.__do_deep_studies:
+                self.__base_cols.extend(list(BPM.__ref_col_names_LR))
+            self.get_cols_diff(in_data=self.__interpolation_to_nominal_time, cols_names=self.__base_cols)
+            self.__ref_col_diff_names_final_result = self.__ref_col_diff_names
             self.add_time_min_col(self.__interpolation_to_nominal_time)
+        else:
+            self.__interpolation_to_nominal_time = self.__in_data_def_format
+
+        self.apply_corrections_to_diff(basic_cols=self.__base_cols, apply_lscale=self.__apply_lscale,
+                                       apply_deflection=self.__apply_deflection)
+
 
         # Plotting
         if not get_only_data:
@@ -154,12 +220,51 @@ class BPM:
             if setts.conf_label_special_time_intervals in list(setts.config_dict[self.name][self.__fill]):
                 for xrange in setts.config_dict[self.name][self.__fill][setts.conf_label_special_time_intervals]:
                     self.plot_detector_data(xrange=xrange)
+            # if setts.conf_label_length_scale in self.__settings_list:
+            #     self.plot_detector_data(extra_name_suffix="_scale_corr", cols_to_plot=self.__ref_col_lscale_names,
+            #                             data_to_use=self.__interpolation_to_nominal_time)
+
             if self.name != BPM.__nominal_name:
                 self.plot_detector_all_data()
                 self.plot_detector_data_diff_with_nominal()
+                if self.__do_deep_studies:
+                    self.plot_detector_data_diff_with_nominal(cols_to_plot=self.__ref_col_diff_names_LR,
+                                                              data_to_use=self.__interpolation_to_nominal_time,
+                                                              extra_name_suffix="_LR")
+                    self.plot_detector_data_diff_with_nominal(cols_to_plot=self.__ref_col_diff_names_b1_LR,
+                                                              data_to_use=self.__interpolation_to_nominal_time,
+                                                              extra_name_suffix="_b1_LR")
+                    self.plot_detector_data_diff_with_nominal(cols_to_plot=self.__ref_col_diff_names_b2_LR,
+                                                              data_to_use=self.__interpolation_to_nominal_time,
+                                                              extra_name_suffix="_b2_LR")
                 if setts.conf_label_special_time_intervals in list(setts.config_dict[self.name][self.__fill]):
                     for xrange in setts.config_dict[self.name][self.__fill][setts.conf_label_special_time_intervals]:
                         self.plot_detector_data_diff_with_nominal(xrange=xrange)
+                        self.plot_detector_data_diff_with_nominal(extra_name_suffix="_final",
+                                                                  cols_to_plot=self.__ref_col_diff_names_final_result,
+                                                                  data_to_use=self.__interpolation_to_nominal_time,
+                                                                  xrange=xrange,
+                                                                  legend_labels=self.__ref_col_names)
+                if setts.conf_label_length_scale in self.__settings_list:
+                    self.plot_detector_data_diff_with_nominal(extra_name_suffix="_scale_corr",
+                                                              cols_to_plot=self.__ref_col_lscale_diff_names,
+                                                              data_to_use=self.__interpolation_to_nominal_time)
+                if setts.conf_label_beam_deflection in self.__settings_list:
+                    # print(self.__ref_col_deflection_diff_names)
+                    # print(list(self.__interpolation_to_nominal_time))
+                    self.plot_detector_data_diff_with_nominal(extra_name_suffix="_deflection_corr",
+                                                              cols_to_plot=self.__ref_col_deflection_diff_names,
+                                                              data_to_use=self.__interpolation_to_nominal_time)
+
+                # if setts.conf_label_beam_deflection in self.__settings_list and setts.conf_label_length_scale in self.__settings_list:
+                #     #print(self.__ref_col_lscale_and_deflection_diff_names)
+                #     #print(list(self.__interpolation_to_nominal_time))
+                #     self.plot_detector_data_diff_with_nominal(extra_name_suffix="_deflection_and_lscale_corr",
+                #                                               cols_to_plot=self.__ref_col_deflection_and_lscale_diff_names,
+                #                                               data_to_use=self.__interpolation_to_nominal_time)
+                #     self.plot_detector_data_diff_with_nominal(extra_name_suffix="_lscale_and_deflection_corr",
+                #                                               cols_to_plot=self.__ref_col_lscale_and_deflection_diff_names,
+                #                                               data_to_use=self.__interpolation_to_nominal_time)
 
             self.save_plots()
 
@@ -171,6 +276,8 @@ class BPM:
             data_to_save = self.__interpolation_to_nominal_time
         ltools.save_columns_from_pandas_to_file(data_to_save, cols_to_save, self.__output_dir +
                                                 "plotted_data.csv")
+        # ltools.save_columns_from_pandas_to_file(data_to_save, self.__output_dir +
+        #                                         "plotted_data_all.csv")
 
     @property
     def name(self):
@@ -183,6 +290,55 @@ class BPM:
     @property
     def data(self):
         return self.__in_data_def_format
+
+    def fill_col_names(self):
+        self.__ref_col_lscale_names = [s + BPM.__ref_col_lscale_suffix_label for s in BPM.__ref_col_names]
+        self.__ref_col_lscale_names_LR = [s + BPM.__ref_col_lscale_suffix_label for s in BPM.__ref_col_names_LR]
+        self.__ref_col_lscale_names_b1_LR = [s + BPM.__ref_col_lscale_suffix_label for s in BPM.__cols_b1_names_LR]
+        self.__ref_col_lscale_names_b2_LR = [s + BPM.__ref_col_lscale_suffix_label for s in BPM.__cols_b2_names_LR]
+        if self.name == BPM.__nominal_name:
+            self.__ref_col_diff_names = []
+            self.__ref_col_diff_names_LR = []
+        else:
+            self.__ref_col_diff_names = [s + BPM.__ref_col_diff_suffix_label for s in BPM.__ref_col_names]
+            self.__ref_col_diff_names_LR = [s + BPM.__ref_col_diff_suffix_label for s in BPM.__ref_col_names_LR]
+            self.__ref_col_diff_names_b1_LR = [s + BPM.__ref_col_diff_suffix_label for s in BPM.__cols_b1_names_LR]
+            self.__ref_col_diff_names_b2_LR = [s + BPM.__ref_col_diff_suffix_label for s in BPM.__cols_b2_names_LR]
+
+            self.__ref_col_lscale_diff_names = \
+                [s + BPM.__ref_col_diff_suffix_label for s in self.__ref_col_lscale_names]
+            self.__ref_col_lscale_diff_names_LR = \
+                [s + BPM.__ref_col_diff_suffix_label for s in self.__ref_col_lscale_names_LR]
+
+            self.__ref_col_lscale_diff_names_b1_LR = \
+                [s + BPM.__ref_col_diff_suffix_label for s in self.__ref_col_lscale_names_b1_LR]
+            self.__ref_col_lscale_diff_names_b2_LR = \
+                [s + BPM.__ref_col_diff_suffix_label for s in self.__ref_col_lscale_names_b2_LR]
+
+            self.__ref_col_deflection_diff_names = \
+                [s + BPM.__ref_col_deflection_suffix_label for s in self.__ref_col_diff_names]
+            self.__ref_col_deflection_diff_names_LR = \
+                [s + BPM.__ref_col_deflection_suffix_label for s in self.__ref_col_diff_names_LR]
+
+            self.__ref_col_deflection_diff_names_b1_LR = \
+                [s + BPM.__ref_col_deflection_suffix_label for s in self.__ref_col_diff_names_b1_LR]
+            self.__ref_col_deflection_diff_names_b2_LR = \
+                [s + BPM.__ref_col_deflection_suffix_label for s in self.__ref_col_diff_names_b2_LR]
+
+            #
+            # self.__ref_col_lscale_and_deflection_diff_names = \
+            #     [s + BPM.__ref_col_lscale_suffix_label + BPM.__ref_col_deflection_suffix_label for s in self.__ref_col_diff_names]
+            # self.__ref_col_lscale_and_deflection_diff_names_LR = \
+            #     [s + BPM.__ref_col_lscale_suffix_label + BPM.__ref_col_deflection_suffix_label for s in self.__ref_col_diff_names_LR]
+            #
+            # self.__ref_col_deflection_and_lscale_diff_names = \
+            #     [s + BPM.__ref_col_deflection_suffix_label + BPM.__ref_col_lscale_suffix_label for s in
+            #      self.__ref_col_diff_names]
+            # self.__ref_col_deflection_and_lscale_diff_names_LR = \
+            #     [s + BPM.__ref_col_deflection_suffix_label + BPM.__ref_col_lscale_suffix_label for s in
+            #      self.__ref_col_diff_names_LR]
+
+            self.__ref_col_diff_names_final_result = self.__ref_col_diff_names
 
     def getDataPathFromFillNumber(self, fill: int):
         path_to_fill_data = setts.data_base_folder + self.name + "/Fill" + str(fill) + "/"
@@ -202,17 +358,50 @@ class BPM:
             time0 = self.__zero_time
             for i_col in data_in_unified_format.columns:
                 if i_col == BPM.__col_time:
-                    data_in_unified_format[BPM.__col_time_min] = (data_in_unified_format[BPM.__col_time] - time0) * BPM.__scale_time
+                    data_in_unified_format[BPM.__col_time_min] = (data_in_unified_format[
+                                                                      BPM.__col_time] - time0) * BPM.__scale_time
                 elif i_col in BPM.__cols_to_be_position_scaled:
                     rescale_factor = BPM.__scale_position[self.name]
                     data_in_unified_format[i_col] = data_in_unified_format[i_col] * rescale_factor
                 else:
                     print("     *** WARNING -->> column " + i_col + " not scaled!")
 
+        if setts.conf_label_special_col_sign in self.__settings_list:
+            for col_name in list(setts.config_dict[self.name][self.__fill][setts.conf_label_special_col_sign]):
+                col_factor = setts.config_dict[self.name][self.__fill][setts.conf_label_special_col_sign][col_name]
+                data_in_unified_format[col_name] = data_in_unified_format[col_name]*col_factor
+                print(" --> Column " + col_name + " has been multiplied by " + str(col_factor))
+
+        return data_in_unified_format
+
+    def apply_offsets(self, in_data: pd.DataFrame):
+        data_in_unified_format = in_data
+
         if self.name == BPM.__doros_name:
-            offsets_time = setts.config_dict[self.name][self.__fill][setts.conf_label_offset_time]
-            offsets_values = setts.config_dict[self.name][self.__fill][setts.conf_label_offset_values]
+            offsets_computed = False
+            offsets_for_LR_cols_available = False
+            if setts.conf_label_compute_offsets in self.__settings_list:
+                if self.__settings[setts.conf_label_compute_offsets]:
+                    self.compute_offsets()
+                    offsets_computed = True
+            if setts.conf_label_offset_values in self.__settings_list:
+                self.get_offsets_from_config()
+
+            #print(self.__offsets_time_split)
+            #print(self.__offsets)
+            offsets_time = self.__offsets_time_split
             n_offsets_intervals = len(offsets_time)
+            cols_with_offsets = list(self.__offsets)
+
+            # check if LR cols offsets are available, and if not filling dumb values with 0.
+            if all(item in cols_with_offsets for item in BPM.__ref_col_names_LR):
+                offsets_for_LR_cols_available = True
+                print("LR cols offsets values loaded")
+            else:
+                dumb_offset_list = [0.] * n_offsets_intervals
+                print(dumb_offset_list)
+                for col_name in BPM.__ref_col_names_LR:
+                    self.__offsets[col_name] = dumb_offset_list
 
             # Check if arrays are ordered in time
             if not sorted(offsets_time) == offsets_time:
@@ -223,57 +412,128 @@ class BPM:
             col_b2h = []
             col_b2v = []
 
+            col_b1h_L = []
+            col_b1v_L = []
+            col_b2h_L = []
+            col_b2v_L = []
+
+            col_b1h_R = []
+            col_b1v_R = []
+            col_b2h_R = []
+            col_b2v_R = []
+
+
             # read offsets:
             pos_in_offsets_time_array = 0
             print("Applying offsets for time: " + str(offsets_time[pos_in_offsets_time_array]))
-            off_b1h = offsets_values[0][setts.col_pos_offset_array[BPM.__col_b1h]]
-            off_b1v = offsets_values[0][setts.col_pos_offset_array[BPM.__col_b1v]]
-            off_b2h = offsets_values[0][setts.col_pos_offset_array[BPM.__col_b2h]]
-            off_b2v = offsets_values[0][setts.col_pos_offset_array[BPM.__col_b2v]]
+            off_b1h = self.__offsets[BPM.__col_b1h][0]
+            off_b1v = self.__offsets[BPM.__col_b1v][0]
+            off_b2h = self.__offsets[BPM.__col_b2h][0]
+            off_b2v = self.__offsets[BPM.__col_b2v][0]
+
+            off_b1hL = self.__offsets[BPM.__col_b1hL][0]
+            off_b1vL = self.__offsets[BPM.__col_b1vL][0]
+            off_b2hL = self.__offsets[BPM.__col_b2hL][0]
+            off_b2vL = self.__offsets[BPM.__col_b2vL][0]
+            off_b1hR = self.__offsets[BPM.__col_b1hR][0]
+            off_b1vR = self.__offsets[BPM.__col_b1vR][0]
+            off_b2hR = self.__offsets[BPM.__col_b2hR][0]
+            off_b2vR = self.__offsets[BPM.__col_b2vR][0]
 
             for i_iter in range(0, len(data_in_unified_format)):
 
                 if pos_in_offsets_time_array < n_offsets_intervals - 1 and \
-                        data_in_unified_format[BPM.__col_time][i_iter] >= offsets_time[pos_in_offsets_time_array+1]:
+                        data_in_unified_format[BPM.__col_time][i_iter] >= offsets_time[pos_in_offsets_time_array + 1]:
                     pos_in_offsets_time_array += 1
                     print("Applying offsets for time: " + str(offsets_time[pos_in_offsets_time_array]))
-                    off_b1h = offsets_values[pos_in_offsets_time_array][setts.col_pos_offset_array[BPM.__col_b1h]]
-                    off_b1v = offsets_values[pos_in_offsets_time_array][setts.col_pos_offset_array[BPM.__col_b1v]]
-                    off_b2h = offsets_values[pos_in_offsets_time_array][setts.col_pos_offset_array[BPM.__col_b2h]]
-                    off_b2v = offsets_values[pos_in_offsets_time_array][setts.col_pos_offset_array[BPM.__col_b2v]]
+                    off_b1h = self.__offsets[BPM.__col_b1h][pos_in_offsets_time_array]
+                    off_b1v = self.__offsets[BPM.__col_b1v][pos_in_offsets_time_array]
+                    off_b2h = self.__offsets[BPM.__col_b2h][pos_in_offsets_time_array]
+                    off_b2v = self.__offsets[BPM.__col_b2v][pos_in_offsets_time_array]
 
-                mean_value_LR_b1h = (data_in_unified_format[BPM.__col_b1hL][i_iter] +
-                                     data_in_unified_format[BPM.__col_b1hR][i_iter]) / 2
-                mean_value_LR_b1v = (data_in_unified_format[BPM.__col_b1vL][i_iter] +
-                                     data_in_unified_format[BPM.__col_b1vR][i_iter]) / 2
-                mean_value_LR_b2h = (data_in_unified_format[BPM.__col_b2hL][i_iter] +
-                                     data_in_unified_format[BPM.__col_b2hR][i_iter]) / 2
-                mean_value_LR_b2v = (data_in_unified_format[BPM.__col_b2vL][i_iter] +
-                                     data_in_unified_format[BPM.__col_b2vR][i_iter]) / 2
+                    off_b1hL = self.__offsets[BPM.__col_b1hL][pos_in_offsets_time_array]
+                    off_b1vL = self.__offsets[BPM.__col_b1vL][pos_in_offsets_time_array]
+                    off_b2hL = self.__offsets[BPM.__col_b2hL][pos_in_offsets_time_array]
+                    off_b2vL = self.__offsets[BPM.__col_b2vL][pos_in_offsets_time_array]
+                    off_b1hR = self.__offsets[BPM.__col_b1hR][pos_in_offsets_time_array]
+                    off_b1vR = self.__offsets[BPM.__col_b1vR][pos_in_offsets_time_array]
+                    off_b2hR = self.__offsets[BPM.__col_b2hR][pos_in_offsets_time_array]
+                    off_b2vR = self.__offsets[BPM.__col_b2vR][pos_in_offsets_time_array]
+
+                value_b1hL = data_in_unified_format[BPM.__col_b1hL][i_iter]
+                value_b1hR = data_in_unified_format[BPM.__col_b1hR][i_iter]
+                value_b1vL = data_in_unified_format[BPM.__col_b1vL][i_iter]
+                value_b1vR = data_in_unified_format[BPM.__col_b1vR][i_iter]
+
+                value_b2hL = data_in_unified_format[BPM.__col_b2hL][i_iter]
+                value_b2hR = data_in_unified_format[BPM.__col_b2hR][i_iter]
+                value_b2vL = data_in_unified_format[BPM.__col_b2vL][i_iter]
+                value_b2vR = data_in_unified_format[BPM.__col_b2vR][i_iter]
+
+                mean_value_LR_b1h = (value_b1hL + value_b1hR) / 2
+                mean_value_LR_b1v = (value_b1vL + value_b1vR) / 2
+                mean_value_LR_b2h = (value_b2hL + value_b2hR) / 2
+                mean_value_LR_b2v = (value_b2vL + value_b2vR) / 2
 
                 col_b1h.append(mean_value_LR_b1h - off_b1h)
                 col_b1v.append(mean_value_LR_b1v - off_b1v)
                 col_b2h.append(mean_value_LR_b2h - off_b2h)
                 col_b2v.append(mean_value_LR_b2v - off_b2v)
 
+                if self.__do_deep_studies:
+                    col_b1h_L.append(value_b1hL - off_b1hL)
+                    col_b1v_L.append(value_b1vL - off_b1vL)
+                    col_b2h_L.append(value_b2hL - off_b2hL)
+                    col_b2v_L.append(value_b2vL - off_b2vL)
+
+                    col_b1h_R.append(value_b1hR - off_b1hR)
+                    col_b1v_R.append(value_b1vR - off_b1vR)
+                    col_b2h_R.append(value_b2hR - off_b2hR)
+                    col_b2v_R.append(value_b2vR - off_b2vR)
+
             data_in_unified_format[BPM.__col_b1h] = np.array(col_b1h)
             data_in_unified_format[BPM.__col_b1v] = np.array(col_b1v)
             data_in_unified_format[BPM.__col_b2h] = np.array(col_b2h)
             data_in_unified_format[BPM.__col_b2v] = np.array(col_b2v)
 
+            if self.__do_deep_studies:
+                data_in_unified_format[BPM.__col_b1hL] = np.array(col_b1h_L)
+                data_in_unified_format[BPM.__col_b1vL] = np.array(col_b1v_L)
+                data_in_unified_format[BPM.__col_b2hL] = np.array(col_b2h_L)
+                data_in_unified_format[BPM.__col_b2vL] = np.array(col_b2v_L)
+
+                data_in_unified_format[BPM.__col_b1hR] = np.array(col_b1h_R)
+                data_in_unified_format[BPM.__col_b1vR] = np.array(col_b1v_R)
+                data_in_unified_format[BPM.__col_b2hR] = np.array(col_b2h_R)
+                data_in_unified_format[BPM.__col_b2vR] = np.array(col_b2v_R)
+
         return data_in_unified_format
 
-    def get_nominal_diff(self):
-        in_data = self.__interpolation_to_nominal_time
-        for col_name in BPM.__ref_col_names:
-            in_data[col_name + BPM.__ref_col_diff_suffix_label] = in_data[col_name] - self.__nominal_data[col_name]
+    # It gets the difference between in_data specified cols and Nominal. If no matching to nominal cols dict is provided
+    # then a default dict is constructed from the input cols taken the same ones for Nominal.
+    def get_cols_diff(self, in_data, cols_names: list, cols_names_nominal: dict = None):
+        # print(cols_names)
+        if cols_names_nominal is None:
+            cols_names_nominal = {}
+            for i_col in cols_names:
+                cols_names_nominal[i_col] = get_base_name_from_DOROS_LR(i_col)
+        # print(cols_names_nominal)
+        assert len(cols_names) == len(cols_names_nominal)
+        for col_name in cols_names:
+            nominal_col_name = cols_names_nominal[col_name]
+            in_data[col_name + BPM.__ref_col_diff_suffix_label] = in_data[col_name] - \
+                                                                  self.__nominal_data[nominal_col_name]
 
     def get_interpolation_to_nominal_time(self):
         in_data = self.__in_data_def_format
         self.__interpolation_to_nominal_time = pd.DataFrame()
         x = self.__nominal_data[BPM.__col_time]
         self.__interpolation_to_nominal_time[BPM.__col_time] = x
-        for col_name in BPM.__ref_col_names:
+        if self.__do_deep_studies:
+            col_names = BPM.__cols_to_be_position_scaled
+        else:
+            col_names = BPM.__ref_col_names
+        for col_name in col_names:
             tck = interpolate.splrep(in_data[BPM.__col_time], in_data[col_name], s=0)
             y = interpolate.splev(x, tck, der=0)
             self.__interpolation_to_nominal_time[col_name] = np.array(y)
@@ -284,6 +544,193 @@ class BPM:
             in_df[BPM.__col_time_min] = (in_df[BPM.__col_time] - time0) * BPM.__scale_time
         else:
             raise AssertionError("No time column available")
+
+    def apply_length_scale_correction(self, base_cols: list, data_to_use=None):
+        print("Applying length scale correction ...")
+        if data_to_use is None:
+            data_to_use = self.__interpolation_to_nominal_time
+        # print(list(data_to_use))
+        x_correction = setts.config_dict[self.name][self.__fill][setts.conf_label_length_scale][0]
+        y_correction = setts.config_dict[self.name][self.__fill][setts.conf_label_length_scale][1]
+        h_correction = x_correction
+        v_correction = y_correction
+
+        corrected_cols_dict = {}
+
+        for i_col_name in base_cols:
+            corrected_cols_dict[i_col_name] = []
+
+        for index in range(0, len(data_to_use)):
+            for i_col_name in base_cols:
+                if is_H(i_col_name):
+                    correction = h_correction
+                elif is_V(i_col_name):
+                    correction = v_correction
+                else:
+                    raise AssertionError()
+                corrected_cols_dict[i_col_name].append(data_to_use[i_col_name][index]*correction)
+
+        for i_col_name in base_cols:
+            data_to_use[i_col_name + BPM.__ref_col_lscale_suffix_label] = \
+                np.array(corrected_cols_dict[i_col_name])
+
+    def read_deflection_correction_file(self):
+        reading_cols_dict = {
+            '#timestamp_start': BPM.__col_deflection_ini_time,
+            'timestamp_end': BPM.__col_deflection_end_time,
+            'correction_x': BPM.__col_deflection_correction_x,
+            'correction_y': BPM.__col_deflection_correction_y
+        }
+        unit_factor = 1000.
+        deflection_correction_data = pd.read_csv(self.__settings[setts.conf_label_beam_deflection],
+                                                 index_col=False, usecols=list(reading_cols_dict))
+        deflection_correction_data.rename(inplace=True, columns=reading_cols_dict)
+        deflection_correction_data[BPM.__col_deflection_correction_x] *= unit_factor
+        deflection_correction_data[BPM.__col_deflection_correction_y] *= unit_factor
+        # print(deflection_correction_data)
+
+        deflection_correction_data.sort_values(BPM.__col_deflection_ini_time, inplace=True)
+        deflection_correction_data.dropna(inplace=True)
+        deflection_correction_data.reset_index(drop=True, inplace=True)
+
+        return deflection_correction_data
+
+    def apply_deflection_correction(self, basic_cols, data_to_use=None):
+        print("Applying beam-beam deflection correction ...")
+        deflection_correction_data = self.read_deflection_correction_file()
+        if data_to_use is None:
+            data_to_use = self.__interpolation_to_nominal_time
+
+        for col_name in basic_cols:
+            data_to_use[col_name + BPM.__ref_col_deflection_suffix_label] = data_to_use[col_name].copy()
+
+        # print(list(data_to_use))
+        last_time_index_corrected_in_data = 0
+        for correction_index in range(0, len(deflection_correction_data)):
+            ini_time = deflection_correction_data[BPM.__col_deflection_ini_time][correction_index]
+            end_time = deflection_correction_data[BPM.__col_deflection_end_time][correction_index]
+            # print("correction index: " + str(correction_index))
+            for data_index in range(last_time_index_corrected_in_data+1, len(data_to_use)):
+                data_time = data_to_use[BPM.__col_time][data_index]
+                # print("data index: " + str(data_index))
+                if ini_time <= data_time <= end_time:
+                    # print("--> applying correction")
+                    last_time_index_corrected_in_data = data_index
+                    for col_name in basic_cols:
+                        if is_H(col_name):
+                            correction_direction_label = BPM.__col_deflection_correction_x
+                        elif is_V(col_name):
+                            correction_direction_label = BPM.__col_deflection_correction_y
+                        else:
+                            raise AssertionError()
+                        correction = deflection_correction_data[correction_direction_label][correction_index]
+                        if is_B1(col_name):
+                            correction *= -1
+                        data_to_use[col_name + BPM.__ref_col_deflection_suffix_label][data_index] += correction
+                elif data_time > end_time:
+                    break
+
+    def apply_corrections_to_diff(self, basic_cols: list, apply_lscale=False, apply_deflection=False):
+        data_to_use = self.__interpolation_to_nominal_time
+
+        col_names_diff_raw_data_to_raw_nominal = [basename + BPM.__ref_col_diff_suffix_label for basename in basic_cols]
+        col_names_lscale_raw_data = [basename + BPM.__ref_col_lscale_suffix_label for basename in basic_cols]
+
+        corrected_cols_suffix = ""
+        if apply_lscale:
+            corrected_cols_suffix += BPM.__ref_col_lscale_suffix_label
+        if apply_deflection:
+            corrected_cols_suffix += BPM.__ref_col_deflection_suffix_label
+
+        if apply_deflection and not self.__is_nominal:
+            self.apply_deflection_correction(basic_cols=col_names_diff_raw_data_to_raw_nominal, data_to_use=data_to_use)
+            # print(list(data_to_use))
+            self.__ref_col_diff_names_final_result = self.__ref_col_deflection_diff_names
+        if apply_lscale:
+            self.apply_length_scale_correction(base_cols=basic_cols, data_to_use=data_to_use)
+            # print(list(data_to_use))
+            if not self.__is_nominal:
+                self.get_cols_diff(in_data=self.__interpolation_to_nominal_time, cols_names=col_names_lscale_raw_data)
+                # print(list(data_to_use))
+
+        #if apply_deflection and apply_lscale:
+
+    def compute_offsets(self):
+        print("Computing offsets ...")
+        diffs = {}
+        offsets = {}
+        data_to_use = self.__in_data_def_format
+        when_b1_h_is_zero = self.__nominal_data[BPM.__col_b1h] == 0.
+        when_b1_v_is_zero = self.__nominal_data[BPM.__col_b1v] == 0.
+        when_b2_h_is_zero = self.__nominal_data[BPM.__col_b2h] == 0.
+        when_b2_v_is_zero = self.__nominal_data[BPM.__col_b2v] == 0.
+
+        nominal_in_zero: pd.DataFrame = self.__nominal_data[when_b1_h_is_zero & when_b1_v_is_zero &
+                                              when_b2_h_is_zero & when_b2_v_is_zero].copy()
+
+        mask = data_to_use[BPM.__col_time].isin(nominal_in_zero[BPM.__col_time])
+        data_for_offsets = data_to_use[mask].copy()
+
+        if len(data_for_offsets) != len(nominal_in_zero):
+            # reduce nominal_in_zero to the available timestamps from data_for_offsets
+            mask = nominal_in_zero[BPM.__col_time].isin(data_for_offsets[BPM.__col_time])
+            nominal_in_zero = nominal_in_zero[mask].copy()
+
+        # print(len(data_for_offsets), len(nominal_in_zero))
+        assert len(data_for_offsets) == len(nominal_in_zero)
+
+        nominal_in_zero.reset_index(inplace=True)
+        data_for_offsets.reset_index(inplace=True)
+
+        if self.name == BPM.__doros_name:
+            raw_col_names = BPM.__ref_col_names_LR
+        else:
+            raise AssertionError("Detector not implemented in compute_offsets")
+
+        for col_name in raw_col_names:
+            diffs[col_name] = []
+            self.__offsets[col_name] = []
+
+        for i_iter in range(0, len(data_for_offsets)):
+            # check that time matches
+            assert data_for_offsets[BPM.__col_time][i_iter] == nominal_in_zero[BPM.__col_time][i_iter]
+            for col_name in raw_col_names:
+                nominal_col_name = get_base_name_from_DOROS_LR(col_name)
+                diffs[col_name].append(data_for_offsets[col_name][i_iter] - nominal_in_zero[nominal_col_name][i_iter])
+
+        diffs_df = pd.DataFrame.from_dict(diffs)
+        diffs_df[BPM.__col_time] = nominal_in_zero[BPM.__col_time]
+
+        self.__plt_plots["offsets_histos"] = diffs_df.hist(bins=50)[0][0].get_figure()
+
+        diffs_df_split_time_list = []
+        if setts.conf_label_offset_time in self.__settings_list:
+            self.__offsets_time_split = self.__settings[setts.conf_label_offset_time]
+            for index in range(0, len(self.__offsets_time_split)):
+                if index == len(self.__offsets_time_split) - 1:
+                    diffs_df_split_time_list.append(diffs_df[diffs_df[BPM.__col_time] >= self.__offsets_time_split[index]])
+                else:
+                    diffs_df_split_time_list.append(diffs_df[(diffs_df[BPM.__col_time] >= self.__offsets_time_split[index])
+                                                                      & (diffs_df[BPM.__col_time] < self.__offsets_time_split[index+1])])
+            time_id = 0
+            for i_df in diffs_df_split_time_list:
+                self.__plt_plots["offsets_histos_" + str(self.__offsets_time_split[time_id])] = i_df.hist(bins=50)[0][0].get_figure()
+                for col_name in raw_col_names:
+                    self.__offsets[col_name].append(i_df[col_name].mean())
+                time_id += 1
+        else:
+            diffs_df_split_time_list = [diffs_df]
+            for col_name in raw_col_names:
+                self.__offsets[col_name] = diffs_df[col_name].mean()
+
+    def get_offsets_from_config(self):
+        offsets_values = setts.config_dict[self.name][self.__fill][setts.conf_label_offset_values]
+        self.__offsets_time_split = self.__settings[setts.conf_label_offset_time]
+        col_names = BPM.__ref_col_names
+        for col_name in col_names:
+            self.__offsets[col_name] = []
+            for index in range(0, len(self.__offsets_time_split)):
+                self.__offsets[col_name].append(offsets_values[index][setts.col_pos_offset_array[col_name]])
 
     def plot_detector_all_data(self, save_data_to_file=True):
         plot_name = self.name + "_all_data"
@@ -300,8 +747,9 @@ class BPM:
                                                                               label_cms_status=False
                                                                               ).get_figure()
 
-    def plot_detector_data(self, xrange=None, save_data_to_file=True):
-        plot_name = self.name + "_data"
+    def plot_detector_data(self, xrange=None, save_data_to_file=True, extra_name_suffix="", cols_to_plot=None,
+                           data_to_use=None):
+        plot_name = self.name + "_data" + extra_name_suffix
         x_min = None
         x_max = None
         if xrange:
@@ -310,8 +758,13 @@ class BPM:
             plot_name += "_" + str(x_min) + "_" + str(x_max)
         print("plotting " + plot_name + "...")
 
-        cols_to_plot = BPM.__ref_col_names
-        self.__plt_plots[plot_name] = plotting.scatter_plot_from_pandas_frame(self.__in_data_def_format,
+        if cols_to_plot is None:
+            cols_to_plot = BPM.__ref_col_names
+
+        if data_to_use is None:
+            data_to_use = self.__in_data_def_format
+
+        self.__plt_plots[plot_name] = plotting.scatter_plot_from_pandas_frame(data_to_use,
                                                                               x_data_label=BPM.__col_time_min,
                                                                               y_data_label=list(cols_to_plot),
                                                                               ymin=self.__y_range[0],
@@ -323,8 +776,9 @@ class BPM:
                                                                               label_cms_status=False
                                                                               ).get_figure()
 
-    def plot_detector_data_diff_with_nominal(self, xrange=None, save_data_to_file=True):
-        plot_name = self.name + "_data_diff_with_nominal"
+    def plot_detector_data_diff_with_nominal(self, xrange=None, save_data_to_file=True, extra_name_suffix="",
+                                             cols_to_plot=None, data_to_use=None, legend_labels=None):
+        plot_name = self.name + "_data_diff_with_nominal" + extra_name_suffix
         x_min = None
         x_max = None
         if xrange:
@@ -332,23 +786,59 @@ class BPM:
             x_max = xrange[1]
             plot_name += "_" + str(x_min) + "_" + str(x_max)
         print("plotting " + plot_name + "...")
-        cols_to_plot = self.__ref_col_diff_names
+        if cols_to_plot is None:
+            cols_to_plot = self.__ref_col_diff_names
+        if data_to_use is None:
+            data_to_use = self.__interpolation_to_nominal_time
 
-        self.__plt_plots[plot_name] = plotting.scatter_plot_from_pandas_frame(self.__interpolation_to_nominal_time,
+        self.__plt_plots[plot_name] = plotting.scatter_plot_from_pandas_frame(data_to_use,
                                                                               x_data_label=BPM.__col_time_min,
                                                                               y_data_label=list(cols_to_plot),
                                                                               ymin=self.__y_diff_range[0],
                                                                               ymax=self.__y_diff_range[1],
                                                                               xmin=x_min, xmax=x_max,
                                                                               xlabel="time [min]",
-                                                                              ylabel= self.name + " - Nominal diff." + " [" +
+                                                                              ylabel=self.name + " - Nominal diff." + " [" +
                                                                                      BPM.__distance_unit + "]",
                                                                               ncol_legend=4,
                                                                               plot_style='o',
-                                                                              label_cms_status=False
+                                                                              label_cms_status=False,
+                                                                              legend_labels=legend_labels
                                                                               ).get_figure()
 
     def save_plots(self):
         print('\n\n Saving plots:')
         plotting.save_plots(self.__plt_plots, self.__output_dir, save_pickle=setts.save_figures_as_pickle)
         plotting.save_plots(self.__sns_plots, self.__output_dir, save_pickle=setts.save_figures_as_pickle)
+
+
+def get_base_name_from_DOROS_LR(full_name: str):
+    if "_L" in full_name:
+        return full_name.replace("_L", "")
+    elif "_R" in full_name:
+        return full_name.replace("_R", "")
+    else:
+        return full_name
+
+
+def check_string(input_string: str, to_check: str):
+    if to_check in input_string:
+        return True
+    else:
+        return False
+
+
+def is_H(full_name: str):
+    return check_string(full_name, "_H")
+
+
+def is_V(full_name: str):
+    return check_string(full_name, "_V")
+
+
+def is_B1(full_name: str):
+    return check_string(full_name, "B1_")
+
+
+def is_B2(full_name: str):
+    return check_string(full_name, "B2_")
