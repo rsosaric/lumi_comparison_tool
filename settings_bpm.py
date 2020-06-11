@@ -42,7 +42,7 @@ config_dict = {
 
             conf_label_special_time_intervals: [[5, 95]],
 
-            conf_label_length_scale: [0.9959, 0.9949],
+            conf_label_length_scale: [0.9941, 0.9943],
             conf_label_beam_deflection: "beamData/extra_corrections/deflectioncorrection4266.csv",
 
             conf_label_y_range: [-650., 650.],
@@ -63,7 +63,7 @@ config_dict = {
             conf_label_offset_time: [1464336119, 1464348464, 1464350758],
             conf_label_min_time: 1464336193,
             conf_label_max_time: 1464353223,
-            # conf_label_length_scale: [0.9968, 0.9967],
+            # conf_label_length_scale: [1.0315, 1.0314],
             # conf_label_beam_deflection: "beamData/extra_corrections/deflectioncorrection4266.csv",
 
             # conf_label_zero_time: 1464335770,
@@ -124,7 +124,7 @@ config_dict = {
     "Nominal": {
         4266: {
             conf_label_data_file_path: "vdm_Nominal_Fill4266_n02.csv",
-            conf_label_length_scale: [0.9968, 0.9967],
+            conf_label_length_scale: [0.9952, 0.9969],
             # conf_label_beam_deflection: "beamData/extra_corrections/deflectioncorrection4266.csv",
 
             conf_label_min_time: 1440462850,
@@ -138,6 +138,7 @@ config_dict = {
         4954: {
             conf_label_data_file_path: "vdm_Nominal_Fill4954_n02.csv",
             # conf_label_special_time_intervals: [[75, 100], [110, 180], [180, 215]],
+            # conf_label_length_scale: [0.9899, 0.9950],
 
             conf_label_min_time: 1464336193,
             conf_label_max_time: 1464353223,
