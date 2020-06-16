@@ -1,0 +1,184 @@
+
+Output file:
+
+  Name: CMS_arc_Fill7443_pos_merged.csv
+
+Input Columns:
+
+  B1_L:
+    T:  1
+    H:  2
+    V:  4
+    
+  B1_R:
+    T:  1
+    H:  2
+    V:  4
+    
+  B2_L:
+    T:  1
+    H:  2
+    V:  4
+    
+  B2_R:
+    T:  1
+    H:  2
+    V:  4
+
+Data files:
+
+  B1_L:
+    Raw/B1_L_pos_1710_1720.csv
+    Raw/B1_L_pos_1720_1730.csv
+    Raw/B1_L_pos_1730_1740.csv
+    Raw/B1_L_pos_1740_1750.csv
+    Raw/B1_L_pos_1750_1800.csv
+    Raw/B1_L_pos_1800_1810.csv
+    Raw/B1_L_pos_1810_1820.csv
+    Raw/B1_L_pos_1820_1830.csv
+    Raw/B1_L_pos_1830_1840.csv
+    Raw/B1_L_pos_1840_1850.csv
+    Raw/B1_L_pos_1850_1900.csv
+    Raw/B1_L_pos_1900_1910.csv
+    Raw/B1_L_pos_1910_1920.csv
+    Raw/B1_L_pos_1920_1930.csv
+    Raw/B1_L_pos_1930_1940.csv
+    Raw/B1_L_pos_1940_1950.csv
+    Raw/B1_L_pos_1950_2000.csv
+    Raw/B1_L_pos_2000_2010.csv
+    Raw/B1_L_pos_2010_2020.csv
+    Raw/B1_L_pos_2020_2030.csv
+    Raw/B1_L_pos_2030_2040.csv
+    Raw/B1_L_pos_2040_2050.csv
+    Raw/B1_L_pos_2050_2100.csv
+    Raw/B1_L_pos_2100_2110.csv
+    Raw/B1_L_pos_2110_2120.csv
+    Raw/B1_L_pos_2120_2130.csv
+    Raw/B1_L_pos_2130_2140.csv
+    Raw/B1_L_pos_2140_2150.csv
+    Raw/B1_L_pos_2150_2200.csv
+    Raw/B1_L_pos_2200_2210.csv
+    Raw/B1_L_pos_2210_2220.csv
+    Raw/B1_L_pos_2220_2230.csv
+    Raw/B1_L_pos_2230_2240.csv
+    Raw/B1_L_pos_2240_2250.csv
+    Raw/B1_L_pos_2250_2300.csv
+    Raw/B1_L_pos_2300_2310.csv
+    Raw/B1_L_pos_2310_2316.csv
+    
+  B1_R:
+    Raw/B1_R_pos_1710_1720.csv
+    Raw/B1_R_pos_1720_1730.csv
+    Raw/B1_R_pos_1730_1740.csv
+    Raw/B1_R_pos_1740_1750.csv
+    Raw/B1_R_pos_1750_1800.csv
+    Raw/B1_R_pos_1800_1810.csv
+    Raw/B1_R_pos_1810_1820.csv
+    Raw/B1_R_pos_1820_1830.csv
+    Raw/B1_R_pos_1830_1840.csv
+    Raw/B1_R_pos_1840_1850.csv
+    Raw/B1_R_pos_1850_1900.csv
+    Raw/B1_R_pos_1900_1910.csv
+    Raw/B1_R_pos_1910_1920.csv
+    Raw/B1_R_pos_1920_1930.csv
+    Raw/B1_R_pos_1930_1940.csv
+    Raw/B1_R_pos_1940_1950.csv
+    Raw/B1_R_pos_1950_2000.csv
+    Raw/B1_R_pos_2000_2010.csv
+    Raw/B1_R_pos_2010_2020.csv
+    Raw/B1_R_pos_2020_2030.csv
+    Raw/B1_R_pos_2030_2040.csv
+    Raw/B1_R_pos_2040_2050.csv
+    Raw/B1_R_pos_2050_2100.csv
+    Raw/B1_R_pos_2100_2110.csv
+    Raw/B1_R_pos_2110_2120.csv
+    Raw/B1_R_pos_2120_2130.csv
+    Raw/B1_R_pos_2130_2140.csv
+    Raw/B1_R_pos_2140_2150.csv
+    Raw/B1_R_pos_2150_2200.csv
+    Raw/B1_R_pos_2200_2210.csv
+    Raw/B1_R_pos_2210_2220.csv
+    Raw/B1_R_pos_2220_2230.csv
+    Raw/B1_R_pos_2230_2240.csv
+    Raw/B1_R_pos_2240_2250.csv
+    Raw/B1_R_pos_2250_2300.csv
+    Raw/B1_R_pos_2300_2310.csv
+    Raw/B1_R_pos_2310_2316.csv
+    
+  B2_L:
+    Raw/B2_L_pos_1710_1720.csv
+    Raw/B2_L_pos_1720_1730.csv
+    Raw/B2_L_pos_1730_1740.csv
+    Raw/B2_L_pos_1740_1750.csv
+    Raw/B2_L_pos_1750_1800.csv
+    Raw/B2_L_pos_1800_1810.csv
+    Raw/B2_L_pos_1810_1820.csv
+    Raw/B2_L_pos_1820_1830.csv
+    Raw/B2_L_pos_1830_1840.csv
+    Raw/B2_L_pos_1840_1850.csv
+    Raw/B2_L_pos_1850_1900.csv
+    Raw/B2_L_pos_1900_1910.csv
+    Raw/B2_L_pos_1910_1920.csv
+    Raw/B2_L_pos_1920_1930.csv
+    Raw/B2_L_pos_1930_1940.csv
+    Raw/B2_L_pos_1940_1950.csv
+    Raw/B2_L_pos_1950_2000.csv
+    Raw/B2_L_pos_2000_2010.csv
+    Raw/B2_L_pos_2010_2020.csv
+    Raw/B2_L_pos_2020_2030.csv
+    Raw/B2_L_pos_2030_2040.csv
+    Raw/B2_L_pos_2040_2050.csv
+    Raw/B2_L_pos_2050_2100.csv
+    Raw/B2_L_pos_2100_2110.csv
+    Raw/B2_L_pos_2110_2120.csv
+    Raw/B2_L_pos_2120_2130.csv
+    Raw/B2_L_pos_2130_2140.csv
+    Raw/B2_L_pos_2140_2150.csv
+    Raw/B2_L_pos_2150_2200.csv
+    Raw/B2_L_pos_2200_2210.csv
+    Raw/B2_L_pos_2210_2220.csv
+    Raw/B2_L_pos_2220_2230.csv
+    Raw/B2_L_pos_2230_2240.csv
+    Raw/B2_L_pos_2240_2250.csv
+    Raw/B2_L_pos_2250_2300.csv
+    Raw/B2_L_pos_2300_2310.csv
+    Raw/B2_L_pos_2310_2316.csv
+    
+  B2_R:
+    Raw/B2_R_pos_1710_1720.csv
+    Raw/B2_R_pos_1720_1730.csv
+    Raw/B2_R_pos_1730_1740.csv
+    Raw/B2_R_pos_1740_1750.csv
+    Raw/B2_R_pos_1750_1800.csv
+    Raw/B2_R_pos_1800_1810.csv
+    Raw/B2_R_pos_1810_1820.csv
+    Raw/B2_R_pos_1820_1830.csv
+    Raw/B2_R_pos_1830_1840.csv
+    Raw/B2_R_pos_1840_1850.csv
+    Raw/B2_R_pos_1850_1900.csv
+    Raw/B2_R_pos_1900_1910.csv
+    Raw/B2_R_pos_1910_1920.csv
+    Raw/B2_R_pos_1920_1930.csv
+    Raw/B2_R_pos_1930_1940.csv
+    Raw/B2_R_pos_1940_1950.csv
+    Raw/B2_R_pos_1950_2000.csv
+    Raw/B2_R_pos_2000_2010.csv
+    Raw/B2_R_pos_2010_2020.csv
+    Raw/B2_R_pos_2020_2030.csv
+    Raw/B2_R_pos_2030_2040.csv
+    Raw/B2_R_pos_2040_2050.csv
+    Raw/B2_R_pos_2050_2100.csv
+    Raw/B2_R_pos_2100_2110.csv
+    Raw/B2_R_pos_2110_2120.csv
+    Raw/B2_R_pos_2120_2130.csv
+    Raw/B2_R_pos_2130_2140.csv
+    Raw/B2_R_pos_2140_2150.csv
+    Raw/B2_R_pos_2150_2200.csv
+    Raw/B2_R_pos_2200_2210.csv
+    Raw/B2_R_pos_2210_2220.csv
+    Raw/B2_R_pos_2220_2230.csv
+    Raw/B2_R_pos_2230_2240.csv
+    Raw/B2_R_pos_2240_2250.csv
+    Raw/B2_R_pos_2250_2300.csv
+    Raw/B2_R_pos_2300_2310.csv
+    Raw/B2_R_pos_2310_2316.csv

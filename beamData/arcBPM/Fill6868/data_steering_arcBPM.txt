@@ -1,0 +1,124 @@
+
+Output file:
+
+  Name: CMS_arc_Fill6868_pos_merged.csv
+
+Input Columns:
+
+  B1_L:
+    T:  1
+    H:  2
+    V:  4
+    
+  B1_R:
+    T:  1
+    H:  2
+    V:  4
+    
+  B2_L:
+    T:  1
+    H:  2
+    V:  4
+    
+  B2_R:
+    T:  1
+    H:  2
+    V:  4
+
+Data files:
+
+  B1_L:
+    Raw/Take1/B1_L_pos_1144_1259.csv
+    Raw/Take1/B1_L_pos_1259_1350.csv
+    Raw/Take1/B1_L_pos_1350_1414.csv
+    Raw/Take1/B1_L_pos_1414_1440.csv
+    Raw/Take1/B1_L_pos_1440_1507.csv
+    Raw/Take1/B1_L_pos_1507_1558.csv
+    Raw/Take1/B1_L_pos_1558_1625.csv
+    Raw/Take1/B1_L_pos_1625_1644.csv
+    Raw/Take2/B1_L_pos_0005_0116.csv
+    Raw/Take2/B1_L_pos_0116_0143.csv
+    Raw/Take2/B1_L_pos_0143_0208.csv
+    Raw/Take2/B1_L_pos_0208_0256.csv
+    Raw/Take2/B1_L_pos_0256_0348.csv
+    Raw/Take2/B1_L_pos_0348_0445.csv
+    Raw/Take2/B1_L_pos_0445_0535.csv
+    Raw/Take2/B1_L_pos_0535_0553.csv
+    Raw/Take2/B1_L_pos_0553_0620.csv
+    Raw/Take2/B1_L_pos_0620_0647.csv
+    Raw/Take2/B1_L_pos_0647_0713.csv
+    Raw/Take2/B1_L_pos_0713_0739.csv
+    Raw/Take2/B1_L_pos_0739_0849.csv
+    Raw/Take2/B1_L_pos_0849_0930.csv
+    
+  B1_R:
+    Raw/Take1/B1_R_pos_1144_1259.csv
+    Raw/Take1/B1_R_pos_1259_1350.csv
+    Raw/Take1/B1_R_pos_1350_1414.csv
+    Raw/Take1/B1_R_pos_1414_1440.csv
+    Raw/Take1/B1_R_pos_1440_1507.csv
+    Raw/Take1/B1_R_pos_1507_1558.csv
+    Raw/Take1/B1_R_pos_1558_1625.csv
+    Raw/Take1/B1_R_pos_1625_1644.csv
+    Raw/Take2/B1_R_pos_0005_0116.csv
+    Raw/Take2/B1_R_pos_0116_0143.csv
+    Raw/Take2/B1_R_pos_0143_0208.csv
+    Raw/Take2/B1_R_pos_0208_0256.csv
+    Raw/Take2/B1_R_pos_0256_0348.csv
+    Raw/Take2/B1_R_pos_0348_0445.csv
+    Raw/Take2/B1_R_pos_0445_0535.csv
+    Raw/Take2/B1_R_pos_0535_0553.csv
+    Raw/Take2/B1_R_pos_0553_0620.csv
+    Raw/Take2/B1_R_pos_0620_0647.csv
+    Raw/Take2/B1_R_pos_0647_0713.csv
+    Raw/Take2/B1_R_pos_0713_0739.csv
+    Raw/Take2/B1_R_pos_0739_0849.csv
+    Raw/Take2/B1_R_pos_0849_0930.csv
+    
+  B2_L:
+    Raw/Take1/B2_L_pos_1144_1259.csv
+    Raw/Take1/B2_L_pos_1259_1350.csv
+    Raw/Take1/B2_L_pos_1350_1414.csv
+    Raw/Take1/B2_L_pos_1414_1440.csv
+    Raw/Take1/B2_L_pos_1440_1507.csv
+    Raw/Take1/B2_L_pos_1507_1558.csv
+    Raw/Take1/B2_L_pos_1558_1625.csv
+    Raw/Take1/B2_L_pos_1625_1644.csv
+    Raw/Take2/B2_L_pos_0005_0116.csv
+    Raw/Take2/B2_L_pos_0116_0143.csv
+    Raw/Take2/B2_L_pos_0143_0208.csv
+    Raw/Take2/B2_L_pos_0208_0256.csv
+    Raw/Take2/B2_L_pos_0256_0348.csv
+    Raw/Take2/B2_L_pos_0348_0445.csv
+    Raw/Take2/B2_L_pos_0445_0535.csv
+    Raw/Take2/B2_L_pos_0535_0553.csv
+    Raw/Take2/B2_L_pos_0553_0620.csv
+    Raw/Take2/B2_L_pos_0620_0647.csv
+    Raw/Take2/B2_L_pos_0647_0713.csv
+    Raw/Take2/B2_L_pos_0713_0739.csv
+    Raw/Take2/B2_L_pos_0739_0849.csv
+    Raw/Take2/B2_L_pos_0849_0930.csv
+    
+  B2_R:
+    Raw/Take1/B2_R_pos_1144_1259.csv
+    Raw/Take1/B2_R_pos_1259_1350.csv
+    Raw/Take1/B2_R_pos_1350_1414.csv
+    Raw/Take1/B2_R_pos_1414_1440.csv
+    Raw/Take1/B2_R_pos_1440_1507.csv
+    Raw/Take1/B2_R_pos_1507_1558.csv
+    Raw/Take1/B2_R_pos_1558_1625.csv
+    Raw/Take1/B2_R_pos_1625_1644.csv
+    Raw/Take2/B2_R_pos_0005_0116.csv
+    Raw/Take2/B2_R_pos_0116_0143.csv
+    Raw/Take2/B2_R_pos_0143_0208.csv
+    Raw/Take2/B2_R_pos_0208_0256.csv
+    Raw/Take2/B2_R_pos_0256_0348.csv
+    Raw/Take2/B2_R_pos_0348_0445.csv
+    Raw/Take2/B2_R_pos_0445_0535.csv
+    Raw/Take2/B2_R_pos_0535_0553.csv
+    Raw/Take2/B2_R_pos_0553_0620.csv
+    Raw/Take2/B2_R_pos_0620_0647.csv
+    Raw/Take2/B2_R_pos_0647_0713.csv
+    Raw/Take2/B2_R_pos_0713_0739.csv
+    Raw/Take2/B2_R_pos_0739_0849.csv
+    Raw/Take2/B2_R_pos_0849_0930.csv

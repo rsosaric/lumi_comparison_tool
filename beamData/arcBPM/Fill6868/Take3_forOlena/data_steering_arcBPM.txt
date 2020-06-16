@@ -1,0 +1,56 @@
+
+Output file:
+
+  Name: CMS_arc_Fill6868_pos_1150_1330.csv
+
+Input Columns:
+
+  B1_L:
+    T:  1
+    H:  2
+    V:  4
+    
+  B1_R:
+    T:  1
+    H:  2
+    V:  4
+    
+  B2_L:
+    T:  1
+    H:  2
+    V:  4
+    
+  B2_R:
+    T:  1
+    H:  2
+    V:  4
+
+Data files:
+
+  B1_L:
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/OrbitDrifts/Repository/OrbitDriftsCorr/Data/arcBPM/Fill6868/Take3_forOlena/Raw/B1_L_pos_1150_1210.csv
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/OrbitDrifts/Repository/OrbitDriftsCorr/Data/arcBPM/Fill6868/Take3_forOlena/Raw/B1_L_pos_1210_1230.csv
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/OrbitDrifts/Repository/OrbitDriftsCorr/Data/arcBPM/Fill6868/Take3_forOlena/Raw/B1_L_pos_1230_1250.csv
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/OrbitDrifts/Repository/OrbitDriftsCorr/Data/arcBPM/Fill6868/Take3_forOlena/Raw/B1_L_pos_1250_1310.csv
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/OrbitDrifts/Repository/OrbitDriftsCorr/Data/arcBPM/Fill6868/Take3_forOlena/Raw/B1_L_pos_1310_1330.csv
+    
+  B1_R:
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/OrbitDrifts/Repository/OrbitDriftsCorr/Data/arcBPM/Fill6868/Take3_forOlena/Raw/B1_R_pos_1150_1210.csv
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/OrbitDrifts/Repository/OrbitDriftsCorr/Data/arcBPM/Fill6868/Take3_forOlena/Raw/B1_R_pos_1210_1230.csv
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/OrbitDrifts/Repository/OrbitDriftsCorr/Data/arcBPM/Fill6868/Take3_forOlena/Raw/B1_R_pos_1230_1250.csv
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/OrbitDrifts/Repository/OrbitDriftsCorr/Data/arcBPM/Fill6868/Take3_forOlena/Raw/B1_R_pos_1250_1310.csv
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/OrbitDrifts/Repository/OrbitDriftsCorr/Data/arcBPM/Fill6868/Take3_forOlena/Raw/B1_R_pos_1310_1330.csv
+    
+  B2_L:
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/OrbitDrifts/Repository/OrbitDriftsCorr/Data/arcBPM/Fill6868/Take3_forOlena/Raw/B2_L_pos_1150_1210.csv
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/OrbitDrifts/Repository/OrbitDriftsCorr/Data/arcBPM/Fill6868/Take3_forOlena/Raw/B2_L_pos_1210_1230.csv
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/OrbitDrifts/Repository/OrbitDriftsCorr/Data/arcBPM/Fill6868/Take3_forOlena/Raw/B2_L_pos_1230_1250.csv
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/OrbitDrifts/Repository/OrbitDriftsCorr/Data/arcBPM/Fill6868/Take3_forOlena/Raw/B2_L_pos_1250_1310.csv
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/OrbitDrifts/Repository/OrbitDriftsCorr/Data/arcBPM/Fill6868/Take3_forOlena/Raw/B2_L_pos_1310_1330.csv
+    
+  B2_R:
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/OrbitDrifts/Repository/OrbitDriftsCorr/Data/arcBPM/Fill6868/Take3_forOlena/Raw/B2_R_pos_1150_1210.csv
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/OrbitDrifts/Repository/OrbitDriftsCorr/Data/arcBPM/Fill6868/Take3_forOlena/Raw/B2_R_pos_1210_1230.csv
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/OrbitDrifts/Repository/OrbitDriftsCorr/Data/arcBPM/Fill6868/Take3_forOlena/Raw/B2_R_pos_1230_1250.csv
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/OrbitDrifts/Repository/OrbitDriftsCorr/Data/arcBPM/Fill6868/Take3_forOlena/Raw/B2_R_pos_1250_1310.csv
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/OrbitDrifts/Repository/OrbitDriftsCorr/Data/arcBPM/Fill6868/Take3_forOlena/Raw/B2_R_pos_1310_1330.csv

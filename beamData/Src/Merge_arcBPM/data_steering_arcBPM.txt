@@ -1,0 +1,60 @@
+
+Output file:
+
+  Name: CMS_arc_Fill6016_pos_merged.csv
+
+Input Columns:
+
+  B1_L:
+    T:  1
+    H:  2
+    V:  4
+    
+  B1_R:
+    T:  1
+    H:  2
+    V:  4
+    
+  B2_L:
+    T:  1
+    H:  2
+    V:  4
+    
+  B2_R:
+    T:  1
+    H:  2
+    V:  4
+
+Data files:
+
+  B1_L:
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/VdM/arcBPMs/Data/Fill6016/Raw/arcBPM_0950_1140_B1L_pos.csv
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/VdM/arcBPMs/Data/Fill6016/Raw/arcBPM_1145_1335_B1L_pos.csv
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/VdM/arcBPMs/Data/Fill6016/Raw/arcBPM_1425_1615_B1L_pos.csv
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/VdM/arcBPMs/Data/Fill6016/Raw/arcBPM_1845_1945_B1L_pos.csv
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/VdM/arcBPMs/Data/Fill6016/Raw/arcBPM_1945_2120_B1L_pos.csv
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/VdM/arcBPMs/Data/Fill6016/Raw/arcBPM_2120_2205_B1L_pos.csv
+    
+  B1_R:
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/VdM/arcBPMs/Data/Fill6016/Raw/arcBPM_0950_1140_B1R_pos.csv
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/VdM/arcBPMs/Data/Fill6016/Raw/arcBPM_1145_1335_B1R_pos.csv
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/VdM/arcBPMs/Data/Fill6016/Raw/arcBPM_1425_1615_B1R_pos.csv
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/VdM/arcBPMs/Data/Fill6016/Raw/arcBPM_1845_1945_B1R_pos.csv
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/VdM/arcBPMs/Data/Fill6016/Raw/arcBPM_1945_2120_B1R_pos.csv
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/VdM/arcBPMs/Data/Fill6016/Raw/arcBPM_2120_2205_B1R_pos.csv
+    
+  B2_L:
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/VdM/arcBPMs/Data/Fill6016/Raw/arcBPM_0950_1140_B2L_pos.csv
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/VdM/arcBPMs/Data/Fill6016/Raw/arcBPM_1145_1335_B2L_pos.csv
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/VdM/arcBPMs/Data/Fill6016/Raw/arcBPM_1425_1615_B2L_pos.csv
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/VdM/arcBPMs/Data/Fill6016/Raw/arcBPM_1845_1945_B2L_pos.csv
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/VdM/arcBPMs/Data/Fill6016/Raw/arcBPM_1945_2120_B2L_pos.csv
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/VdM/arcBPMs/Data/Fill6016/Raw/arcBPM_2120_2205_B2L_pos.csv
+    
+  B2_R:
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/VdM/arcBPMs/Data/Fill6016/Raw/arcBPM_0950_1140_B2R_pos.csv
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/VdM/arcBPMs/Data/Fill6016/Raw/arcBPM_1145_1335_B2R_pos.csv
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/VdM/arcBPMs/Data/Fill6016/Raw/arcBPM_1425_1615_B2R_pos.csv
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/VdM/arcBPMs/Data/Fill6016/Raw/arcBPM_1845_1945_B2R_pos.csv
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/VdM/arcBPMs/Data/Fill6016/Raw/arcBPM_1945_2120_B2R_pos.csv
+    /Users/turkot/DESY/Postdoc/CMS/Lumi/VdM/arcBPMs/Data/Fill6016/Raw/arcBPM_2120_2205_B2R_pos.csv

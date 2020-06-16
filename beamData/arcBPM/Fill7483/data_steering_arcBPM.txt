@@ -1,0 +1,60 @@
+
+Output file:
+
+  Name: CMS_arc_Fill7483_pos_merged.csv
+
+Input Columns:
+
+  B1_L:
+    T:  1
+    H:  2
+    V:  4
+    
+  B1_R:
+    T:  1
+    H:  2
+    V:  4
+    
+  B2_L:
+    T:  1
+    H:  2
+    V:  4
+    
+  B2_R:
+    T:  1
+    H:  2
+    V:  4
+
+Data files:
+
+  B1_L:
+    Raw/B1_L_pos_0455_0505.csv
+    Raw/B1_L_pos_0505_0515.csv
+    Raw/B1_L_pos_0515_0525.csv
+    Raw/B1_L_pos_0525_0535.csv
+    Raw/B1_L_pos_0535_0545.csv
+    Raw/B1_L_pos_0545_0555.csv
+    
+  B1_R:
+    Raw/B1_R_pos_0455_0505.csv
+    Raw/B1_R_pos_0505_0515.csv
+    Raw/B1_R_pos_0515_0525.csv
+    Raw/B1_R_pos_0525_0535.csv
+    Raw/B1_R_pos_0535_0545.csv
+    Raw/B1_R_pos_0545_0555.csv
+    
+  B2_L:
+    Raw/B2_L_pos_0455_0505.csv
+    Raw/B2_L_pos_0505_0515.csv
+    Raw/B2_L_pos_0515_0525.csv
+    Raw/B2_L_pos_0525_0535.csv
+    Raw/B2_L_pos_0535_0545.csv
+    Raw/B2_L_pos_0545_0555.csv
+    
+  B2_R:
+    Raw/B2_R_pos_0455_0505.csv
+    Raw/B2_R_pos_0505_0515.csv
+    Raw/B2_R_pos_0515_0525.csv
+    Raw/B2_R_pos_0525_0535.csv
+    Raw/B2_R_pos_0535_0545.csv
+    Raw/B2_R_pos_0545_0555.csv

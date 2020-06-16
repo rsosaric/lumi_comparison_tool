@@ -1,0 +1,120 @@
+
+Output file:
+
+  Name: CMS_arc_Fill6016_pos_merged.csv
+
+Input Columns:
+
+  B1_L:
+    T:  1
+    H:  2
+    V:  4
+    
+  B1_R:
+    T:  1
+    H:  2
+    V:  4
+    
+  B2_L:
+    T:  1
+    H:  2
+    V:  4
+    
+  B2_R:
+    T:  1
+    H:  2
+    V:  4
+
+Data files:
+
+  B1_L:
+    Raw/Fill6016_B1_L_pos_0545_0618.csv
+    Raw/Fill6016_B1_L_pos_0936_1009.csv
+    Raw/Fill6016_B1_L_pos_1009_1042.csv
+    Raw/Fill6016_B1_L_pos_1042_1115.csv
+    Raw/Fill6016_B1_L_pos_1115_1148.csv
+    Raw/Fill6016_B1_L_pos_1148_1221.csv
+    Raw/Fill6016_B1_L_pos_1221_1254.csv
+    Raw/Fill6016_B1_L_pos_1254_1327.csv
+    Raw/Fill6016_B1_L_pos_1327_1400.csv
+    Raw/Fill6016_B1_L_pos_1400_1433.csv
+    Raw/Fill6016_B1_L_pos_1433_1506.csv
+    Raw/Fill6016_B1_L_pos_1506_1539.csv
+    Raw/Fill6016_B1_L_pos_1539_1612.csv
+    Raw/Fill6016_B1_L_pos_1612_1645.csv
+    Raw/Fill6016_B1_L_pos_1824_1857.csv
+    Raw/Fill6016_B1_L_pos_1857_1930.csv
+    Raw/Fill6016_B1_L_pos_1930_2003.csv
+    Raw/Fill6016_B1_L_pos_2003_2036.csv
+    Raw/Fill6016_B1_L_pos_2036_2109.csv
+    Raw/Fill6016_B1_L_pos_2109_2142.csv
+    Raw/Fill6016_B1_L_pos_2142_2215.csv
+    
+  B1_R:
+    Raw/Fill6016_B1_R_pos_0545_0618.csv
+    Raw/Fill6016_B1_R_pos_0936_1009.csv
+    Raw/Fill6016_B1_R_pos_1009_1042.csv
+    Raw/Fill6016_B1_R_pos_1042_1115.csv
+    Raw/Fill6016_B1_R_pos_1115_1148.csv
+    Raw/Fill6016_B1_R_pos_1148_1221.csv
+    Raw/Fill6016_B1_R_pos_1221_1254.csv
+    Raw/Fill6016_B1_R_pos_1254_1327.csv
+    Raw/Fill6016_B1_R_pos_1327_1400.csv
+    Raw/Fill6016_B1_R_pos_1400_1433.csv
+    Raw/Fill6016_B1_R_pos_1433_1506.csv
+    Raw/Fill6016_B1_R_pos_1506_1539.csv
+    Raw/Fill6016_B1_R_pos_1539_1612.csv
+    Raw/Fill6016_B1_R_pos_1612_1645.csv
+    Raw/Fill6016_B1_R_pos_1824_1857.csv
+    Raw/Fill6016_B1_R_pos_1857_1930.csv
+    Raw/Fill6016_B1_R_pos_1930_2003.csv
+    Raw/Fill6016_B1_R_pos_2003_2036.csv
+    Raw/Fill6016_B1_R_pos_2036_2109.csv
+    Raw/Fill6016_B1_R_pos_2109_2142.csv
+    Raw/Fill6016_B1_R_pos_2142_2215.csv
+    
+  B2_L:
+    Raw/Fill6016_B2_L_pos_0545_0618.csv
+    Raw/Fill6016_B2_L_pos_0936_1009.csv
+    Raw/Fill6016_B2_L_pos_1009_1042.csv
+    Raw/Fill6016_B2_L_pos_1042_1115.csv
+    Raw/Fill6016_B2_L_pos_1115_1148.csv
+    Raw/Fill6016_B2_L_pos_1148_1221.csv
+    Raw/Fill6016_B2_L_pos_1221_1254.csv
+    Raw/Fill6016_B2_L_pos_1254_1327.csv
+    Raw/Fill6016_B2_L_pos_1327_1400.csv
+    Raw/Fill6016_B2_L_pos_1400_1433.csv
+    Raw/Fill6016_B2_L_pos_1433_1506.csv
+    Raw/Fill6016_B2_L_pos_1506_1539.csv
+    Raw/Fill6016_B2_L_pos_1539_1612.csv
+    Raw/Fill6016_B2_L_pos_1612_1645.csv
+    Raw/Fill6016_B2_L_pos_1824_1857.csv
+    Raw/Fill6016_B2_L_pos_1857_1930.csv
+    Raw/Fill6016_B2_L_pos_1930_2003.csv
+    Raw/Fill6016_B2_L_pos_2003_2036.csv
+    Raw/Fill6016_B2_L_pos_2036_2109.csv
+    Raw/Fill6016_B2_L_pos_2109_2142.csv
+    Raw/Fill6016_B2_L_pos_2142_2215.csv
+    
+  B2_R:
+    Raw/Fill6016_B2_R_pos_0545_0618.csv
+    Raw/Fill6016_B2_R_pos_0936_1009.csv
+    Raw/Fill6016_B2_R_pos_1009_1042.csv
+    Raw/Fill6016_B2_R_pos_1042_1115.csv
+    Raw/Fill6016_B2_R_pos_1115_1148.csv
+    Raw/Fill6016_B2_R_pos_1148_1221.csv
+    Raw/Fill6016_B2_R_pos_1221_1254.csv
+    Raw/Fill6016_B2_R_pos_1254_1327.csv
+    Raw/Fill6016_B2_R_pos_1327_1400.csv
+    Raw/Fill6016_B2_R_pos_1400_1433.csv
+    Raw/Fill6016_B2_R_pos_1433_1506.csv
+    Raw/Fill6016_B2_R_pos_1506_1539.csv
+    Raw/Fill6016_B2_R_pos_1539_1612.csv
+    Raw/Fill6016_B2_R_pos_1612_1645.csv
+    Raw/Fill6016_B2_R_pos_1824_1857.csv
+    Raw/Fill6016_B2_R_pos_1857_1930.csv
+    Raw/Fill6016_B2_R_pos_1930_2003.csv
+    Raw/Fill6016_B2_R_pos_2003_2036.csv
+    Raw/Fill6016_B2_R_pos_2036_2109.csv
+    Raw/Fill6016_B2_R_pos_2109_2142.csv
+    Raw/Fill6016_B2_R_pos_2142_2215.csv
