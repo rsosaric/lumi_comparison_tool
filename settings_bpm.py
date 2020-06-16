@@ -10,7 +10,9 @@ conf_label_y_range = "y_range"
 conf_label_y_diff_range = "y_diff_range"
 conf_label_length_scale = "length_scale"
 conf_label_beam_deflection = "beam_deflection"
+conf_label_beam_deflection_gfactor = "beam_deflection_gfactor"  # geometrical factor for beam_deflection correction
 conf_label_special_col_sign = "special col sign"  # it can be used to invert input data column sign or scale it
+conf_label_orbit_drift = "orbit_drift"
 conf_label_deep_studies = "deep_studies"
 conf_label_compute_offsets = "compute offsets"
 
@@ -44,6 +46,9 @@ config_dict = {
 
             conf_label_length_scale: [0.9941, 0.9943],
             conf_label_beam_deflection: "beamData/extra_corrections/deflectioncorrection4266.csv",
+            conf_label_beam_deflection_gfactor: [2.65, 2.76],  # [x, y]
+
+            # conf_label_orbit_drift: "beamData/extra_corrections/orbitdriftcorrection4266.csv",
 
             conf_label_y_range: [-650., 650.],
             conf_label_y_diff_range: [-15., 15.],
@@ -52,8 +57,8 @@ config_dict = {
                 "B1_H_L": -1, "B1_H_R": -1, "B2_H_R": -1
             },
 
-            conf_label_deep_studies: True,
-            conf_label_compute_offsets: True
+            # conf_label_deep_studies: True,
+            # conf_label_compute_offsets: True
 
         },
         4954: {
@@ -63,16 +68,17 @@ config_dict = {
             conf_label_offset_time: [1464336119, 1464348464, 1464350758],
             conf_label_min_time: 1464336193,
             conf_label_max_time: 1464353223,
-            # conf_label_length_scale: [1.0315, 1.0314],
-            # conf_label_beam_deflection: "beamData/extra_corrections/deflectioncorrection4266.csv",
+            conf_label_length_scale: [1.0315, 1.0314],
+            conf_label_beam_deflection: "beamData/extra_corrections/deflectioncorrection4954.csv",
+            conf_label_beam_deflection_gfactor: [2.65, 2.76],  # [x, y]
 
             # conf_label_zero_time: 1464335770,
 
-            # conf_label_special_time_intervals: [[75, 100], [110, 180], [180, 215]]
+            conf_label_special_time_intervals: [[0, 80]],
 
             conf_label_y_range: [-600., 600.],
             # conf_label_y_diff_range: [-30., 30.]
-            conf_label_y_diff_range: [-7., 7.]
+            conf_label_y_diff_range: [-10., 10.]
 
         },
         7442: {
@@ -125,7 +131,8 @@ config_dict = {
         4266: {
             conf_label_data_file_path: "vdm_Nominal_Fill4266_n02.csv",
             conf_label_length_scale: [0.9952, 0.9969],
-            # conf_label_beam_deflection: "beamData/extra_corrections/deflectioncorrection4266.csv",
+            conf_label_beam_deflection: "beamData/extra_corrections/deflectioncorrection4266.csv",
+            conf_label_beam_deflection_gfactor: [2.65, 2.76],  # [x, y]
 
             conf_label_min_time: 1440462850,
             conf_label_max_time: 1440480981,
@@ -137,8 +144,11 @@ config_dict = {
         },
         4954: {
             conf_label_data_file_path: "vdm_Nominal_Fill4954_n02.csv",
-            # conf_label_special_time_intervals: [[75, 100], [110, 180], [180, 215]],
-            # conf_label_length_scale: [0.9899, 0.9950],
+            conf_label_special_time_intervals: [[5, 80]],
+            conf_label_length_scale: [0.9899, 0.9950],
+
+            conf_label_beam_deflection: "beamData/extra_corrections/deflectioncorrection4954.csv",
+            conf_label_beam_deflection_gfactor: [2.65, 2.76],  # [x, y]
 
             conf_label_min_time: 1464336193,
             conf_label_max_time: 1464353223,

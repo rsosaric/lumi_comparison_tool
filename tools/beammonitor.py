@@ -50,6 +50,7 @@ class BPM:
     __ref_col_diff_suffix_label = '_diff'
     __ref_col_lscale_suffix_label = '_lscale'
     __ref_col_deflection_suffix_label = '_deflection'
+    __ref_col_orbit_drift_suffix_label = '_orbit_drift'
 
     __col_names_to_read = {
         __doros_name: {"sec": __col_time,
@@ -68,10 +69,10 @@ class BPM:
                          "set_nominal_B2sepPlane": __col_b2v}
     }
 
-    __col_deflection_ini_time = 'timestamp_start'
-    __col_deflection_end_time = 'timestamp_end'
-    __col_deflection_correction_x = 'correction_x'
-    __col_deflection_correction_y = 'correction_y'
+    __col_correction_ini_time = 'timestamp_start'
+    __col_correction_end_time = 'timestamp_end'
+    __col_correction_x = 'correction_x'
+    __col_correction_y = 'correction_y'
 
     def __init__(self, name: str, fill: int, data_file_name: str = None,
                  get_only_data: bool = False, nominal_data=None) -> None:
@@ -96,6 +97,8 @@ class BPM:
         # column names
         self.__ref_col_lscale_names = []
         self.__ref_col_lscale_names_LR = []
+        self.__ref_col_orbit_drift_names = []
+        self.__ref_col_orbit_drift_names_LR = []
         self.__ref_col_diff_names = []
         self.__ref_col_diff_names_LR = []
         self.__ref_col_diff_names_b1_LR = []
@@ -106,6 +109,8 @@ class BPM:
         self.__ref_col_lscale_diff_names_b2_LR = []
         self.__ref_col_deflection_diff_names = []
         self.__ref_col_deflection_diff_names_LR = []
+        self.__ref_col_orbit_drift_diff_names = []
+        self.__ref_col_orbit_drift_diff_names_LR = []
         self.__ref_col_lscale_and_deflection_diff_names = []
         self.__ref_col_lscale_and_deflection_diff_names_LR = []
         self.__ref_col_deflection_and_lscale_diff_names = []
@@ -118,6 +123,8 @@ class BPM:
         self.__ref_col_lscale_and_deflection_diff_names_b2_LR = []
         self.__ref_col_deflection_and_lscale_diff_names_b1_LR = []
         self.__ref_col_deflection_and_lscale_diff_names_b2_LR = []
+        self.__ref_col_deflection_and_orbit_and_lscale_diff_names = []
+        self.__ref_col_deflection_and_orbit_and_lscale_diff_names_LR = []
 
         self.fill_col_names()
 
@@ -161,7 +168,7 @@ class BPM:
         else:
             self.__y_diff_range = [setts.l_diff_zoom_min_plot, setts.l_diff_zoom_max_plot]
 
-        if setts.conf_label_beam_deflection in self.__settings_list and not self.__is_nominal:
+        if setts.conf_label_beam_deflection in self.__settings_list:
             self.__apply_deflection = True
         else:
             self.__apply_deflection = False
@@ -170,6 +177,11 @@ class BPM:
             self.__apply_lscale = True
         else:
             self.__apply_lscale = False
+
+        if setts.conf_label_orbit_drift in self.__settings_list:
+            self.__apply_orbit_drift = True
+        else:
+            self.__apply_orbit_drift = False
 
         print("Analysing " + self.name + " using data: " + str(self.__path_to_data))
         in_data = pd.DataFrame()
@@ -215,8 +227,10 @@ class BPM:
         else:
             self.__interpolation_to_nominal_time = self.__in_data_def_format
 
-        self.apply_corrections_to_diff(basic_cols=self.__base_cols, apply_lscale=self.__apply_lscale,
-                                       apply_deflection=self.__apply_deflection)
+        self.apply_corrections_to_diff(basic_cols=self.__base_cols,
+                                       apply_lscale=self.__apply_lscale,
+                                       apply_deflection=self.__apply_deflection,
+                                       apply_orbit_drift=self.__apply_orbit_drift)
 
         # Plotting
         if not get_only_data:
@@ -250,72 +264,65 @@ class BPM:
                                                                   data_to_use=self.__interpolation_to_nominal_time,
                                                                   xrange=xrange,
                                                                   legend_labels=self.__ref_col_names)
-                if setts.conf_label_length_scale in self.__settings_list:
+                if self.__apply_lscale:
                     self.plot_detector_data_diff_with_nominal(extra_name_suffix="_scale_corr",
                                                               cols_to_plot=self.__ref_col_lscale_diff_names,
                                                               data_to_use=self.__interpolation_to_nominal_time)
-                if setts.conf_label_beam_deflection in self.__settings_list:
+                if self.__apply_deflection:
                     # print(self.__ref_col_deflection_diff_names)
                     # print(list(self.__interpolation_to_nominal_time))
                     self.plot_detector_data_diff_with_nominal(extra_name_suffix="_deflection_corr",
                                                               cols_to_plot=self.__ref_col_deflection_diff_names,
                                                               data_to_use=self.__interpolation_to_nominal_time)
-
-                if setts.conf_label_beam_deflection in self.__settings_list and setts.conf_label_length_scale in self.__settings_list:
-                    self.plot_detector_data_diff_with_nominal(extra_name_suffix="_deflection_and_lscale_corr",
-                                                              cols_to_plot=self.__ref_col_deflection_and_lscale_diff_names,
+                if self.__apply_orbit_drift:
+                    self.plot_detector_data_diff_with_nominal(extra_name_suffix="_orbit_drift",
+                                                              cols_to_plot=self.__ref_col_orbit_drift_diff_names,
                                                               data_to_use=self.__interpolation_to_nominal_time)
-                    # self.plot_detector_data_diff_with_nominal(extra_name_suffix="_lscale_and_deflection_corr",
-                    #                                           cols_to_plot=self.__ref_col_lscale_and_deflection_diff_names,
-                    #                                           data_to_use=self.__interpolation_to_nominal_time)
-                    if self.__do_deep_studies:
-                        # print(self.__ref_col_lscale_and_deflection_diff_names_b1_LR)
-                        # print(list(self.__interpolation_to_nominal_time))
-                        # self.plot_detector_data_diff_with_nominal(extra_name_suffix="_lscale_and_deflection_corr_LR_b1",
-                        #                                           cols_to_plot=self.__ref_col_lscale_and_deflection_diff_names_b1_LR,
-                        #                                           data_to_use=self.__interpolation_to_nominal_time)
-                        # self.plot_detector_data_diff_with_nominal(extra_name_suffix="_lscale_and_deflection_corr_LR_b2",
-                        #                                           cols_to_plot=self.__ref_col_lscale_and_deflection_diff_names_b2_LR,
-                        #                                           data_to_use=self.__interpolation_to_nominal_time)
-                        self.plot_detector_data_diff_with_nominal(extra_name_suffix="_deflection_and_lscale_corr_LR_b1",
-                                                                  cols_to_plot=self.__ref_col_deflection_and_lscale_diff_names_b1_LR,
-                                                                  data_to_use=self.__interpolation_to_nominal_time)
-                        self.plot_detector_data_diff_with_nominal(extra_name_suffix="_deflection_and_lscale_corr_LR_b2",
-                                                                  cols_to_plot=self.__ref_col_deflection_and_lscale_diff_names_b2_LR,
-                                                                  data_to_use=self.__interpolation_to_nominal_time)
-                        if setts.conf_label_special_time_intervals in list(setts.config_dict[self.name][self.__fill]):
-                            short_name_deflection_and_lscale_diff_names_b1_LR = exclude_suffix_from_names(
-                                        self.__ref_col_deflection_and_lscale_diff_names_b1_LR,
-                                        suffix=BPM.__ref_col_deflection_suffix_label + BPM.__ref_col_lscale_suffix_label
-                                               + BPM.__ref_col_diff_suffix_label)
-                            short_name_deflection_and_lscale_diff_names_b2_LR = exclude_suffix_from_names(
-                                self.__ref_col_deflection_and_lscale_diff_names_b2_LR,
-                                suffix=BPM.__ref_col_deflection_suffix_label + BPM.__ref_col_lscale_suffix_label
-                                       + BPM.__ref_col_diff_suffix_label)
-                            for xrange in setts.config_dict[self.name][self.__fill][
-                                setts.conf_label_special_time_intervals]:
-                                self.plot_detector_data_diff_with_nominal(xrange=xrange,
-                                                                          cols_to_plot=self.__ref_col_diff_names_b1_LR,
-                                                                          data_to_use=self.__interpolation_to_nominal_time,
-                                                                          extra_name_suffix="_b1_LR")
-                                self.plot_detector_data_diff_with_nominal(
-                                    extra_name_suffix="_deflection_and_lscale_corr_b1_LR",
-                                    cols_to_plot=self.__ref_col_deflection_and_lscale_diff_names_b1_LR,
-                                    data_to_use=self.__interpolation_to_nominal_time,
-                                    xrange=xrange,
-                                    legend_labels=short_name_deflection_and_lscale_diff_names_b1_LR)
 
-                                self.plot_detector_data_diff_with_nominal(
-                                    xrange=xrange,
-                                    cols_to_plot=self.__ref_col_diff_names_b2_LR,
-                                    data_to_use=self.__interpolation_to_nominal_time,
-                                    extra_name_suffix="_b2_LR")
-                                self.plot_detector_data_diff_with_nominal(
-                                    extra_name_suffix="_deflection_and_lscale_corr_b2_LR",
-                                    cols_to_plot=self.__ref_col_deflection_and_lscale_diff_names_b2_LR,
-                                    data_to_use=self.__interpolation_to_nominal_time,
-                                    xrange=xrange,
-                                    legend_labels=short_name_deflection_and_lscale_diff_names_b2_LR)
+                # if self.__apply_deflection and self.__apply_lscale:
+                #     self.plot_detector_data_diff_with_nominal(extra_name_suffix="_deflection_and_lscale_corr",
+                #                                               cols_to_plot=self.__ref_col_deflection_and_lscale_diff_names,
+                #                                               data_to_use=self.__interpolation_to_nominal_time)
+                #     if self.__do_deep_studies:
+                #         self.plot_detector_data_diff_with_nominal(extra_name_suffix="_deflection_and_lscale_corr_LR_b1",
+                #                                                   cols_to_plot=self.__ref_col_deflection_and_lscale_diff_names_b1_LR,
+                #                                                   data_to_use=self.__interpolation_to_nominal_time)
+                #         self.plot_detector_data_diff_with_nominal(extra_name_suffix="_deflection_and_lscale_corr_LR_b2",
+                #                                                   cols_to_plot=self.__ref_col_deflection_and_lscale_diff_names_b2_LR,
+                #                                                   data_to_use=self.__interpolation_to_nominal_time)
+                #         if setts.conf_label_special_time_intervals in self.__settings_list:
+                #             short_name_deflection_and_lscale_diff_names_b1_LR = exclude_suffix_from_names(
+                #                         self.__ref_col_deflection_and_lscale_diff_names_b1_LR,
+                #                         suffix=BPM.__ref_col_deflection_suffix_label + BPM.__ref_col_lscale_suffix_label
+                #                                + BPM.__ref_col_diff_suffix_label)
+                #             short_name_deflection_and_lscale_diff_names_b2_LR = exclude_suffix_from_names(
+                #                 self.__ref_col_deflection_and_lscale_diff_names_b2_LR,
+                #                 suffix=BPM.__ref_col_deflection_suffix_label + BPM.__ref_col_lscale_suffix_label
+                #                        + BPM.__ref_col_diff_suffix_label)
+                #             for xrange in setts.config_dict[self.name][self.__fill][
+                #                 setts.conf_label_special_time_intervals]:
+                #                 self.plot_detector_data_diff_with_nominal(xrange=xrange,
+                #                                                           cols_to_plot=self.__ref_col_diff_names_b1_LR,
+                #                                                           data_to_use=self.__interpolation_to_nominal_time,
+                #                                                           extra_name_suffix="_b1_LR")
+                #                 self.plot_detector_data_diff_with_nominal(
+                #                     extra_name_suffix="_deflection_and_lscale_corr_b1_LR",
+                #                     cols_to_plot=self.__ref_col_deflection_and_lscale_diff_names_b1_LR,
+                #                     data_to_use=self.__interpolation_to_nominal_time,
+                #                     xrange=xrange,
+                #                     legend_labels=short_name_deflection_and_lscale_diff_names_b1_LR)
+                #
+                #                 self.plot_detector_data_diff_with_nominal(
+                #                     xrange=xrange,
+                #                     cols_to_plot=self.__ref_col_diff_names_b2_LR,
+                #                     data_to_use=self.__interpolation_to_nominal_time,
+                #                     extra_name_suffix="_b2_LR")
+                #                 self.plot_detector_data_diff_with_nominal(
+                #                     extra_name_suffix="_deflection_and_lscale_corr_b2_LR",
+                #                     cols_to_plot=self.__ref_col_deflection_and_lscale_diff_names_b2_LR,
+                #                     data_to_use=self.__interpolation_to_nominal_time,
+                #                     xrange=xrange,
+                #                     legend_labels=short_name_deflection_and_lscale_diff_names_b2_LR)
 
             self.save_plots()
 
@@ -347,6 +354,9 @@ class BPM:
         self.__ref_col_lscale_names_LR = [s + BPM.__ref_col_lscale_suffix_label for s in BPM.__ref_col_names_LR]
         self.__ref_col_lscale_names_b1_LR = [s + BPM.__ref_col_lscale_suffix_label for s in BPM.__cols_b1_names_LR]
         self.__ref_col_lscale_names_b2_LR = [s + BPM.__ref_col_lscale_suffix_label for s in BPM.__cols_b2_names_LR]
+        self.__ref_col_orbit_drift_names = [s + BPM.__ref_col_orbit_drift_suffix_label for s in BPM.__ref_col_names]
+        self.__ref_col_orbit_drift_names_LR = [s + BPM.__ref_col_orbit_drift_suffix_label for s in BPM.__ref_col_names_LR]
+
         if self.name == BPM.__nominal_name:
             self.__ref_col_diff_names = []
             self.__ref_col_diff_names_LR = []
@@ -374,15 +384,11 @@ class BPM:
                 [s + BPM.__ref_col_deflection_suffix_label for s in self.__ref_col_diff_names_b1_LR]
             self.__ref_col_deflection_diff_names_b2_LR = \
                 [s + BPM.__ref_col_deflection_suffix_label for s in self.__ref_col_diff_names_b2_LR]
-            #
-            # self.__ref_col_lscale_and_deflection_diff_names = \
-            #     [s + BPM.__ref_col_deflection_suffix_label for s in self.__ref_col_lscale_diff_names]
-            # self.__ref_col_lscale_and_deflection_diff_names_LR = \
-            #     [s + BPM.__ref_col_deflection_suffix_label for s in self.__ref_col_lscale_diff_names_LR]
-            # self.__ref_col_lscale_and_deflection_diff_names_b1_LR = \
-            #     [s + BPM.__ref_col_deflection_suffix_label for s in self.__ref_col_lscale_diff_names_b1_LR]
-            # self.__ref_col_lscale_and_deflection_diff_names_b2_LR = \
-            #     [s + BPM.__ref_col_deflection_suffix_label for s in self.__ref_col_lscale_diff_names_b2_LR]
+
+            self.__ref_col_orbit_drift_diff_names = \
+                [s + BPM.__ref_col_orbit_drift_suffix_label for s in self.__ref_col_diff_names]
+            self.__ref_col_orbit_drift_diff_names_LR = \
+                [s + BPM.__ref_col_orbit_drift_suffix_label for s in self.__ref_col_diff_names_LR]
 
             self.__ref_col_deflection_and_lscale_diff_names = \
                 [s + BPM.__ref_col_deflection_suffix_label + BPM.__ref_col_lscale_suffix_label +
@@ -396,6 +402,15 @@ class BPM:
             self.__ref_col_deflection_and_lscale_diff_names_b2_LR = \
                 [s + BPM.__ref_col_deflection_suffix_label + BPM.__ref_col_lscale_suffix_label +
                  BPM.__ref_col_diff_suffix_label for s in BPM.__cols_b2_names_LR]
+
+            self.__ref_col_deflection_and_orbit_and_lscale_diff_names = \
+                [s + BPM.__ref_col_deflection_suffix_label + BPM.__ref_col_orbit_drift_suffix_label +
+                 BPM.__ref_col_lscale_suffix_label +
+                 BPM.__ref_col_diff_suffix_label for s in BPM.__ref_col_names]
+            self.__ref_col_deflection_and_orbit_and_lscale_diff_names_LR = \
+                [s + BPM.__ref_col_deflection_suffix_label + BPM.__ref_col_orbit_drift_suffix_label +
+                 BPM.__ref_col_lscale_suffix_label +
+                 BPM.__ref_col_diff_suffix_label for s in BPM.__ref_col_names_LR]
 
             self.__ref_col_diff_names_final_result = self.__ref_col_diff_names
 
@@ -632,63 +647,134 @@ class BPM:
             data_to_use[i_col_name + BPM.__ref_col_lscale_suffix_label] = \
                 np.array(corrected_cols_dict[i_col_name])
 
-    def read_deflection_correction_file(self):
+    def read_deflection_correction_input(self):
         reading_cols_dict = {
-            '#timestamp_start': BPM.__col_deflection_ini_time,
-            'timestamp_end': BPM.__col_deflection_end_time,
-            'correction_x': BPM.__col_deflection_correction_x,
-            'correction_y': BPM.__col_deflection_correction_y
+            '#timestamp_start': BPM.__col_correction_ini_time,
+            'timestamp_end': BPM.__col_correction_end_time,
+            'correction_x': BPM.__col_correction_x,
+            'correction_y': BPM.__col_correction_y
         }
         unit_factor = 1000.
         deflection_correction_data = pd.read_csv(self.__settings[setts.conf_label_beam_deflection],
                                                  index_col=False, usecols=list(reading_cols_dict))
         deflection_correction_data.rename(inplace=True, columns=reading_cols_dict)
-        deflection_correction_data[BPM.__col_deflection_correction_x] *= unit_factor
-        deflection_correction_data[BPM.__col_deflection_correction_y] *= unit_factor
+        deflection_correction_data[BPM.__col_correction_x] *= unit_factor
+        deflection_correction_data[BPM.__col_correction_y] *= unit_factor
         # print(deflection_correction_data)
 
-        deflection_correction_data.sort_values(BPM.__col_deflection_ini_time, inplace=True)
+        deflection_correction_data.sort_values(BPM.__col_correction_ini_time, inplace=True)
         deflection_correction_data.dropna(inplace=True)
         deflection_correction_data.reset_index(drop=True, inplace=True)
 
-        return deflection_correction_data
+        # read correction geometrical factor from settings and set to 1. if not found
+        x_gfactor = 2.
+        y_gfactor = 2.
+        if setts.conf_label_beam_deflection_gfactor in self.__settings_list:
+            gfactors = self.__settings[setts.conf_label_beam_deflection_gfactor]
+            x_gfactor = gfactors[0]
+            y_gfactor = gfactors[1]
+        else:
+            print("WARNING: No geometrical factor was provided. Taking 2.0 as an estimated value")
 
-    def apply_deflection_correction(self, basic_cols, data_to_use=None):
-        print("Applying beam-beam deflection correction ...")
-        deflection_correction_data = self.read_deflection_correction_file()
+        correction_gfactors = [x_gfactor, y_gfactor]
+        return deflection_correction_data, correction_gfactors
+
+    def read_orbit_drift_correction_input(self):
+        reading_cols_dict = {
+            '#timestamp_start': BPM.__col_correction_ini_time,
+            'timestamp_end': BPM.__col_correction_end_time,
+            'correction_x': BPM.__col_correction_x,
+            'correction_y': BPM.__col_correction_y
+        }
+        unit_factor = 1000.
+        orbit_drift_correction_data = pd.read_csv(self.__settings[setts.conf_label_beam_deflection],
+                                                  index_col=False, usecols=list(reading_cols_dict))
+        orbit_drift_correction_data.rename(inplace=True, columns=reading_cols_dict)
+        orbit_drift_correction_data[BPM.__col_correction_x] *= unit_factor
+        orbit_drift_correction_data[BPM.__col_correction_y] *= unit_factor
+
+        orbit_drift_correction_data.dropna(inplace=True)
+        orbit_drift_correction_data.sort_values(by=[BPM.__col_correction_ini_time])
+        orbit_drift_correction_data.reset_index(drop=True, inplace=True)
+        return orbit_drift_correction_data
+
+    def apply_per_time_range_addition_correction(self, basic_cols, mode, data_to_use=None):
+        if mode == "orbit drift":
+            print("Applying orbit drift correction ...")
+            correction_data = self.read_orbit_drift_correction_input()
+            beam_factor = 0.5
+            correction_gfactors = [1, 1]
+            default_correction = 0.0
+            corrected_suffix = BPM.__ref_col_orbit_drift_suffix_label
+        elif mode == "deflection":
+            print("Applying beam-beam deflection correction ...")
+            correction_data, correction_gfactors = self.read_deflection_correction_input()
+            beam_factor = 0.5
+            default_correction = 0.0
+            corrected_suffix = BPM.__ref_col_deflection_suffix_label
+        else:
+            raise AssertionError("Mode not implemented!!")
+
+        x_gfactor = correction_gfactors[0]
+        y_gfactor = correction_gfactors[1]
+
         if data_to_use is None:
             data_to_use = self.__interpolation_to_nominal_time
 
-        for col_name in basic_cols:
-            data_to_use[col_name + BPM.__ref_col_deflection_suffix_label] = data_to_use[col_name].copy()
+        corrected_cols_dict = {}
 
-        # print(list(data_to_use))
-        last_time_index_corrected_in_data = 0
-        for correction_index in range(0, len(deflection_correction_data)):
-            ini_time = deflection_correction_data[BPM.__col_deflection_ini_time][correction_index]
-            end_time = deflection_correction_data[BPM.__col_deflection_end_time][correction_index]
-            # print("correction index: " + str(correction_index))
-            for data_index in range(last_time_index_corrected_in_data + 1, len(data_to_use)):
-                data_time = data_to_use[BPM.__col_time][data_index]
-                # print("data index: " + str(data_index))
-                if ini_time <= data_time <= end_time:
-                    # print("--> applying correction")
-                    last_time_index_corrected_in_data = data_index
-                    for col_name in basic_cols:
-                        if is_H(col_name):
-                            correction_direction_label = BPM.__col_deflection_correction_x
-                        elif is_V(col_name):
-                            correction_direction_label = BPM.__col_deflection_correction_y
-                        else:
-                            raise AssertionError()
-                        correction = deflection_correction_data[correction_direction_label][correction_index]
-                        if is_B1(col_name):
-                            correction *= -1
-                        data_to_use[col_name + BPM.__ref_col_deflection_suffix_label][data_index] += correction
-                elif data_time > end_time:
-                    break
+        for i_col_name in basic_cols:
+            corrected_cols_dict[i_col_name] = []
 
-    def apply_corrections_to_diff(self, basic_cols: list, apply_lscale=False, apply_deflection=False):
+        correction_time_index = 0
+        ini_time = correction_data[BPM.__col_correction_ini_time][0]
+        end_time = correction_data[BPM.__col_correction_end_time][0]
+
+        for data_index in range(0, len(data_to_use)):
+            data_time = data_to_use[BPM.__col_time][data_index]
+            available_correction = False
+            # print(data_time, ini_time, end_time)
+            if data_time < ini_time or data_time > end_time:
+                # print("Looking for correct index")
+                time_matched_index = correction_data[
+                    (correction_data[BPM.__col_correction_ini_time] <= data_time) &
+                    (correction_data[BPM.__col_correction_end_time] >= data_time)].index.tolist()
+                if len(time_matched_index) >= 1:
+                    correction_time_index = time_matched_index[0]
+                    ini_time = correction_data[BPM.__col_correction_ini_time][correction_time_index]
+                    end_time = correction_data[BPM.__col_correction_end_time][correction_time_index]
+                    available_correction = True
+                # print(time_matched_index, ini_time, end_time)
+            else:
+                available_correction = True
+
+            for i_col in basic_cols:
+                uncorrected_val = data_to_use[i_col][data_index]
+                if not available_correction:
+                    # print("Not correction found")
+                    correction = default_correction
+                else:
+                    if is_H(i_col):
+                        correction_direction_label = BPM.__col_correction_x
+                        gfactor = x_gfactor
+                    elif is_V(i_col):
+                        correction_direction_label = BPM.__col_correction_y
+                        gfactor = y_gfactor
+                    else:
+                        raise AssertionError()
+                    correction = \
+                        correction_data[correction_direction_label][correction_time_index] * beam_factor * gfactor
+                    if is_B1(i_col):
+                        correction *= -1
+
+                corrected_cols_dict[i_col].append(uncorrected_val+correction)
+
+        for i_col_name in basic_cols:
+            data_to_use[i_col_name + corrected_suffix] = \
+                np.array(corrected_cols_dict[i_col_name])
+
+    def apply_corrections_to_diff(self, basic_cols: list, apply_lscale: bool = False, apply_deflection: bool = False,
+                                  apply_orbit_drift: bool = False):
         data_to_use = self.__interpolation_to_nominal_time
 
         col_names_diff_raw_data_to_raw_nominal = [basename + BPM.__ref_col_diff_suffix_label for basename in basic_cols]
@@ -696,6 +782,10 @@ class BPM:
                                                         BPM.__ref_col_diff_suffix_label for basename in basic_cols]
         col_names_lscale_raw_data = [basename + BPM.__ref_col_lscale_suffix_label for basename in basic_cols]
         col_names_deflection_raw_data = [basename + BPM.__ref_col_deflection_suffix_label for basename in basic_cols]
+        col_names_deflection_raw_nominal = [basename + BPM.__ref_col_deflection_suffix_label
+                                            for basename in BPM.__ref_col_names]
+        col_names_deflection_orbit_drift_raw_data = [basename + BPM.__ref_col_orbit_drift_suffix_label
+                                                     for basename in col_names_deflection_raw_data]
 
         corrected_cols_suffix = ""
         if apply_lscale:
@@ -704,9 +794,18 @@ class BPM:
             corrected_cols_suffix += BPM.__ref_col_deflection_suffix_label
 
         if apply_deflection and not self.__is_nominal:
-            self.apply_deflection_correction(basic_cols=col_names_diff_raw_data_to_raw_nominal, data_to_use=data_to_use)
+            self.apply_per_time_range_addition_correction(mode="deflection",
+                                                          basic_cols=col_names_diff_raw_data_to_raw_nominal,
+                                                          data_to_use=data_to_use)
             # print(list(data_to_use))
             self.__ref_col_diff_names_final_result = self.__ref_col_deflection_diff_names
+
+        if apply_deflection and self.__is_nominal:
+            self.apply_per_time_range_addition_correction(mode="deflection",
+                                                          basic_cols=BPM.__ref_col_names,
+                                                          data_to_use=data_to_use)
+            # print(data_to_use)
+
         if apply_lscale:
             self.apply_length_scale_correction(base_cols=basic_cols, data_to_use=data_to_use)
             # print(list(data_to_use))
@@ -715,36 +814,67 @@ class BPM:
                 # print(list(data_to_use))
             self.__ref_col_diff_names_final_result = self.__ref_col_lscale_diff_names
 
-        if apply_deflection and apply_lscale and not self.__is_nominal:
-            # # case 1: B1diff = (B1doros * dorosLS - B1nominal * nominalLS) - deflection
-            # self.apply_deflection_correction(basic_cols=col_names_diff_lscale_data_to_lscale_nominal,
-            #                                  data_to_use=data_to_use)
+        if apply_orbit_drift:
+            self.apply_per_time_range_addition_correction(mode="orbit drift",
+                                                          basic_cols=basic_cols, data_to_use=data_to_use)
+            if not self.__is_nominal:
+                self.apply_per_time_range_addition_correction(mode="orbit drift",
+                                                              basic_cols=col_names_diff_raw_data_to_raw_nominal,
+                                                              data_to_use=data_to_use)
 
+        if apply_deflection and apply_orbit_drift and self.__is_nominal:
+            self.apply_per_time_range_addition_correction(mode="orbit drift",
+                                                          basic_cols=col_names_deflection_raw_nominal,
+                                                          data_to_use=data_to_use)
+
+        if apply_deflection and apply_lscale and self.__is_nominal:
+            self.apply_length_scale_correction(base_cols=col_names_deflection_raw_nominal,
+                                               data_to_use=data_to_use)
+
+        if apply_deflection and apply_lscale and not self.__is_nominal:
             # case 2: BXdiff = (BXdoros - deflection) * dorosLS - BXnominal * nominalLS
             # BXdoros - deflection
-            print("Applying combined correction: BXdiff = (BXdoros - deflection) * dorosLS - BXnominal * nominalLS")
-            self.apply_deflection_correction(basic_cols=basic_cols, data_to_use=data_to_use)
+            print("Applying combined correction: BXdiff = (BXdoros - deflection - OD) * dorosLS - BXnominal * nominalLS")
+            self.apply_per_time_range_addition_correction(mode="deflection",
+                                                          basic_cols=basic_cols,
+                                                          data_to_use=data_to_use)
+            input_cols_for_lscale = col_names_deflection_raw_data
+            if apply_orbit_drift:
+                self.apply_per_time_range_addition_correction(mode="orbit drift",
+                                                              basic_cols=col_names_deflection_raw_data,
+                                                              data_to_use=data_to_use)
+                input_cols_for_lscale = col_names_deflection_orbit_drift_raw_data
+                self.__ref_col_diff_names_final_result = self.__ref_col_deflection_and_orbit_and_lscale_diff_names
+            else:
+                self.__ref_col_diff_names_final_result = self.__ref_col_deflection_and_lscale_diff_names
+
             # (BXdoros - deflection) * dorosLS
-            self.apply_length_scale_correction(base_cols=col_names_deflection_raw_data, data_to_use=data_to_use)
+            self.apply_length_scale_correction(base_cols=input_cols_for_lscale, data_to_use=data_to_use)
 
             # create correct matched Nominal cols (BXnominal * nominalLS) with respective (BXdoros - deflection) * dorosLS
-            col_names_deflection_lscale_raw_data = []
-            col_names_lscale_nominal_data = []
-            col_names_deflection_lscale_raw_data_dict_nominal = {}
+            col_names_final_correction_data = []
+            col_names_final_nominal_data = []
+            col_names_final_correction_dict_nominal = {}
+            if apply_orbit_drift:
+                final_data_suffix = BPM.__ref_col_deflection_suffix_label + \
+                                    BPM.__ref_col_orbit_drift_suffix_label + BPM.__ref_col_lscale_suffix_label
+                final_nominal_suffix = BPM.__ref_col_lscale_suffix_label
+            else:
+                final_data_suffix = BPM.__ref_col_deflection_suffix_label + BPM.__ref_col_lscale_suffix_label
+                final_nominal_suffix = BPM.__ref_col_lscale_suffix_label
+
             for basename in basic_cols:
-                corrected_col_name = basename + BPM.__ref_col_deflection_suffix_label + BPM.__ref_col_lscale_suffix_label
-                nominal_name_lscale = get_base_name_from_DOROS_LR(basename) + BPM.__ref_col_lscale_suffix_label
-                col_names_deflection_lscale_raw_data.append(corrected_col_name)
-                col_names_deflection_lscale_raw_data_dict_nominal[corrected_col_name] = nominal_name_lscale
-                col_names_lscale_nominal_data.append(nominal_name_lscale)
+                corrected_col_name = basename + final_data_suffix
+                nominal_name_lscale = get_base_name_from_DOROS_LR(basename) + final_nominal_suffix
+                col_names_final_correction_data.append(corrected_col_name)
+                col_names_final_correction_dict_nominal[corrected_col_name] = nominal_name_lscale
+                col_names_final_nominal_data.append(nominal_name_lscale)
 
             # print(col_names_deflection_lscale_raw_data_dict_nominal)
             # BXdiff = (BXdoros - deflection) * dorosLS - BXnominal * nominalLS
             self.get_cols_diff(in_data=data_to_use,
-                               cols_names=col_names_deflection_lscale_raw_data,
-                               cols_names_nominal=col_names_deflection_lscale_raw_data_dict_nominal)
-
-            self.__ref_col_diff_names_final_result = self.__ref_col_deflection_and_lscale_diff_names
+                               cols_names=col_names_final_correction_data,
+                               cols_names_nominal=col_names_final_correction_dict_nominal)
 
         # print(self.__interpolation_to_nominal_time)
 
@@ -849,9 +979,12 @@ class BPM:
         x_min = None
         x_max = None
         if xrange:
-            x_min = xrange[0]
+            if xrange[0] == 0:
+                x_min = xrange[0] + 0.0001
+            else:
+                x_min = xrange[0]
             x_max = xrange[1]
-            plot_name += "_" + str(x_min) + "_" + str(x_max)
+            plot_name += "_" + str(xrange[0]) + "_" + str(x_max)
         print("plotting " + plot_name + "...")
 
         if cols_to_plot is None:
@@ -878,9 +1011,12 @@ class BPM:
         x_min = None
         x_max = None
         if xrange:
-            x_min = xrange[0]
+            if xrange[0] == 0:
+                x_min = xrange[0] + 0.0001
+            else:
+                x_min = xrange[0]
             x_max = xrange[1]
-            plot_name += "_" + str(x_min) + "_" + str(x_max)
+            plot_name += "_" + str(xrange[0]) + "_" + str(x_max)
         print("plotting " + plot_name + "...")
         if cols_to_plot is None:
             cols_to_plot = self.__ref_col_diff_names
