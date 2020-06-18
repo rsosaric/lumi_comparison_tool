@@ -250,6 +250,10 @@ class BPM:
             if self.name != BPM.__nominal_name:
                 self.plot_detector_all_data()
                 self.plot_detector_data_diff_with_nominal()
+                self.plot_detector_data_diff_with_nominal(extra_name_suffix="_final",
+                                                          cols_to_plot=self.__ref_col_diff_names_final_result,
+                                                          data_to_use=self.__interpolation_to_nominal_time,
+                                                          legend_labels=self.__ref_col_names)
                 if self.__do_deep_studies:
                     self.plot_detector_data_diff_with_nominal(cols_to_plot=self.__ref_col_diff_names_LR,
                                                               data_to_use=self.__interpolation_to_nominal_time,
