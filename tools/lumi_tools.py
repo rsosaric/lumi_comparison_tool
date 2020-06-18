@@ -5,6 +5,7 @@ from datetime import datetime
 from statsmodels.stats.weightstats import DescrStatsW
 import statsmodels.api as sm
 import pandas as pd
+from termcolor import colored
 
 
 def get_year_and_energy(fill):
@@ -196,3 +197,7 @@ def get_weighted_average(values, w_for_values):
 
 def save_columns_from_pandas_to_file(data, cols, path):
     data[cols].to_csv(path)
+
+
+def color_print(text: str, color: str):
+    print(colored(text, color))
