@@ -48,7 +48,8 @@ config_dict = {
             # conf_label_beam_deflection: "beamData/extra_corrections/deflectioncorrection4266.csv",
             # conf_label_beam_deflection_gfactor: [2.65, 2.76],  # [x, y]
 
-            conf_label_orbit_drift: "beamData/extra_corrections/orbitdriftcorrection4266.csv",
+            conf_label_orbit_drift: "beamData/extra_corrections/orbitdriftcorrection4266average.csv",
+            # conf_label_orbit_drift: "beamData/extra_corrections/orbitdriftcorrection4266doros.csv",
 
             conf_label_y_range: [-650., 650.],
             conf_label_y_diff_range: [-15., 15.],
@@ -72,7 +73,8 @@ config_dict = {
             # conf_label_beam_deflection: "beamData/extra_corrections/deflectioncorrection4954.csv",
             # conf_label_beam_deflection_gfactor: [2.65, 2.76],  # [x, y]
 
-            conf_label_orbit_drift: "beamData/extra_corrections/orbitdriftcorrection4954.csv",
+            conf_label_orbit_drift: "beamData/extra_corrections/orbitdriftcorrection4954average.csv",
+            # conf_label_orbit_drift: "beamData/extra_corrections/orbitdriftcorrection4954doros.csv",
 
             # conf_label_zero_time: 1464335770,
 
