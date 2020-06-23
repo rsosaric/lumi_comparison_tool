@@ -61,6 +61,11 @@ example for 2017: python run.py -p -y 2017 best second
 ** Where best, second should be in this path: csv_input_files/2017/ as best.csv and second.csv
 
 
+*********************** Residual non-linearity analysis ***********************
+For these studies NBX per fill files are needed here: /NBX_files (please use the following naming convention: NBX_year_energy.csv, check existent examples in that folder)
+Execution example: python run.py -l -y 2017 -i csv_input_files/2017_5TeV/ pcc hfoc
+
+Check in settings.py for needed configurations inputs. For example in these dictionaries: limits_linearity_slopes_year, points_in_summary_lin_year, nls_for_lin_year, etc.(check for other years, energies already implemented)
 
 *********************** Ramses(in principle can be used for any other cross calibration) ***********************
 
