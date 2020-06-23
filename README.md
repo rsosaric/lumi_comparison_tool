@@ -21,6 +21,7 @@ source activate lumi_tools
 - seaborn=0.9.0
 - statsmodels=0.10.0
 - tornado=6.0.2
+- lmfit
 
 *********************** INSTRUCTIONS ***********************
 
@@ -52,14 +53,25 @@ For example: python run.py -a -y 2017 hfet pcc
 Is also possible for 3 detectors: python run.py -a -y 2017 hfet pcc hfoc
 
 
+
 *********************** Best/second best analysis ***********************
 
 example for 2017: python run.py -p -y 2017 best second
 
 ** Where best, second should be in this path: csv_input_files/2017/ as best.csv and second.csv
 
+
+
 *********************** Ramses(in principle can be used for any other cross calibration) ***********************
 
 For this you need two kind of files: ramses_channels_raw_data.csv (containing time and dose) and csv file from a reference detector: hfet_all.csv
 
 Here one example:  python run.py --ramses_crosscal csv_input_files/ramses_2017_raw/ramses_dataframe_1.csv csv_input_files/ramses_2017_raw/ramses_dataframe_2.csv csv_input_files/2017/hfet_all.csv
+
+
+*********************** BPM analysis: Hysteresis ***********************
+Required files must be updated here if needed: /beamData
+Configuration and input files for each BPM and fill can be modified and added here: settings_bpm.py
+
+Example of use:
+python run_bpm.py -f 4954 DOROS (fill must be specified with option -f)
