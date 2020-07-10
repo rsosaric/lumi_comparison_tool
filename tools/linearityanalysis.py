@@ -5,6 +5,7 @@ import tools.lumi_tools as ltools
 import settings as setts
 import numpy as np
 import pandas as pd
+import json
 from scipy.optimize import curve_fit
 from lmfit import Model
 import matplotlib.pyplot as plt
@@ -137,6 +138,9 @@ class LinearityAnalysis:
         self.__by_fill_nls_slopes_stdv_errw = None
         self.__by_fill_nls_slopes_mean_totalw = None
         self.__by_fill_nls_slopes_stdv_totalw = None
+        self.__all_data_fitted_slope = None
+        self.__all_data_fitted_slope_err = None
+        self.__all_data_fitted_slope_chi2 = None
         self.__excluded_fills_in_running = []
         self.__good_fills = []
         self.__average_points_in_summary = setts.points_in_summary_lin_year[self.__year,self.__energy]
@@ -158,6 +162,7 @@ class LinearityAnalysis:
         self.plot_by_fill_norm_ratio_vs_all_data_sbil()
         self.plot_by_nls_by_fill_norm_ratio_vs_all_data_sbil()
         self.save_plots()
+        self.save_summary_csv()
 
     def create_by_fill_data(self):
         print('Creating by fill data ...')
@@ -367,7 +372,8 @@ class LinearityAnalysis:
                                                              xlabel="fill number",
                                                              ylabel="slope [hz/" + r'$\mu$' + "b]",
                                                              energy_year_label=self.__year_energy_label,
-                                                             use_integers_in_x_axis=True)
+                                                             use_integers_in_x_axis=True,
+                                                             fig_size_shape="sq")
         slope_nls_vs_lumi = plotting.plot_scatter_and_errors(data_frame=self.__by_fill_df,
                                                              y_data_label=self.__label_col_nls_slopes,
                                                              x_data_label=self.__label_col_accumulated_lumi,
@@ -377,7 +383,8 @@ class LinearityAnalysis:
                                                              xlabel="Integrated luminosity [$" +
                                                                     self.__lumi_unit + "^{-1}$]",
                                                              ylabel="slope [hz/" + r'$\mu$' + "b]",
-                                                             energy_year_label=self.__year_energy_label)
+                                                             energy_year_label=self.__year_energy_label,
+                                                             fig_size_shape="sq")
 
         self.__plt_plots['slope_hist'] = slope_hist
         self.__plt_plots['slope_hist_nls'] = slope_hist_nls
@@ -455,6 +462,10 @@ class LinearityAnalysis:
         slope_err = result_fit.params['a'].stderr
         intercept = result_fit.params['b'].value
         chi2 = result_fit.redchi
+
+        self.__all_data_fitted_slope = slope
+        self.__all_data_fitted_slope_err = slope_err
+        self.__all_data_fitted_slope_chi2 = chi2
 
         nls_fig = plotting.plot_from_fit(x, y, y_err=ey,
                                          fitted_slope=slope, chi2=chi2,
@@ -609,6 +620,7 @@ class LinearityAnalysis:
                                                              ylabel="slope [hz/" + r'$\mu$' + "b]",
                                                              energy_year_label=self.__year_energy_label)
 
+
         self.__plt_plots['avg_slope_nls_vs_fill'] = slope_nls_vs_fill
         self.__plt_plots['avg_slope_nls_vs_lumi'] = slope_nls_vs_lumi
 
@@ -660,20 +672,33 @@ class LinearityAnalysis:
                                                                          fig_size_shape='sq')
         self.__plt_plots['by_nls_by_fill_norm_ratio_vs_all_data_sbil'] = ratio_vs_all_data_sbil.get_figure()
 
-    def plot_summary_slopes(self):
-        summary_fig = self.__plt_plots['avg_slope_nls_vs_fill']
-        
-        # self.__plt_plots['avg_slope_nls_vs_lumi']
-
-    # def plot_linear_fit_by_fill(self, fill, model_fit):
-    #     fill_fit_plot = plotting.plot_from_fit(self.__by_fill_data[fill], model_fit=model_fit,
-    #                                            x_data_label=self.__nls_sbil_label,
-    #                                            y_data_label=self.__nls_ratio_label)
-    #     self.__plt_plots.append([self.__by_fill_fits_dir_name + 'fill_' + str(fill), fill_fit_plot.get_figure()])
-
     def save_plots(self):
         print('\n\n Saving linearity plots for ' + self.__label_ratio + ':')
         plotting.save_plots(self.__plt_plots, self.__output_dir)
+
+    def save_summary_csv(self):
+        summary_dict = {
+            # slopes values from fill-by-fill
+            'slope_hist': self.__by_fill_slopes_mean,
+            'slope_hist_nls': self.__by_fill_nls_slopes_mean,
+            'slope_hist_lw': self.__by_fill_slopes_mean_lw,
+            'slope_hist_nls_lw': self.__by_fill_nls_slopes_mean_lw,
+            'slope_hist_nls_errw': self.__by_fill_nls_slopes_mean_errw,
+            'slope_hist_nls_totalw': self.__by_fill_nls_slopes_mean_totalw,
+            'slope_stdv_hist': self.__by_fill_slopes_stdv,
+            'slope_stdv_hist_nls': self.__by_fill_nls_slopes_stdv,
+            'slope_stdv_hist_lw': self.__by_fill_slopes_stdv_lw,
+            'slope_stdv_hist_nls_lw': self.__by_fill_nls_slopes_stdv_lw,
+            'slope_stdv_hist_nls_errw': self.__by_fill_nls_slopes_stdv_errw,
+            'slope_stdv_hist_nls_totalw': self.__by_fill_nls_slopes_stdv_totalw,
+            # slope from all data fitting
+            'all_data_fitted_slope': self.__all_data_fitted_slope,
+            'all_data_fitted_slope_err': self.__all_data_fitted_slope_err,
+            'all_data_fitted_slope_chi2': self.__all_data_fitted_slope_chi2
+        }
+
+        with open(self.__output_dir + "summary_values.json", 'w') as outfile:
+            json.dump(summary_dict, outfile, indent=4)
 
     @property
     def sbil_mean(self):

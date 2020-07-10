@@ -176,6 +176,11 @@ class BPM:
         else:
             self.__y_diff_range = [setts.l_diff_zoom_min_plot, setts.l_diff_zoom_max_plot]
 
+        if setts.conf_label_y_diff_smaller_range in list(setts.config_dict[self.name][fill]):
+            self.__y_diff_smaller_range = setts.config_dict[self.name][fill][setts.conf_label_y_diff_smaller_range]
+        else:
+            self.__y_diff_smaller_range = self.__y_diff_range
+
         if setts.conf_label_beam_deflection in self.__settings_list:
             self.__apply_deflection = True
         else:
@@ -243,6 +248,8 @@ class BPM:
                                apply_orbit_drift=self.__apply_orbit_drift)
 
         # Plotting
+        marker_size_for_sq_canvas_plots = 2.0
+        use_squared_shape_for_final_plots = True
         if not get_only_data:
             ltools.color_print(" \n\nFinal results columns: ", "green")
             ltools.color_print("    " + str(self.__ref_col_diff_names_final_result), "blue")
@@ -271,51 +278,65 @@ class BPM:
                                                               extra_name_suffix="_b2_LR")
                 if setts.conf_label_special_time_intervals in list(setts.config_dict[self.name][self.__fill]):
                     for xrange in setts.config_dict[self.name][self.__fill][setts.conf_label_special_time_intervals]:
-                        self.plot_detector_data_diff_with_nominal(xrange=xrange)
+                        self.plot_detector_data_diff_with_nominal(xrange=xrange,
+                                                                  canvas_square_shape=use_squared_shape_for_final_plots,
+                                                                  marker_size=marker_size_for_sq_canvas_plots,
+                                                                  legend_labels=self.__ref_col_names)
                         self.plot_detector_data_diff_with_nominal(extra_name_suffix="_final",
                                                                   cols_to_plot=self.__ref_col_diff_names_final_result,
                                                                   data_to_use=self.__interpolation_to_nominal_time,
                                                                   xrange=xrange,
+                                                                  marker_size=marker_size_for_sq_canvas_plots,
+                                                                  canvas_square_shape=use_squared_shape_for_final_plots,
                                                                   legend_labels=self.__ref_col_names)
                 if self.__apply_lscale or self.__lscale_applied_in_nominal:
                     self.plot_detector_data_diff_with_nominal(extra_name_suffix="_scale_corr",
                                                               cols_to_plot=self.__ref_col_lscale_diff_names,
-                                                              data_to_use=self.__interpolation_to_nominal_time)
+                                                              data_to_use=self.__interpolation_to_nominal_time,
+                                                              legend_labels=self.__ref_col_names)
                 if self.__apply_deflection or self.__deflection_applied_in_nominal:
                     # print(self.__ref_col_deflection_diff_names)
                     # print(list(self.__interpolation_to_nominal_time))
                     self.plot_detector_data_diff_with_nominal(extra_name_suffix="_deflection_corr",
                                                               cols_to_plot=self.__ref_col_deflection_diff_names,
-                                                              data_to_use=self.__interpolation_to_nominal_time)
+                                                              data_to_use=self.__interpolation_to_nominal_time,
+                                                              legend_labels=self.__ref_col_names)
                     if self.apply_lscale:
                         self.plot_detector_data_diff_with_nominal(extra_name_suffix="_deflection_lscale_corr",
                                                                   cols_to_plot=self.__ref_col_deflection_and_lscale_diff_names,
-                                                                  data_to_use=self.__interpolation_to_nominal_time)
+                                                                  data_to_use=self.__interpolation_to_nominal_time,
+                                                                  legend_labels=self.__ref_col_names)
 
                 if self.__apply_orbit_drift:
                     self.plot_detector_data_diff_with_nominal(extra_name_suffix="_orbit_drift",
                                                               cols_to_plot=self.__ref_col_orbit_drift_diff_names,
-                                                              data_to_use=self.__interpolation_to_nominal_time)
+                                                              data_to_use=self.__interpolation_to_nominal_time,
+                                                              legend_labels=self.__ref_col_names)
                     if self.apply_lscale:
                         self.plot_detector_data_diff_with_nominal(extra_name_suffix="_orbit_drift_lscale",
                                                                   cols_to_plot=self.__ref_col_orbit_drift_and_lscale_diff_names,
-                                                                  data_to_use=self.__interpolation_to_nominal_time)
+                                                                  data_to_use=self.__interpolation_to_nominal_time,
+                                                                  legend_labels=self.__ref_col_names)
 
                 if len(self.__ref_col_diff_names_final_result) > 0:
                     if setts.conf_label_special_time_intervals in self.__settings_list:
                         for xrange in setts.config_dict[self.name][self.__fill][setts.conf_label_special_time_intervals]:
-                            self.plot_detector_data_diff_with_nominal(extra_name_suffix="_H_V",
+                            self.plot_detector_data_diff_with_nominal(extra_name_suffix="_H_V_final",
                                                                       cols_to_plot=[BPM.__col_H_diff, BPM.__col_V_diff],
                                                                       data_to_use=self.__interpolation_to_nominal_time,
                                                                       legend_labels=["H", "V"],
+                                                                      marker_size=marker_size_for_sq_canvas_plots,
                                                                       xrange=xrange,
+                                                                      use_smaller_y_range=True,
+                                                                      canvas_square_shape=use_squared_shape_for_final_plots,
                                                                       y_label="B2 - B1" +
                                                                               " [" + BPM.__distance_unit + "]")
 
-                    self.plot_detector_data_diff_with_nominal(extra_name_suffix="_H_V",
+                    self.plot_detector_data_diff_with_nominal(extra_name_suffix="_H_V_final",
                                                               cols_to_plot=[BPM.__col_H_diff, BPM.__col_V_diff],
                                                               data_to_use=self.__interpolation_to_nominal_time,
                                                               legend_labels=["H", "V"],
+                                                              use_smaller_y_range=True,
                                                               y_label="B2 - B1" +
                                                                       " [" + BPM.__distance_unit + "]")
 
@@ -743,7 +764,7 @@ class BPM:
         return deflection_correction_data, correction_gfactors
 
     def read_orbit_drift_correction_input(self):
-        reading_cols_dict = {
+        reading_cols_dict =    {
             '#timestamp_start': BPM.__col_correction_ini_time,
             'timestamp_end': BPM.__col_correction_end_time,
             'correction_x': BPM.__col_correction_x,
@@ -1111,7 +1132,8 @@ class BPM:
 
     def plot_detector_data_diff_with_nominal(self, xrange=None, save_data_to_file=True, extra_name_suffix="",
                                              cols_to_plot=None, data_to_use=None, legend_labels=None,
-                                             y_label=None):
+                                             y_label=None, use_smaller_y_range=False, canvas_square_shape=False,
+                                             marker_size=1.0):
         plot_name = self.name + "_data_diff_with_nominal" + extra_name_suffix
         x_min = None
         x_max = None
@@ -1133,18 +1155,31 @@ class BPM:
         ltools.color_print("plotting " + plot_name, 'green')
         print("     using columns: " + str(cols_to_plot))
 
+        if use_smaller_y_range:
+            ymin = self.__y_diff_smaller_range[0]
+            ymax = self.__y_diff_smaller_range[1]
+        else:
+            ymin = self.__y_diff_range[0]
+            ymax = self.__y_diff_range[1]
+
+        canvas_shape = 'nsq'
+        if canvas_square_shape:
+            canvas_shape = 'sq'
+
         self.__plt_plots[plot_name] = plotting.scatter_plot_from_pandas_frame(data_to_use,
                                                                               x_data_label=BPM.__col_time_min,
                                                                               y_data_label=list(cols_to_plot),
-                                                                              ymin=self.__y_diff_range[0],
-                                                                              ymax=self.__y_diff_range[1],
+                                                                              ymin=ymin,
+                                                                              ymax=ymax,
                                                                               xmin=x_min, xmax=x_max,
                                                                               xlabel="time [min]",
                                                                               ylabel=y_label,
                                                                               ncol_legend=4,
                                                                               plot_style='o',
                                                                               label_cms_status=False,
-                                                                              legend_labels=legend_labels
+                                                                              legend_labels=legend_labels,
+                                                                              fig_size_shape=canvas_shape,
+                                                                              marker_size=marker_size
                                                                               ).get_figure()
 
     def save_plots(self):

@@ -45,8 +45,8 @@ leg_vs_plots_text_s = 12
 leg_vs_plots_marker_scale = 7  # -> marker_in_legend/...in_plot scale
 
 # axis configuration:
-axis_labelpad = 20
-axis_labelpad_x = 20
+axis_labelpad = 10
+axis_labelpad_x = 10
 axis_labelpad_y = 8
 axis_weight = 'bold'
 
@@ -161,7 +161,7 @@ min_num_data_to_fit = 5
 # plots_formats = ('pdf', 'png')
 plots_formats = 'png'
 # plots_formats = 'pdf'
-dpi_png_plots = 1200
+dpi_png_plots = 600
 default_output_dir = 'plots/'
 
 # -*-*-*-*-*-*-*-*-*-*-*- > > > Data structure and format < < < -*-*-*-*-*-*-*-*-*-*-*-

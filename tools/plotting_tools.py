@@ -219,7 +219,7 @@ def scatter_plot_from_pandas_frame(data_frame, x_data_label, y_data_label, title
         plot = data_frame.plot(x=x_data_label, y=y_data_label, style=plot_style, figsize=fig_size,
                                markersize=marker_size, legend=None, ax=ax)
     plot.set_title(title)
-    plot.set_ylabel(ylabel, labelpad=setts.axis_labelpad - 15, weight=setts.axis_weight,
+    plot.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight,
                     size=setts.axis_case_size[fig_size_shape])
     plot.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight,
                     size=setts.axis_case_size[fig_size_shape])
@@ -290,6 +290,9 @@ def plot_from_fit(x, y, fitted_slope, fitted_slope_err, fitted_intercept, fitted
                  ha='left',
                  fontsize=setts.leg_font_size, fontweight='bold', transform=ax.transAxes)
 
+    if fig_size_shape == 'sq':
+        plt.subplots_adjust(left=0.18, right=0.95, top=0.92, bottom=0.1)
+
     return fig
 
 
@@ -298,12 +301,12 @@ def plot_scatter_and_errors(data_frame, y_data_label, x_data_label, err_y_data_l
                             xlabel='', ylabel='',
                             markersize=5,
                             ymin=None, ymax=None,
-                            use_integers_in_x_axis=False):
+                            use_integers_in_x_axis=False,
+                            fig_size_shape='nsq'):
     x = data_frame[x_data_label]
     y = data_frame[y_data_label]
     y_err = data_frame[err_y_data_label]
 
-    fig_size_shape = 'nsq'
     fig_size = get_fig_size(fig_size_shape)
     fig, ax = plt.subplots(figsize=fig_size)
 
@@ -319,7 +322,7 @@ def plot_scatter_and_errors(data_frame, y_data_label, x_data_label, err_y_data_l
 
     ax.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight,
                   size=setts.axis_case_size[fig_size_shape])
-    ax.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight,
+    ax.set_ylabel(ylabel, weight=setts.axis_weight,
                   size=setts.axis_case_size[fig_size_shape])
 
     plt.xticks(fontsize=setts.axis_thicks_case_size[fig_size_shape])
@@ -330,6 +333,9 @@ def plot_scatter_and_errors(data_frame, y_data_label, x_data_label, err_y_data_l
 
     if use_integers_in_x_axis:
         ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+
+    if fig_size_shape == 'sq':
+        plt.subplots_adjust(left=0.18, right=0.95, top=0.92, bottom=0.1)
 
     return fig
 

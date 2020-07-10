@@ -8,6 +8,7 @@ conf_label_zero_time = "zero_time"
 conf_label_special_time_intervals = "special_time_intervals"
 conf_label_y_range = "y_range"
 conf_label_y_diff_range = "y_diff_range"
+conf_label_y_diff_smaller_range = "y_diff_range_smaller"
 conf_label_length_scale = "length_scale"
 conf_label_beam_deflection = "beam_deflection"
 conf_label_beam_deflection_gfactor = "beam_deflection_gfactor"  # geometrical factor for beam_deflection correction
@@ -42,17 +43,18 @@ config_dict = {
             conf_label_min_time: 1440462850,
             conf_label_max_time: 1440480981,
 
-            conf_label_special_time_intervals: [[5, 95]],
+            conf_label_special_time_intervals: [[5, 95], [5, 27], [28, 50]],
 
             conf_label_length_scale: [0.9941, 0.9943],
             # conf_label_beam_deflection: "beamData/extra_corrections/deflectioncorrection4266.csv",
             # conf_label_beam_deflection_gfactor: [2.65, 2.76],  # [x, y]
 
-            conf_label_orbit_drift: "beamData/extra_corrections/orbitdriftcorrection4266average.csv",
-            # conf_label_orbit_drift: "beamData/extra_corrections/orbitdriftcorrection4266doros.csv",
+            # conf_label_orbit_drift: "beamData/extra_corrections/orbitdriftcorrection4266average.csv",
+            conf_label_orbit_drift: "beamData/extra_corrections/orbitdriftcorrection4266doros.csv",
 
             conf_label_y_range: [-650., 650.],
-            conf_label_y_diff_range: [-15., 15.],
+            conf_label_y_diff_range: [-8., 8.],
+            conf_label_y_diff_smaller_range: [-5, 5],
 
             conf_label_special_col_sign: {
                 "B1_H_L": -1, "B1_H_R": -1, "B2_H_R": -1
@@ -73,16 +75,17 @@ config_dict = {
             # conf_label_beam_deflection: "beamData/extra_corrections/deflectioncorrection4954.csv",
             # conf_label_beam_deflection_gfactor: [2.65, 2.76],  # [x, y]
 
-            conf_label_orbit_drift: "beamData/extra_corrections/orbitdriftcorrection4954average.csv",
-            # conf_label_orbit_drift: "beamData/extra_corrections/orbitdriftcorrection4954doros.csv",
+            # conf_label_orbit_drift: "beamData/extra_corrections/orbitdriftcorrection4954average.csv",
+            conf_label_orbit_drift: "beamData/extra_corrections/orbitdriftcorrection4954doros.csv",
 
             # conf_label_zero_time: 1464335770,
 
-            conf_label_special_time_intervals: [[0, 80]],
+            conf_label_special_time_intervals: [[0, 80], [0, 20]],
 
             conf_label_y_range: [-600., 600.],
             # conf_label_y_diff_range: [-30., 30.]
-            conf_label_y_diff_range: [-10., 10.]
+            conf_label_y_diff_range: [-8., 8.],
+            conf_label_y_diff_smaller_range: [-5, 5]
 
         },
         7442: {
