@@ -1,4 +1,4 @@
-*********************** INSTALLATION ***********************
+**INSTALLATION**
 
 Suggested: install miniconda or anaconda. Then use the provided file for create a working conda environment: 
 
@@ -8,7 +8,7 @@ Then every time you start a new console you have to load the environment:
 
 source activate lumi_tools
 
-** PYTHON libraries needed **
+**PYTHON libraries needed**
 
 - numpy=1.16.3
 - numpy-base=1.16.3
@@ -21,8 +21,9 @@ source activate lumi_tools
 - seaborn=0.9.0
 - statsmodels=0.10.0
 - tornado=6.0.2
+- lmfit
 
-*********************** INSTRUCTIONS ***********************
+**BASIC INSTRUCTIONS**
 
 For running the comparison always use the file: run.py
 Example: python run.py -y 2015 pcc dt (python run.py [opts] det1 det2 ...)
@@ -36,15 +37,15 @@ In the example the input folder would be: csv_input_files/2015/.
 For modifications in plots and analysis cuts go to settings.py
 For minor modification of the analysis (stability, linearity) go first to lumianalysis.py
 
-*********************** IMPLEMENTED OPTIONS ***********************
+**IMPLEMENTED OPTIONS**
 
 use the help: python run.py --help
 
-*********************** using recorded or delivered lumi? ***********************
+**using recorded or delivered lumi?**
 
 By default the code uses recorded luminosity from the detectors. If you want to use delivered please use: --lumi_type del
 
-*********************** Analysis of the exclusion of bad zones (runs, fills) ***********************
+**Analysis of the exclusion of bad zones (runs, fills)**
 For this it are needed two files for each detector: det.csv(selected data) and det_all.csv (all data)
 
 For example: python run.py -a -y 2017 hfet pcc
@@ -52,14 +53,32 @@ For example: python run.py -a -y 2017 hfet pcc
 Is also possible for 3 detectors: python run.py -a -y 2017 hfet pcc hfoc
 
 
-*********************** Best/second best analysis ***********************
+
+**Best/second best analysis**
 
 example for 2017: python run.py -p -y 2017 best second
 
 ** Where best, second should be in this path: csv_input_files/2017/ as best.csv and second.csv
 
-*********************** Ramses(in principle can be used for any other cross calibration) ***********************
+
+**Residual non-linearity analysis**
+
+For these studies NBX per fill files are needed here: /NBX_files (please use the following naming convention: NBX_year_energy.csv, check existent examples in that folder)
+Execution example: python run.py -l -y 2017 -i csv_input_files/2017_5TeV/ pcc hfoc
+
+Check in settings.py for needed configurations inputs. For example in these dictionaries: limits_linearity_slopes_year, points_in_summary_lin_year, nls_for_lin_year, etc.(check for other years, energies already implemented)
+
+**Ramses(in principle can be used for any other cross calibration)**
 
 For this you need two kind of files: ramses_channels_raw_data.csv (containing time and dose) and csv file from a reference detector: hfet_all.csv
 
 Here one example:  python run.py --ramses_crosscal csv_input_files/ramses_2017_raw/ramses_dataframe_1.csv csv_input_files/ramses_2017_raw/ramses_dataframe_2.csv csv_input_files/2017/hfet_all.csv
+
+
+**BPM analysis: Hysteresis**
+
+Required files must be updated here if needed: /beamData
+Configuration and input files for each BPM and fill can be modified and added here: settings_bpm.py
+
+Example of use:
+python run_bpm.py -f 4954 DOROS (fill must be specified with option -f)
