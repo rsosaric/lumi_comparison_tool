@@ -195,13 +195,16 @@ def scatter_plot_from_pandas_frame(data_frame, x_data_label, y_data_label, title
                                    leg_text_s=setts.leg_vs_plots_text_s,
                                    plot_style='o',
                                    fig_size_shape='nsq',
-                                   ncol_legend=None):
+                                   ncol_legend=None,
+                                   draw_labels_pos_dict=None,
+                                   draw_vertical_line_pos=None):
     fig_size = get_fig_size(fig_size_shape)
     if xlabel == '':
         xlabel = x_data_label
     if ylabel == '':
         ylabel = y_data_label
     fig, ax = plt.subplots()
+
     if type(y_data_label) == list:
         plot = data_frame.plot(x=x_data_label, y=y_data_label, style=plot_style, figsize=fig_size,
                                markersize=marker_size, ax=ax)
@@ -230,6 +233,19 @@ def scatter_plot_from_pandas_frame(data_frame, x_data_label, y_data_label, title
     if label_cms_status:
         add_extra_text(ax, fig_size_shape, energy_year_label=energy_year_label,
                        experiment=setts.experiment, work_status=setts.work_status)
+
+    # Draw vertical lines
+    if draw_vertical_line_pos is not None:
+        for x_pos in draw_vertical_line_pos:
+            plt.axvline(x=x_pos, linestyle='dashed', alpha=0.3)
+
+    # Draw text from draw_labels_pos_dict -> {"text": [x, y], ... }
+    if draw_labels_pos_dict is not None:
+        labels_text = list(draw_labels_pos_dict)
+        for i_label in labels_text:
+            plt.text(draw_labels_pos_dict[i_label][0], draw_labels_pos_dict[i_label][1], i_label,
+                     fontweight='bold', alpha=0.5, horizontalalignment='center', verticalalignment='center'
+                     )
 
     # margin optimization
     if fig_size == (12, 4):

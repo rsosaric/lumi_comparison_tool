@@ -1,7 +1,9 @@
-import pandas as pd
-import numpy as np
+#import pandas as pd
+#import numpy as np
 
-import tools.lumi_tools as ltools
+#import tools.lumi_tools as ltools
+
+import beammonitor as bmonitor
 
 # df1 = pd.DataFrame([['bird', 'polly'], ['monkey', 'george'], ['conejo', 'lucas'], ['conejo1', 'lucas1']],
 #                    columns=['animal', 'name'])
@@ -32,9 +34,14 @@ import tools.lumi_tools as ltools
 # print (df1)
 
 
-l1 = [0.1, 0.2, 0.3]
-l2 = [0.00002, 0.00004, 0.0003]
-l1 = np.array(l1)
-l2 = np.array(l2)
+# l1 = [0.1, 0.2, 0.3]
+# l2 = [0.00002, 0.00004, 0.0003]
+# l1 = np.array(l1)
+# l2 = np.array(l2)
+#
+# print(ltools.get_total_weights(l1, l2))
 
-print(ltools.get_total_weights(l1, l2))
+
+test = bmonitor.bpm_col_b1hL
+
+

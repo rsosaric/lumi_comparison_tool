@@ -1,0 +1,56 @@
+
+Output file:
+
+  Name: CMS_arc_Fill4689_pos_merged.csv
+
+Input Columns:
+
+  B1_L:
+    T:  1
+    H:  2
+    V:  4
+    
+  B1_R:
+    T:  1
+    H:  2
+    V:  4
+    
+  B2_L:
+    T:  1
+    H:  2
+    V:  4
+    
+  B2_R:
+    T:  1
+    H:  2
+    V:  4
+
+Data files:
+
+  B1_L:
+    /Users/rsosaric/mycodes/orbit_drift/OrbitDriftsCorr/Data/arcBPM/Fill4689/Raw/pos_B1L_1.csv
+    /Users/rsosaric/mycodes/orbit_drift/OrbitDriftsCorr/Data/arcBPM/Fill4689/Raw/pos_B1L_2.csv
+    /Users/rsosaric/mycodes/orbit_drift/OrbitDriftsCorr/Data/arcBPM/Fill4689/Raw/pos_B1L_3.csv
+    /Users/rsosaric/mycodes/orbit_drift/OrbitDriftsCorr/Data/arcBPM/Fill4689/Raw/pos_B1L_4.csv
+    /Users/rsosaric/mycodes/orbit_drift/OrbitDriftsCorr/Data/arcBPM/Fill4689/Raw/pos_B1L_5.csv
+    
+  B1_R:
+    /Users/rsosaric/mycodes/orbit_drift/OrbitDriftsCorr/Data/arcBPM/Fill4689/Raw/pos_B1R_1.csv
+    /Users/rsosaric/mycodes/orbit_drift/OrbitDriftsCorr/Data/arcBPM/Fill4689/Raw/pos_B1R_2.csv
+    /Users/rsosaric/mycodes/orbit_drift/OrbitDriftsCorr/Data/arcBPM/Fill4689/Raw/pos_B1R_3.csv
+    /Users/rsosaric/mycodes/orbit_drift/OrbitDriftsCorr/Data/arcBPM/Fill4689/Raw/pos_B1R_4.csv
+    /Users/rsosaric/mycodes/orbit_drift/OrbitDriftsCorr/Data/arcBPM/Fill4689/Raw/pos_B1R_5.csv
+    
+  B2_L:
+    /Users/rsosaric/mycodes/orbit_drift/OrbitDriftsCorr/Data/arcBPM/Fill4689/Raw/pos_B2L_1.csv
+    /Users/rsosaric/mycodes/orbit_drift/OrbitDriftsCorr/Data/arcBPM/Fill4689/Raw/pos_B2L_2.csv
+    /Users/rsosaric/mycodes/orbit_drift/OrbitDriftsCorr/Data/arcBPM/Fill4689/Raw/pos_B2L_3.csv
+    /Users/rsosaric/mycodes/orbit_drift/OrbitDriftsCorr/Data/arcBPM/Fill4689/Raw/pos_B2L_4.csv
+    /Users/rsosaric/mycodes/orbit_drift/OrbitDriftsCorr/Data/arcBPM/Fill4689/Raw/pos_B2L_5.csv
+    
+  B2_R:
+    /Users/rsosaric/mycodes/orbit_drift/OrbitDriftsCorr/Data/arcBPM/Fill4689/Raw/pos_B2R_1.csv
+    /Users/rsosaric/mycodes/orbit_drift/OrbitDriftsCorr/Data/arcBPM/Fill4689/Raw/pos_B2R_2.csv
+    /Users/rsosaric/mycodes/orbit_drift/OrbitDriftsCorr/Data/arcBPM/Fill4689/Raw/pos_B2R_3.csv
+    /Users/rsosaric/mycodes/orbit_drift/OrbitDriftsCorr/Data/arcBPM/Fill4689/Raw/pos_B2R_4.csv
+    /Users/rsosaric/mycodes/orbit_drift/OrbitDriftsCorr/Data/arcBPM/Fill4689/Raw/pos_B2R_5.csv

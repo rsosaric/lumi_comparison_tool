@@ -13,16 +13,29 @@ conf_label_length_scale = "length_scale"
 conf_label_beam_deflection = "beam_deflection"
 conf_label_beam_deflection_gfactor = "beam_deflection_gfactor"  # geometrical factor for beam_deflection correction
 conf_label_special_col_sign = "special col sign"  # it can be used to invert input data column sign or scale it
-conf_label_orbit_drift = "orbit_drift"
-conf_label_deep_studies = "deep_studies"
-conf_label_compute_offsets = "compute offsets"
+conf_label_orbit_drift = "orbit_drift" # Orbit drift input file
+conf_label_deep_studies = "deep_studies" # Do extra studies and plots: LR studies
+conf_label_compute_offsets = "compute offsets" # Compute offsets internally
+conf_label_special_input_col_names = "special_input_col_names" # Use if the format of the input file is different
+conf_label_unit_position_factor_to_um = "factor to convert input positions to [um]"
+conf_label_timestamp_in_ms = "timestamp_in_ms" # Use if the input times are in ms
+conf_label_scans_names = "scans names" # Scans name list. Will be used in plots
+conf_label_scans_time_windows = "scans times" # Scans times limits.
+conf_label_exclusion_times = "times to exclude from results" # Optimization scans, not useful times during VDM, etc
 
 l_min_plot = -100.
 l_max_plot = 100.
 l_diff_min_plot = -20.
 l_diff_max_plot = 20.
+l_diff_orbit_drift_min_plot = -60.
+l_diff_orbit_drift_max_plot = 60.
 l_diff_zoom_min_plot = -5.
 l_diff_zoom_max_plot = 5.
+
+zero_position_window = 0.1    # in um
+delta_scan_time_window = 100  # seconds
+
+delta_pos_for_scan_labels = 0.15  # pos_y = min_y + min_y * delta_pos_for_scan_labels
 
 save_figures_as_pickle = False
 
@@ -34,11 +47,96 @@ col_pos_offset_array = {
 }
 
 config_dict = {
+    "Nominal": {
+        4266: {
+            conf_label_data_file_path: "vdm_Nominal_Fill4266_n02.csv",
+            conf_label_length_scale: [0.9952, 0.9969],
+            conf_label_beam_deflection: "beamData/extra_corrections/deflectioncorrection4266.csv",
+            conf_label_beam_deflection_gfactor: [2.65, 2.76],  # [x, y]
+
+            conf_label_scans_names: ["X1", "Y1", "Y2", "X2", "L1X", "L1Y", "X3", "Y3", "X4", "Y4", "L2X", "X5", "Y5"],
+            conf_label_scans_time_windows: [[1440463385, 1440464388], [1440464725, 1440465732],
+                                            [1440466016, 1440467017], [1440467318, 1440468322],
+                                            [1440468604, 1440470118], [1440470347, 1440471670],
+                                            [1440472571, 1440473372], [1440473655, 1440474470],
+                                            [1440474775, 1440475585], [1440475865, 1440476670],
+                                            [1440476953, 1440478244], [1440478566, 1440479567],
+                                            [1440479880, 1440480885]],
+
+            # conf_label_exclusion_times: [[1440471893, 1440472149]],
+
+            conf_label_min_time: 1440462850,
+            conf_label_max_time: 1440480981,
+            conf_label_zero_time: 1440462850,
+            conf_label_special_time_intervals: [[5, 95]],
+
+            conf_label_y_range: [-650., 650.],
+            conf_label_y_diff_range: [-7., 7.]
+        },
+        4689: {
+            conf_label_data_file_path: "vdm_Nominal_Fill4689_n01.csv",
+
+            conf_label_scans_names: ['X1', 'Y1', 'Y2', 'X2', 'X3', 'Y3', 'Y4', 'X4', 'X5', 'Y5'],
+            conf_label_scans_time_windows: [[1449134119, 1449135013], [1449135216, 1449136109],
+                                            [1449136443, 1449137337], [1449137529, 1449138424],
+                                            [1449154166, 1449154670], [1449154731, 1449155279],
+                                            [1449155460, 1449155961], [1449156079, 1449156581],
+                                            [1449158467, 1449158972], [1449159125, 1449159628]],
+
+            conf_label_exclusion_times: [[1449133337, 1449133477], [1449153552, 1449153809], [1449156746, 1449158261],
+                                         [1449138606, 1449153552]],
+
+            conf_label_min_time: 1449134042,
+            conf_label_max_time: 1449163025,
+            conf_label_zero_time: 1449134042,
+            # conf_label_special_time_intervals: [[5, 95]],
+
+            conf_label_y_range: [-100., 100.],
+            conf_label_y_diff_range: [-7., 7.]
+        },
+        4954: {
+            conf_label_data_file_path: "vdm_Nominal_Fill4954_n02.csv",
+            conf_label_special_time_intervals: [[5, 80]],
+            conf_label_length_scale: [0.9899, 0.9950],
+
+            conf_label_beam_deflection: "beamData/extra_corrections/deflectioncorrection4954.csv",
+            conf_label_beam_deflection_gfactor: [2.65, 2.76],  # [x, y]
+
+            conf_label_min_time: 1464336193,
+            conf_label_max_time: 1464353223,
+            # conf_label_zero_time: 1464335770,
+
+            conf_label_y_range: [-600., 600.],
+        },
+        7442: {
+            conf_label_data_file_path: "vdm_Nominal_Fill7442_n03.csv",
+            conf_label_special_time_intervals: [[75, 100], [110, 180], [180, 215]],
+
+            conf_label_min_time: 1542135000,
+            conf_label_max_time: 1542150000,
+            # conf_label_zero_time: 1542135660,
+        },
+        7443: {
+            conf_label_data_file_path: "vdm_Nominal_Fill7443_n01.csv",
+
+            conf_label_min_time: 1542211800,
+            conf_label_max_time: 1542233400,
+            # conf_label_zero_time: 1542211800
+        },
+        7483: {
+            conf_label_data_file_path: "vdm_Nominal_Fill7483_n01.csv",
+
+            conf_label_min_time: 1543463700,
+            conf_label_max_time: 1543467300
+        },
+
+    },
+
     "DOROS": {
         4266: {
-            conf_label_data_file_path: "DOROS_Fill4266_Timber.csv",
-            conf_label_offset_values: [[-87.8, -157.85, -291.55, -457.7],
-                                       [-84.05, -162.2, -281.85, -461.7]],
+            # conf_label_data_file_path: "DOROS_Fill4266_Timber.csv",
+            # conf_label_offset_values: [[-87.8, -157.85, -291.55, -457.7],
+            #                            [-84.05, -162.2, -281.85, -461.7]],
             conf_label_offset_time: [1440462850, 1440472132],
             conf_label_min_time: 1440462850,
             conf_label_max_time: 1440480981,
@@ -60,9 +158,44 @@ config_dict = {
                 "B1_H_L": -1, "B1_H_R": -1, "B2_H_R": -1
             },
 
-            # conf_label_deep_studies: True,
-            # conf_label_compute_offsets: True
+            conf_label_data_file_path: "4266_P5_data_exper.csv",
+            conf_label_special_input_col_names: {"time": "timestamp",
+                                                 "pc H.B1.L [um]": "B1_H_L",
+                                                 "pc V.B1.L [um]": "B1_V_L",
+                                                 "pc H.B2.L [um]": "B2_H_L",
+                                                 "pc V.B2.L [um]": "B2_V_L",
+                                                 "pc H.B1.R [um]": "B1_H_R",
+                                                 "pc V.B1.R [um]": "B1_V_R",
+                                                 "pc H.B2.R [um]": "B2_H_R",
+                                                 "pc V.B2.R [um]": "B2_V_R"},
 
+            conf_label_unit_position_factor_to_um: 1.,
+            conf_label_timestamp_in_ms: True,
+
+            # conf_label_deep_studies: True,
+            conf_label_compute_offsets: True
+
+        },
+        4689: {
+            conf_label_data_file_path: "4689_DOROS_raw_data_from_Timber.csv",
+            conf_label_offset_values: [[-83.85, -191.55, 2072.3, -339.3],
+                                       [-74.8, -193.85, 2120.8, -343.55],
+                                       [-74.4, -193.25, 2142.8, -346.6]],
+            conf_label_offset_time: [1449133477, 1449153809, 1449158261],
+
+            conf_label_min_time: 1449134042,
+            conf_label_max_time: 1449163025,
+            conf_label_zero_time: 1449134042,
+            # conf_label_special_time_intervals: [[5, 95]],
+
+            conf_label_y_range: [-100., 100.],
+            conf_label_y_diff_range: [-20., 20.],
+
+            conf_label_special_col_sign: {
+                "B1_H_L": -1, "B1_V_L": -1, "B2_H_L": -1, "B2_V_L": -1
+            },
+            # conf_label_deep_studies: True,
+            conf_label_compute_offsets: False
         },
         4954: {
             conf_label_data_file_path: "DOROS_Fill4954_Timber.csv",
@@ -120,7 +253,7 @@ config_dict = {
                                      1542229709, 1542231642, 1542232040],
             conf_label_min_time: 1542211800,
             conf_label_max_time: 1542233400,
-            # conf_label_zero_time: 1542211800
+            conf_label_zero_time: 1542211800
         },
         7483: {
             conf_label_data_file_path: "DOROS_Fill7483_Timber.csv",
@@ -134,63 +267,30 @@ config_dict = {
 
     },
 
-    "Nominal": {
-        4266: {
-            conf_label_data_file_path: "vdm_Nominal_Fill4266_n02.csv",
-            conf_label_length_scale: [0.9952, 0.9969],
-            conf_label_beam_deflection: "beamData/extra_corrections/deflectioncorrection4266.csv",
-            conf_label_beam_deflection_gfactor: [2.65, 2.76],  # [x, y]
-
-            conf_label_min_time: 1440462850,
-            conf_label_max_time: 1440480981,
-            # conf_label_zero_time: 1464335770,
-            conf_label_special_time_intervals: [[5, 95]],
-
-            conf_label_y_range: [-650., 650.],
-            conf_label_y_diff_range: [-7., 7.]
-        },
-        4954: {
-            conf_label_data_file_path: "vdm_Nominal_Fill4954_n02.csv",
-            conf_label_special_time_intervals: [[5, 80]],
-            conf_label_length_scale: [0.9899, 0.9950],
-
-            conf_label_beam_deflection: "beamData/extra_corrections/deflectioncorrection4954.csv",
-            conf_label_beam_deflection_gfactor: [2.65, 2.76],  # [x, y]
-
-            conf_label_min_time: 1464336193,
-            conf_label_max_time: 1464353223,
-            # conf_label_zero_time: 1464335770,
-
-            conf_label_y_range: [-600., 600.],
-        },
-        7442: {
-            conf_label_data_file_path: "vdm_Nominal_Fill7442_n03.csv",
-            conf_label_special_time_intervals: [[75, 100], [110, 180], [180, 215]],
-
-            conf_label_min_time: 1542135000,
-            conf_label_max_time: 1542150000,
-            # conf_label_zero_time: 1542135660,
-        },
-        7443: {
-            conf_label_data_file_path: "vdm_Nominal_Fill7443_n01.csv",
-
-            conf_label_min_time: 1542211800,
-            conf_label_max_time: 1542233400,
-            # conf_label_zero_time: 1542211800
-        },
-        7483: {
-            conf_label_data_file_path: "vdm_Nominal_Fill7483_n01.csv",
-
-            conf_label_min_time: 1543463700,
-            conf_label_max_time: 1543467300
-        },
-
-    },
-
     "arcBPM": {
+        4689: {
+            conf_label_data_file_path: "CMS_arc_Fill4689_pos_merged.csv",
+            # conf_label_offset_values: [[-1.48368, -1.23079, 1.41783, -2.2098],
+            #                            [-1.48368, -1.23079, 1.41783, -2.2098],
+            #                            [-1.48368, -1.23079, 1.41783, -2.2098],
+            #                            [-1.48368, -1.23079, 1.41783, -2.2098]],
+            conf_label_offset_time: [1449133477, 1449153809, 1449158261],
+
+            conf_label_min_time: 1449134042,
+            conf_label_max_time: 1449163025,
+            conf_label_zero_time: 1449134042,
+            # conf_label_special_time_intervals: [[5, 95]],
+
+            conf_label_y_range: [-100., 100.],
+            conf_label_y_diff_range: [-20., 20.],
+
+            # conf_label_deep_studies: True,
+            conf_label_compute_offsets: True
+        },
         7442: {
             conf_label_data_file_path: "CMS_arc_Fill7442_pos_merged.csv",
-        }
+        },
+
     }
 }
 

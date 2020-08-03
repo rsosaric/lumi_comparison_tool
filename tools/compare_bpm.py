@@ -1,15 +1,18 @@
 from tools.beammonitor import BPM
-import pandas as pd
+# import pandas as pd
 
 
 def compare_bpms(dets_labels: list, fill: int) -> None:
     detectors = []
     get_only_nominal_data = True
+
     if "Nominal" not in dets_labels:
         dets_labels.insert(0, "Nominal")
     elif "Nominal" in dets_labels and dets_labels[0] != "Nominal":
         dets_labels.remove("Nominal")
         dets_labels.insert(0, "Nominal")
+        get_only_nominal_data = False
+    elif "Nominal" in dets_labels:
         get_only_nominal_data = False
 
     n_det = 0
