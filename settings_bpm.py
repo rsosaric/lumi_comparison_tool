@@ -284,7 +284,7 @@ config_dict = {
             conf_label_zero_time: 1449134042,
             # conf_label_special_time_intervals: [[5, 95]],
 
-            conf_label_y_range: [-100., 100.],
+            conf_label_y_range: [-10., 10.],
             conf_label_y_diff_range: [-20., 20.],
 
             # conf_label_deep_studies: True,

@@ -324,8 +324,15 @@ class BPM:
             self.add_time_min_col(self.__processed_data)
 
             if compute_orbit_drift:
+                orbit_drift_computed = False
                 self.get_diffs_when_nominal_is_zero()
-                self.compute_orbit_drifts_per_limit_scan_points()
+                try:
+                    self.compute_orbit_drifts_per_limit_scan_points()
+                    orbit_drift_computed = True
+                except:
+                    ltools.color_print("\n ** WARNING ** : Orbit drifts not computed \n", 'yellow')
+                    orbit_drift_computed = False
+
                 if not get_only_data:
                     self.plot_detector_data_diff_with_nominal(extra_name_suffix="_H_V_computed_orbit_drift",
                                                               cols_to_plot=[BPM.__col_H_diff, BPM.__col_V_diff],
@@ -349,7 +356,8 @@ class BPM:
                                                               legend_labels=["H", "V"],
                                                               y_label="B2 - B1" +
                                                                       " [" + BPM.__distance_unit + "]")
-                    self.plot_orbit_drift_result()
+                    if orbit_drift_computed:
+                        self.plot_orbit_drift_result()
         else:
             self.__interpolation_to_nominal_time = self.__in_data_def_format
             self.__processed_data = self.__in_data_def_format
@@ -1400,11 +1408,21 @@ class BPM:
 
         ltools.color_print("plotting " + plot_name + "...", "green")
 
+        ylabel = "beam position" + " [" + BPM.__distance_unit + "]"
+
         self.__plt_plots[plot_name] = plotting.scatter_plot_from_pandas_frame(self.__in_data_def_format,
                                                                               x_data_label=BPM.__col_time,
                                                                               y_data_label=cols_to_plot,
                                                                               xlabel="time",
-                                                                              ylabel="beam position", ncol_legend=4,
+                                                                              ylabel=ylabel, ncol_legend=4,
+                                                                              plot_style='-',
+                                                                              label_cms_status=False
+                                                                              ).get_figure()
+        self.__plt_plots[plot_name+"_min"] = plotting.scatter_plot_from_pandas_frame(self.__in_data_def_format,
+                                                                              x_data_label=BPM.__col_time_min,
+                                                                              y_data_label=cols_to_plot,
+                                                                              xlabel="time",
+                                                                              ylabel=ylabel, ncol_legend=4,
                                                                               plot_style='-',
                                                                               label_cms_status=False
                                                                               ).get_figure()
@@ -1454,6 +1472,8 @@ class BPM:
         if not plot_scan_limits_lines:
             draw_lines_scans_limits = None
 
+        ylabel = "beam position" + " [" + BPM.__distance_unit + "]"
+
         self.__plt_plots[plot_name] = plotting.scatter_plot_from_pandas_frame(data_to_use,
                                                                               x_data_label=BPM.__col_time_min,
                                                                               y_data_label=list(cols_to_plot),
@@ -1461,7 +1481,8 @@ class BPM:
                                                                               ymax=ymax,
                                                                               xmin=x_min, xmax=x_max,
                                                                               xlabel="time [min]",
-                                                                              ylabel="beam position", ncol_legend=4,
+                                                                              ylabel=ylabel,
+                                                                              ncol_legend=4,
                                                                               plot_style='-',
                                                                               label_cms_status=False,
                                                                               draw_labels_pos_dict=draw_labels_pos_dict,
@@ -1557,7 +1578,7 @@ class BPM:
         color_for_h = 'green'
         # h_v_colors = [color_for_h, color_for_v]
         fig_size_shape = "nsq"
-        title = ""
+        title = self.name + " Orbit Drift (beam2 - beam1) " + " in Fill" + str(self.__fill)
         plot_file_name = "OrbitDrift_" + self.name
         ylabel = "Orbit Drift [" + BPM.__distance_unit + "]"
         ymin = self.__y_range_orbit_drift[0]
@@ -1578,9 +1599,9 @@ class BPM:
         ax.legend(legend_labels, ncol=ncol_legend, markerscale=leg_marker_sc, fontsize=leg_text_s, loc=legend_position)
 
         ax.set_title(title)
-        ax.set_ylabel(ylabel, labelpad=def_setts.axis_labelpad, weight=def_setts.axis_weight,
+        ax.set_ylabel(ylabel, labelpad=def_setts.axis_labelpad_y, weight=def_setts.axis_weight,
                       size=def_setts.axis_case_size[fig_size_shape])
-        ax.set_xlabel(xlabel, labelpad=def_setts.axis_labelpad, weight=def_setts.axis_weight,
+        ax.set_xlabel(xlabel, labelpad=def_setts.axis_labelpad_x, weight=def_setts.axis_weight,
                       size=def_setts.axis_case_size[fig_size_shape])
 
         plt.xticks(fontsize=def_setts.axis_thicks_case_size[fig_size_shape])
@@ -1618,6 +1639,9 @@ class BPM:
                 plt.text(draw_labels_pos_dict[i_label][0], draw_labels_pos_dict[i_label][1], i_label,
                          fontweight='bold', alpha=0.5, horizontalalignment='center', verticalalignment='center'
                          )
+
+        if fig_size == (12, 4):
+            plt.subplots_adjust(left=0.1, right=0.97, top=0.9, bottom=0.2)
 
         self.__plt_plots[plot_file_name] = fig
 
