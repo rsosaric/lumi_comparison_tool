@@ -75,7 +75,7 @@ For this you need two kind of files: ramses_channels_raw_data.csv (containing ti
 Here one example:  python run.py --ramses_crosscal csv_input_files/ramses_2017_raw/ramses_dataframe_1.csv csv_input_files/ramses_2017_raw/ramses_dataframe_2.csv csv_input_files/2017/hfet_all.csv
 
 
-**BPM analysis: Hysteresis**
+**BPM analysis: Orbit Drift and Hysteresis**
 
 Required files must be updated here if needed: /beamData
 Configuration and input files for each BPM and fill can be modified and added here: settings_bpm.py
