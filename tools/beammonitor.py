@@ -1,7 +1,11 @@
 import pandas as pd
 import settings_bpm as setts
+import settings as def_setts
 import tools.plotting_tools as plotting
 from scipy import interpolate
+from scipy.interpolate import interp1d
+import matplotlib.pyplot as plt
+import json
 import numpy as np
 import tools.lumi_tools as ltools
 
@@ -124,6 +128,7 @@ class BPM:
         self.__offsets_time_split = []
         self.__scans_info_dict = {}
         self.__scans_info_for_plotting = {}
+        self.__orbit_drifts_per_scan = {}
 
         if self.name == BPM.__nominal_name:
             self.__is_nominal = True
@@ -319,7 +324,8 @@ class BPM:
             self.add_time_min_col(self.__processed_data)
 
             if compute_orbit_drift:
-                self.get_diffs_when_Nominal_is_zero()
+                self.get_diffs_when_nominal_is_zero()
+                self.compute_orbit_drifts_per_limit_scan_points()
                 if not get_only_data:
                     self.plot_detector_data_diff_with_nominal(extra_name_suffix="_H_V_computed_orbit_drift",
                                                               cols_to_plot=[BPM.__col_H_diff, BPM.__col_V_diff],
@@ -343,6 +349,7 @@ class BPM:
                                                               legend_labels=["H", "V"],
                                                               y_label="B2 - B1" +
                                                                       " [" + BPM.__distance_unit + "]")
+                    self.plot_orbit_drift_result()
         else:
             self.__interpolation_to_nominal_time = self.__in_data_def_format
             self.__processed_data = self.__in_data_def_format
@@ -632,6 +639,8 @@ class BPM:
 
             mod_low_limit -= delta_low
             mod_top_limit += delta_top
+            mod_low_limit = int(mod_low_limit)
+            mod_top_limit = int(mod_top_limit)
 
             times_i_min = np.array([scans_times[i][0] - self.__zero_time, scans_times[i][1] - self.__zero_time]) * \
                           BPM.__scale_time
@@ -642,12 +651,14 @@ class BPM:
             self.__scans_info_dict[names[i]] = {"time_range": scans_times[i],
                                                 "time_range_minutes": times_i_min,
                                                 "mod_time_range_minutes": mod_times_i_min,
+                                                "mod_time_range": [mod_low_limit, mod_top_limit],
                                                 "mean_time": int((scans_times[i][0] + scans_times[i][1]) / 2),
                                                 "mean_time_minutes": (times_i_min[0] + times_i_min[1]) / 2}
 
             self.__scans_info_for_plotting[names[i]] = (times_i_min[0] + times_i_min[1]) / 2
 
-        print(self.__scans_info_for_plotting)
+        # print(self.__scans_info_for_plotting)
+        print("Scan info loaded")
 
     def covert_cols_to_default_format(self, in_data: pd.DataFrame, rescale: bool = True):
         data_in_unified_format = in_data
@@ -996,7 +1007,7 @@ class BPM:
         else:
             raise AssertionError("No time column available")
 
-    def get_diffs_when_Nominal_is_zero(self):
+    def get_diffs_when_nominal_is_zero(self):
         data_to_use = self.__processed_data
         zero_pos_window = setts.zero_position_window
 
@@ -1025,6 +1036,63 @@ class BPM:
         # Getting V Raw differences
         self.__data_in_zero_beam_position[BPM.__col_V_diff] = self.__data_in_zero_beam_position[BPM.__col_b2v] - \
                                                               self.__data_in_zero_beam_position[BPM.__col_b1v]
+
+    def compute_orbit_drifts_per_limit_scan_points(self):
+        assert len(self.__data_in_zero_beam_position) != 0
+
+        for scan_name in list(self.__scans_info_dict):
+            limit_times = self.__scans_info_dict[scan_name]["time_range"]
+            limit_times_min = self.__scans_info_dict[scan_name]["time_range_minutes"]
+            mod_limit_times = self.__scans_info_dict[scan_name]["mod_time_range"]
+            scan_middle_time = self.__scans_info_dict[scan_name]["mean_time"]
+            scan_middle_time_min = self.__scans_info_dict[scan_name]["mean_time_minutes"]
+
+            data_inside_mod_time = \
+                self.__data_in_zero_beam_position[(self.__data_in_zero_beam_position[BPM.__col_time] >= mod_limit_times[0]) &
+                                                  (self.__data_in_zero_beam_position[BPM.__col_time] <= mod_limit_times[1])].copy()
+
+            tck_H = interp1d(data_inside_mod_time[BPM.__col_time], data_inside_mod_time[BPM.__col_H_diff])
+            tck_V = interp1d(data_inside_mod_time[BPM.__col_time], data_inside_mod_time[BPM.__col_V_diff])
+
+            od_H_in_low_limit = float(tck_H(limit_times[0]))
+            od_H_in_middle = float(tck_H(scan_middle_time))
+            od_H_in_top_limit = float(tck_H(limit_times[1]))
+
+            od_V_in_low_limit = float(tck_V(limit_times[0]))
+            od_V_in_middle = float(tck_V(scan_middle_time))
+            od_V_in_top_limit = float(tck_V(limit_times[1]))
+
+            self.__orbit_drifts_per_scan[scan_name] = {
+                "TimeWindows": [limit_times[0], scan_middle_time, limit_times[1]],
+                "TimeWindows_min": [limit_times_min[0], scan_middle_time_min, limit_times_min[1]],
+                "OrbitDrifts_X": [od_H_in_low_limit, od_H_in_middle, od_H_in_top_limit],
+                "OrbitDrifts_Y": [od_V_in_low_limit, od_V_in_middle, od_V_in_top_limit]
+            }
+
+        # print(self.__orbit_drifts_per_scan)
+        self.store_orbit_drift_in_file()
+
+    def store_orbit_drift_in_file(self):
+        scans = list(self.__orbit_drifts_per_scan)
+        times = []
+        od_x = []
+        od_y = []
+
+        for scan in scans:
+            times.append(self.__orbit_drifts_per_scan[scan]["TimeWindows"])
+            od_x.append(self.__orbit_drifts_per_scan[scan]["OrbitDrifts_X"])
+            od_y.append(self.__orbit_drifts_per_scan[scan]["OrbitDrifts_Y"])
+
+        with open(self.__output_dir + "OrbitDrifts_" + self.name + ".json", 'w') as file:
+            file.write("{\n")
+            file.write('"Names": ' + str(scans) + ",\n")
+            file.write('"TimeWindows": ' + str(times) + ",\n")
+            file.write('"OrbitDrifts_X": ' + str(od_x) + ",\n")
+            file.write('"OrbitDrifts_Y": ' + str(od_y) + "\n")
+            file.write("}")
+
+        ltools.color_print("\n Orbit drifts saved in " +
+                           self.__output_dir + "OrbitDrifts_" + self.name + ".json \n", "yellow")
 
     def apply_length_scale_correction(self, base_cols: list, data_to_use=None):
         print("Applying length scale correction ...")
@@ -1479,6 +1547,79 @@ class BPM:
                                                                               draw_labels_pos_dict=draw_labels_pos_dict,
                                                                               draw_vertical_line_pos=draw_lines_scans_limits
                                                                               ).get_figure()
+
+    def plot_orbit_drift_result(self):
+        data_frame = self.__data_in_zero_beam_position
+        x_data_label = BPM.__col_time_min
+        # y_data_label = [BPM.__col_H_diff, BPM.__col_V_diff]
+        legend_labels = ["H", "V"]
+        color_for_v = 'blue'
+        color_for_h = 'green'
+        # h_v_colors = [color_for_h, color_for_v]
+        fig_size_shape = "nsq"
+        title = ""
+        plot_file_name = "OrbitDrift_" + self.name
+        ylabel = "Orbit Drift [" + BPM.__distance_unit + "]"
+        ymin = self.__y_range_orbit_drift[0]
+        ymax = self.__y_range_orbit_drift[1]
+        xlabel = "time [min]"
+        marker_size = 2.0
+
+        fig_size = def_setts.fig_sizes[fig_size_shape]
+        fig, ax = plt.subplots(figsize=fig_size)
+
+        data_frame.plot(kind='scatter', x=x_data_label, y=BPM.__col_H_diff, s=marker_size, color=color_for_h, ax=ax)
+        data_frame.plot(kind='scatter', x=x_data_label, y=BPM.__col_V_diff, s=marker_size, color=color_for_v, ax=ax)
+
+        ncol_legend = len(legend_labels)
+        leg_marker_sc = def_setts.leg_vs_plots_marker_scale
+        legend_position = def_setts.leg_vs_plots_pos
+        leg_text_s = def_setts.leg_vs_plots_text_s
+        ax.legend(legend_labels, ncol=ncol_legend, markerscale=leg_marker_sc, fontsize=leg_text_s, loc=legend_position)
+
+        ax.set_title(title)
+        ax.set_ylabel(ylabel, labelpad=def_setts.axis_labelpad, weight=def_setts.axis_weight,
+                      size=def_setts.axis_case_size[fig_size_shape])
+        ax.set_xlabel(xlabel, labelpad=def_setts.axis_labelpad, weight=def_setts.axis_weight,
+                      size=def_setts.axis_case_size[fig_size_shape])
+
+        plt.xticks(fontsize=def_setts.axis_thicks_case_size[fig_size_shape])
+        plt.yticks(fontsize=def_setts.axis_thicks_case_size[fig_size_shape])
+
+        if ymin and ymax:
+            plt.ylim(ymin, ymax)
+
+        scans_names = list(self.__orbit_drifts_per_scan)
+        y_pos_scans = ymin + abs(ymin * setts.delta_pos_for_scan_labels)
+        draw_vertical_line_pos = []
+        draw_labels_pos_dict = {}
+        for scan in scans_names:
+            i_x = self.__orbit_drifts_per_scan[scan]["TimeWindows_min"]
+            i_y_h = self.__orbit_drifts_per_scan[scan]["OrbitDrifts_X"]
+            i_y_v = self.__orbit_drifts_per_scan[scan]["OrbitDrifts_Y"]
+
+            draw_vertical_line_pos.extend([i_x[0], i_x[2]])
+            draw_labels_pos_dict[scan] = [i_x[1], y_pos_scans]
+
+            # print(i_x, i_y_h, i_y_v)
+
+            plt.plot(i_x, i_y_h, c=color_for_h)
+            plt.plot(i_x, i_y_v, c=color_for_v)
+
+        # Draw vertical lines
+        if draw_vertical_line_pos is not None:
+            for x_pos in draw_vertical_line_pos:
+                plt.axvline(x=x_pos, linestyle='dashed', alpha=0.3)
+
+        # Draw text from draw_labels_pos_dict -> {"text": [x, y], ... }
+        if draw_labels_pos_dict is not None:
+            labels_text = list(draw_labels_pos_dict)
+            for i_label in labels_text:
+                plt.text(draw_labels_pos_dict[i_label][0], draw_labels_pos_dict[i_label][1], i_label,
+                         fontweight='bold', alpha=0.5, horizontalalignment='center', verticalalignment='center'
+                         )
+
+        self.__plt_plots[plot_file_name] = fig
 
     def save_plots(self):
         ltools.color_print('\n\n Saving plots:', "green")

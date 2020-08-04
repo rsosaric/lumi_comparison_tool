@@ -27,8 +27,8 @@ l_min_plot = -100.
 l_max_plot = 100.
 l_diff_min_plot = -20.
 l_diff_max_plot = 20.
-l_diff_orbit_drift_min_plot = -60.
-l_diff_orbit_drift_max_plot = 60.
+l_diff_orbit_drift_min_plot = -40.
+l_diff_orbit_drift_max_plot = 40.
 l_diff_zoom_min_plot = -5.
 l_diff_zoom_max_plot = 5.
 
@@ -76,7 +76,7 @@ config_dict = {
         4689: {
             conf_label_data_file_path: "vdm_Nominal_Fill4689_n01.csv",
 
-            conf_label_scans_names: ['X1', 'Y1', 'Y2', 'X2', 'X3', 'Y3', 'Y4', 'X4', 'X5', 'Y5'],
+            conf_label_scans_names: ["X1", "Y1", "Y2", "X2", "X3", "Y3", "Y4", "X4", "X5", "Y5"],
             conf_label_scans_time_windows: [[1449134119, 1449135013], [1449135216, 1449136109],
                                             [1449136443, 1449137337], [1449137529, 1449138424],
                                             [1449154166, 1449154670], [1449154731, 1449155279],
@@ -178,10 +178,13 @@ config_dict = {
         },
         4689: {
             conf_label_data_file_path: "4689_DOROS_raw_data_from_Timber.csv",
-            conf_label_offset_values: [[-83.85, -191.55, 2072.3, -339.3],
-                                       [-74.8, -193.85, 2120.8, -343.55],
-                                       [-74.4, -193.25, 2142.8, -346.6]],
-            conf_label_offset_time: [1449133477, 1449153809, 1449158261],
+            # conf_label_offset_values: [[-83.85, -191.55, 2072.3, -339.3],
+            #                            [-74.8, -193.85, 2120.8, -343.55],
+            #                            [-74.4, -193.25, 2142.8, -346.6]],
+            # conf_label_offset_time: [1449133477, 1449153809, 1449158261],
+
+            conf_label_offset_values: [[-83.85, -191.55, 2072.3, -339.3],[-74.8, -193.85, 2120.8, -343.55]],
+            conf_label_offset_time: [1449133477, 1449153809],
 
             conf_label_min_time: 1449134042,
             conf_label_max_time: 1449163025,
