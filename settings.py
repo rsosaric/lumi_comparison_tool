@@ -1,4 +1,5 @@
 # -*-*-*-*-*-*-*-*-*-*-*- > > > General settings < < < -*-*-*-*-*-*-*-*-*-*-*-
+show_live_plots = False
 work_status = 'Preliminary'
 # work_status = 'Work in Progress'
 # work_status = ""

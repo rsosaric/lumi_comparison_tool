@@ -7,6 +7,7 @@ import seaborn as sns
 import numpy as np
 import pandas as pd
 import pickle as pck
+import plotly.express as px
 
 plt.rcParams.update({'figure.max_open_warning': 0})
 
@@ -697,7 +698,6 @@ def add_extra_text(ax, plot_frame_ratio, energy_year_label='', experiment='', wo
                  fontsize=setts.experiment_font_size, fontweight='light', transform=ax.transAxes)
     else:
         raise ValueError('frame ratio value not implemented')
-
 
 def plot_plt_scatter(x, y):
     fig, ax = plt.subplots()

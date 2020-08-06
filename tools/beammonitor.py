@@ -2,10 +2,11 @@ import pandas as pd
 import settings_bpm as setts
 import settings as def_setts
 import tools.plotting_tools as plotting
+import tools.live_plotting_tools as live_plotting
 from scipy import interpolate
 from scipy.interpolate import interp1d
 import matplotlib.pyplot as plt
-import json
+# import json
 import numpy as np
 import tools.lumi_tools as ltools
 
@@ -377,6 +378,8 @@ class BPM:
                 ltools.color_print("    " + str(self.__ref_col_diff_names_final_result), "blue")
             self.plot_detector_data(plot_scan_info=self.__scan_info_available,
                                     plot_scan_limits_lines=self.__scan_info_available)
+            if def_setts.show_live_plots:
+                self.plot_live_detector_data()
 
             if setts.conf_label_special_time_intervals in list(setts.config_dict[self.name][self.__fill]):
                 for xrange in setts.config_dict[self.name][self.__fill][setts.conf_label_special_time_intervals]:
@@ -1488,6 +1491,29 @@ class BPM:
                                                                               draw_labels_pos_dict=draw_labels_pos_dict,
                                                                               draw_vertical_line_pos=draw_lines_scans_limits
                                                                               ).get_figure()
+
+    def plot_live_detector_data(self, xrange=None, extra_name_suffix="", cols_to_plot=None,
+                                data_to_use=None, plot_scan_info=False, plot_scan_limits_lines=False,
+                                scans_limits_to_use="time_range_minutes"):
+        if data_to_use is None:
+            data_to_use = self.__in_data_def_format
+
+        if cols_to_plot is None:
+            cols_to_plot = BPM.__ref_col_names
+
+        ylabel = "beam position" + " [um]"
+        xlabel = "time [min]"
+        live_plotting.live_line_from_pandas(data_frame=data_to_use,
+                                            x_data_label=BPM.__col_time_min,
+                                            y_data_label=list(cols_to_plot),
+                                            show_also_info_in=[BPM.__col_time],
+                                            xlabel=xlabel, ylabel=ylabel
+                                            )
+        live_plotting.live_scatter_from_pandas(data_frame=data_to_use,
+                                               x_data_label=BPM.__col_time_min,
+                                               y_data_label=list(cols_to_plot),
+                                               show_also_info_in=[BPM.__col_time],
+                                               xlabel=xlabel, ylabel=ylabel)
 
     def plot_detector_data_diff_with_nominal(self, xrange=None, yrange=None, extra_name_suffix="",
                                              cols_to_plot=None, data_to_use=None, legend_labels=None,
