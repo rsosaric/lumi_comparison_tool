@@ -243,6 +243,8 @@ class BPM:
 
         ltools.color_print("\n\nAnalysing " + self.name + " using data: " + str(self.__path_to_data), "green")
 
+        ltools.check_and_create_folder(self.__output_dir)
+
         if setts.conf_label_special_input_col_names in self.__settings_list:
             self.__rename_col_dict = self.__settings[setts.conf_label_special_input_col_names]
             print("     --->>> Using special input col names defined in settings. Please check if this is intended!!!")
@@ -478,20 +480,26 @@ class BPM:
                 timing_cols = [BPM.__col_time, BPM.__col_time_min]
                 data_cols = self.__ref_col_diff_names_final_result
                 all_cols_to_save = timing_cols + data_cols
+                raw_data_cols = timing_cols + list(BPM.__ref_col_names) + self.__ref_col_diff_names
                 final_hysteresis_cols = timing_cols + [BPM.__col_H_diff, BPM.__col_V_diff]
 
                 # make sure to store data only in studied range
-                ltools.color_print("\n\nSaving data in " + self.__output_dir + "plotted_data.csv", "green")
-                ltools.color_print("Saving hysteresis data in " + self.__output_dir + str(self.__fill) +
-                                   "_hysteresis.csv", "green")
-                ltools.color_print("    Data saved only in range " + str(self.__y_diff_range), "blue")
-                for i_col in data_cols:
-                    data_to_save = data_to_save[(data_to_save[i_col] >= self.__y_diff_range[0]) &
-                                                (data_to_save[i_col] <= self.__y_diff_range[1])]
+                ltools.color_print("\n\n (OUTPUT FILE) Saving data in " + self.__output_dir + "plotted_data.csv",
+                                   "yellow")
+                ltools.color_print(" (OUTPUT FILE) Saving data with only offsets in " + self.__output_dir +
+                                   "_only_offsets_data.csv", "yellow")
+                ltools.color_print(" (OUTPUT FILE) Saving hysteresis data in " + self.__output_dir + str(self.__fill) +
+                                   "_hysteresis.csv", "yellow")
+                # ltools.color_print("    Data saved only in range " + str(self.__y_diff_range), "blue")
+                # for i_col in data_cols:
+                #     data_to_save = data_to_save[(data_to_save[i_col] >= self.__y_diff_range[0]) &
+                #                                 (data_to_save[i_col] <= self.__y_diff_range[1])]
                 ltools.save_columns_from_pandas_to_file(data_to_save, all_cols_to_save, self.__output_dir +
-                                                        "plotted_data.csv")
+                                                        self.name + "_" + str(self.__fill) + "_plotted_data.csv")
+                ltools.save_columns_from_pandas_to_file(data_to_save, raw_data_cols, self.__output_dir +
+                                                        self.name + "_" + str(self.__fill) + "_only_offsets_data.csv")
                 ltools.save_columns_from_pandas_to_file(data_to_save, final_hysteresis_cols, self.__output_dir +
-                                                        str(self.__fill) + "_hysteresis.csv")
+                                                        self.name + "_" + str(self.__fill) + "_hysteresis.csv")
 
                 # ltools.save_columns_from_pandas_to_file(data_to_save, self.__output_dir +
                 #                                         "plotted_data_all.csv")
@@ -669,7 +677,7 @@ class BPM:
             self.__scans_info_for_plotting[names[i]] = (times_i_min[0] + times_i_min[1]) / 2
 
         # print(self.__scans_info_for_plotting)
-        print("Scan info loaded")
+        ltools.color_print("\n ====>>> Scan info loaded from settings \n", "blue")
 
     def covert_cols_to_default_format(self, in_data: pd.DataFrame, rescale: bool = True):
         data_in_unified_format = in_data
@@ -736,8 +744,29 @@ class BPM:
 
         return data_in_unified_format
 
-    def compute_offsets(self):
+    def compute_offsets(self, mode="only after optimization"):
         print("Computing offsets ...")
+        if setts.conf_label_offset_time in self.__settings_list:
+            self.__offsets_time_split = self.__settings[setts.conf_label_offset_time]
+        else:
+            raise AssertionError("optimization scans times must be defined in settings")
+        available_modes = ("only after optimization", "all head-on")
+        if mode not in available_modes:
+            raise AssertionError("mode not correct")
+        mode_only_short_after_opt = False
+        mode_all_head_on = False
+        if mode == "only after optimization":
+            mode_only_short_after_opt = True
+            if setts.conf_label_offset_time not in self.__settings_list:
+                raise AssertionError("The optimization times must be defined for using the _only after optimization_ method")
+        elif mode == "all head-on":
+            mode_all_head_on = True
+
+        if setts.conf_label_time_window_for_offsets in self.__settings_list:
+            time_window_for_offsets = self.__settings[setts.conf_label_time_window_for_offsets]
+        else:
+            time_window_for_offsets = setts.time_window_for_offsets
+
         diffs = {}
         offsets = {}
         data_to_use = self.__in_data_def_format
@@ -746,11 +775,57 @@ class BPM:
         when_b2_h_is_zero = self.__nominal_data[BPM.__col_b2h] == 0.
         when_b2_v_is_zero = self.__nominal_data[BPM.__col_b2v] == 0.
 
-        nominal_in_zero: pd.DataFrame = self.__nominal_data[when_b1_h_is_zero & when_b1_v_is_zero &
-                                                            when_b2_h_is_zero & when_b2_v_is_zero].copy()
+        zero_pos_window = setts.zero_position_window_for_offsets
+
+        nominal_in_zero: pd.DataFrame = self.__nominal_data[(self.__nominal_data[BPM.__col_b1h] < zero_pos_window) &
+                                                            (self.__nominal_data[
+                                                                 BPM.__col_b1h] > -1 * zero_pos_window) &
+                                                            (self.__nominal_data[BPM.__col_b1v] < zero_pos_window) &
+                                                            (self.__nominal_data[
+                                                                 BPM.__col_b1v] > -1 * zero_pos_window) &
+                                                            (self.__nominal_data[BPM.__col_b2h] < zero_pos_window) &
+                                                            (self.__nominal_data[
+                                                                 BPM.__col_b2h] > -1 * zero_pos_window) &
+                                                            (self.__nominal_data[BPM.__col_b2v] < zero_pos_window) &
+                                                            (self.__nominal_data[BPM.__col_b2v] > -1 * zero_pos_window)
+                                                            ].copy()
 
         mask = data_to_use[BPM.__col_time].isin(nominal_in_zero[BPM.__col_time])
         data_for_offsets = data_to_use[mask].copy()
+
+        offsets_limits = []
+        for i_time in self.__offsets_time_split:
+            offsets_limits.append([i_time, i_time+time_window_for_offsets])
+
+        plot_data_for_offsets = plotting.scatter_plot_from_pandas_frame(data_for_offsets,
+                                                                        x_data_label=BPM.__col_time,
+                                                                        y_data_label=list(BPM.__ref_col_names),
+                                                                        xlabel="time [timestamp]",
+                                                                        ylabel="unscaled positions",
+                                                                        ncol_legend=4,
+                                                                        label_cms_status=False,
+                                                                        draw_vertical_line_pos=self.__settings[
+                                                                            setts.conf_label_offset_time],
+                                                                        draw_vertical_bands_array_pos=offsets_limits,
+                                                                        title="Fill" + str(self.__fill),
+                                                                        title_loc="right"
+                                                                        ).get_figure()
+        plot_nominal_data_for_offsets = plotting.scatter_plot_from_pandas_frame(nominal_in_zero,
+                                                                                x_data_label=BPM.__col_time,
+                                                                                y_data_label=list(BPM.__ref_col_names),
+                                                                                xlabel="time [timestamp]",
+                                                                                ylabel="unscaled positions",
+                                                                                ncol_legend=4,
+                                                                                label_cms_status=False,
+                                                                                draw_vertical_line_pos=self.__settings[
+                                                                                    setts.conf_label_offset_time],
+                                                                                draw_vertical_bands_array_pos=offsets_limits,
+                                                                                title="Fill" + str(self.__fill),
+                                                                                title_loc="right"
+                                                                                ).get_figure()
+
+        plot_data_for_offsets.savefig(self.__output_dir + "offsets_debug_data_for_offsets.png")
+        plot_nominal_data_for_offsets.savefig(self.__output_dir + "offsets_debug_nominal_data_for_offsets.png")
 
         if len(data_for_offsets) != len(nominal_in_zero):
             # reduce nominal_in_zero to the available timestamps from data_for_offsets
@@ -785,16 +860,40 @@ class BPM:
         self.__plt_plots["offsets_histos"] = diffs_df.hist(bins=50)[0][0].get_figure()
 
         diffs_df_split_time_list = []
-        if setts.conf_label_offset_time in self.__settings_list:
+
+        if mode_all_head_on:
+            if setts.conf_label_offset_time in self.__settings_list:
+                self.__offsets_time_split = self.__settings[setts.conf_label_offset_time]
+                for index in range(0, len(self.__offsets_time_split)):
+                    this_opt_scan_time = self.__offsets_time_split[index]
+                    if index == len(self.__offsets_time_split) - 1:
+                        diffs_df_split_time_list.append(
+                            diffs_df[diffs_df[BPM.__col_time] >= this_opt_scan_time])
+                    else:
+                        diffs_df_split_time_list.append(
+                            diffs_df[(diffs_df[BPM.__col_time] >= this_opt_scan_time)
+                                     & (diffs_df[BPM.__col_time] < self.__offsets_time_split[index + 1])])
+                time_id = 0
+                for i_df in diffs_df_split_time_list:
+                    self.__plt_plots["offsets_histos_" + str(self.__offsets_time_split[time_id])] = i_df.hist(bins=50)[0][
+                        0].get_figure()
+                    for col_name in raw_col_names:
+                        self.__offsets[col_name].append(i_df[col_name].mean())
+                    time_id += 1
+            else:
+                diffs_df_split_time_list = [diffs_df]
+                for col_name in raw_col_names:
+                    self.__offsets[col_name] = diffs_df[col_name].mean()
+
+        elif mode_only_short_after_opt:
             self.__offsets_time_split = self.__settings[setts.conf_label_offset_time]
             for index in range(0, len(self.__offsets_time_split)):
-                if index == len(self.__offsets_time_split) - 1:
-                    diffs_df_split_time_list.append(
-                        diffs_df[diffs_df[BPM.__col_time] >= self.__offsets_time_split[index]])
-                else:
-                    diffs_df_split_time_list.append(
-                        diffs_df[(diffs_df[BPM.__col_time] >= self.__offsets_time_split[index])
-                                 & (diffs_df[BPM.__col_time] < self.__offsets_time_split[index + 1])])
+                this_opt_scan_time = self.__offsets_time_split[index]
+                end_of_time_window = this_opt_scan_time + time_window_for_offsets
+
+                diffs_df_split_time_list.append(
+                    diffs_df[(diffs_df[BPM.__col_time] >= this_opt_scan_time)
+                             & (diffs_df[BPM.__col_time] < end_of_time_window)])
             time_id = 0
             for i_df in diffs_df_split_time_list:
                 self.__plt_plots["offsets_histos_" + str(self.__offsets_time_split[time_id])] = i_df.hist(bins=50)[0][
@@ -802,10 +901,27 @@ class BPM:
                 for col_name in raw_col_names:
                     self.__offsets[col_name].append(i_df[col_name].mean())
                 time_id += 1
-        else:
-            diffs_df_split_time_list = [diffs_df]
-            for col_name in raw_col_names:
-                self.__offsets[col_name] = diffs_df[col_name].mean()
+
+        # save computed offsets into file
+        offsets_in_plain_list_format_short = []
+        for time_index in range(0, len(self.__offsets[BPM.__ref_col_names[0]])):
+            col_offsets_in_time = []
+            for col_name in BPM.__ref_col_names:
+                col_offsets_in_time.append(self.__offsets[col_name][time_index])
+            offsets_in_plain_list_format_short.append(col_offsets_in_time)
+
+        with open(self.__output_dir + self.name + "_offsets_all.txt", 'w') as file:
+            file.write('Timestamps: ' + str(self.__offsets_time_split) + "\n")
+            file.write('OffValues dict: ' + str(self.__offsets) + "\n")
+        with open(self.__output_dir + self.name + "_offsets.txt", 'w') as file:
+            file.write('Timestamps: ' + str(self.__offsets_time_split) + "\n")
+            file.write('OffValues: ' + str(offsets_in_plain_list_format_short) + "\n")
+            file.write('Col Names: ' + str(list(BPM.__ref_col_names)) + "\n")
+
+        ltools.color_print("\n (OUTPUT FILE) Computed offsets saved in " +
+                           self.__output_dir + self.name + "_offsets.txt \n", "yellow")
+
+
 
     def get_offsets_from_config(self):
         offsets_values = setts.config_dict[self.name][self.__fill][setts.conf_label_offset_values]
@@ -826,10 +942,14 @@ class BPM:
                     setts.conf_label_offset_values not in self.__settings_list:
                 if self.__settings[setts.conf_label_compute_offsets] or \
                         setts.conf_label_offset_values not in self.__settings_list:
-                    self.compute_offsets()
+                    if setts.conf_label_compute_offsets_method in self.__settings_list:
+                        self.compute_offsets(mode=self.__settings[setts.conf_label_compute_offsets_method])
+                    else:
+                        self.compute_offsets()
                     offsets_computed = True
             if setts.conf_label_offset_values in self.__settings_list:
                 self.get_offsets_from_config()
+                ltools.color_print("\n ====>>> Using offsets defined in settings \n", "blue")
 
             # print(self.__offsets_time_split)
             # print(self.__offsets)
@@ -1057,21 +1177,57 @@ class BPM:
             mod_limit_times = self.__scans_info_dict[scan_name]["mod_time_range"]
             scan_middle_time = self.__scans_info_dict[scan_name]["mean_time"]
             scan_middle_time_min = self.__scans_info_dict[scan_name]["mean_time_minutes"]
+            time_window = setts.delta_scan_time_window
+            ini_scan_time = limit_times[0]
+            end_scan_time = limit_times[1]
+            ini_scan_mod_time = mod_limit_times[0]
+            end_scan_mod_time = mod_limit_times[1]
+
+            orbit_drift_fit_out_dir = self.__output_dir + "/orbit_drift_special_plots/"
 
             data_inside_mod_time = \
                 self.__data_in_zero_beam_position[(self.__data_in_zero_beam_position[BPM.__col_time] >= mod_limit_times[0]) &
                                                   (self.__data_in_zero_beam_position[BPM.__col_time] <= mod_limit_times[1])].copy()
 
-            tck_H = interp1d(data_inside_mod_time[BPM.__col_time], data_inside_mod_time[BPM.__col_H_diff])
-            tck_V = interp1d(data_inside_mod_time[BPM.__col_time], data_inside_mod_time[BPM.__col_V_diff])
+            ini_scan_time_window = [ini_scan_mod_time, ini_scan_time + time_window]
+            end_scan_time_window = [end_scan_time - time_window, end_scan_mod_time]
+            middle_scan_time_window = [scan_middle_time - time_window, scan_middle_time + time_window]
+            ini_scan_points = data_inside_mod_time[(data_inside_mod_time[BPM.__col_time] >= ini_scan_time_window[0]) &
+                                                   (data_inside_mod_time[BPM.__col_time] <= ini_scan_time_window[1])].copy()
+            end_scan_points = data_inside_mod_time[(data_inside_mod_time[BPM.__col_time] >= end_scan_time_window[0]) &
+                                                   (data_inside_mod_time[BPM.__col_time] <= end_scan_time_window[1])].copy()
+            middle_scan_points = data_inside_mod_time[(data_inside_mod_time[BPM.__col_time] >= middle_scan_time_window[0]) &
+                                                      (data_inside_mod_time[BPM.__col_time] <= middle_scan_time_window[1])].copy()
 
-            od_H_in_low_limit = float(tck_H(limit_times[0]))
-            od_H_in_middle = float(tck_H(scan_middle_time))
-            od_H_in_top_limit = float(tck_H(limit_times[1]))
+            region_bands = [ini_scan_time_window, middle_scan_time_window, end_scan_time_window]
+            all_data_inside_scan = plotting.scatter_plot_from_pandas_frame(data_inside_mod_time,
+                                                                           x_data_label=BPM.__col_time,
+                                                                           y_data_label=[BPM.__col_H_diff,
+                                                                                         BPM.__col_V_diff],
+                                                                           xlabel="time [min]",
+                                                                           ylabel="positions",
+                                                                           ncol_legend=4,
+                                                                           label_cms_status=False,
+                                                                           draw_vertical_line_pos=[ini_scan_mod_time,
+                                                                                                   scan_middle_time,
+                                                                                                   end_scan_mod_time],
+                                                                           draw_vertical_bands_array_pos=region_bands,
+                                                                           draw_vertical_bands_array_alpha=0.2,
+                                                                           marker_size=2.0,
+                                                                           title=scan_name + " scan",
+                                                                           title_loc="right"
+                                                                           ).get_figure()
 
-            od_V_in_low_limit = float(tck_V(limit_times[0]))
-            od_V_in_middle = float(tck_V(scan_middle_time))
-            od_V_in_top_limit = float(tck_V(limit_times[1]))
+            ltools.check_and_create_folder(orbit_drift_fit_out_dir)
+            all_data_inside_scan.savefig(orbit_drift_fit_out_dir + scan_name + "_scan_all_data.png")
+
+            od_H_in_low_limit = ini_scan_points[BPM.__col_H_diff].mean()
+            od_H_in_middle = middle_scan_points[BPM.__col_H_diff].mean()
+            od_H_in_top_limit = end_scan_points[BPM.__col_H_diff].mean()
+
+            od_V_in_low_limit = ini_scan_points[BPM.__col_V_diff].mean()
+            od_V_in_middle = middle_scan_points[BPM.__col_V_diff].mean()
+            od_V_in_top_limit = end_scan_points[BPM.__col_V_diff].mean()
 
             self.__orbit_drifts_per_scan[scan_name] = {
                 "TimeWindows": [limit_times[0], scan_middle_time, limit_times[1]],
@@ -1102,7 +1258,7 @@ class BPM:
             file.write('"OrbitDrifts_Y": ' + str(od_y) + "\n")
             file.write("}")
 
-        ltools.color_print("\n Orbit drifts saved in " +
+        ltools.color_print("\n (OUTPUT FILE) Orbit drifts saved in " +
                            self.__output_dir + "OrbitDrifts_" + self.name + ".json \n", "yellow")
 
     def apply_length_scale_correction(self, base_cols: list, data_to_use=None):
@@ -1489,7 +1645,9 @@ class BPM:
                                                                               plot_style='-',
                                                                               label_cms_status=False,
                                                                               draw_labels_pos_dict=draw_labels_pos_dict,
-                                                                              draw_vertical_line_pos=draw_lines_scans_limits
+                                                                              draw_vertical_line_pos=draw_lines_scans_limits,
+                                                                              title="Fill" + str(self.__fill),
+                                                                              title_loc="right"
                                                                               ).get_figure()
 
     def plot_live_detector_data(self, xrange=None, extra_name_suffix="", cols_to_plot=None,
@@ -1592,7 +1750,9 @@ class BPM:
                                                                               fig_size_shape=canvas_shape,
                                                                               marker_size=marker_size,
                                                                               draw_labels_pos_dict=draw_labels_pos_dict,
-                                                                              draw_vertical_line_pos=draw_lines_scans_limits
+                                                                              draw_vertical_line_pos=draw_lines_scans_limits,
+                                                                              title="Fill" + str(self.__fill),
+                                                                              title_loc="right"
                                                                               ).get_figure()
 
     def plot_orbit_drift_result(self):

@@ -198,7 +198,11 @@ def scatter_plot_from_pandas_frame(data_frame, x_data_label, y_data_label, title
                                    fig_size_shape='nsq',
                                    ncol_legend=None,
                                    draw_labels_pos_dict=None,
-                                   draw_vertical_line_pos=None):
+                                   draw_vertical_line_pos=None,
+                                   draw_vertical_bands_array_pos=None,
+                                   draw_vertical_bands_array_color="blue",
+                                   draw_vertical_bands_array_alpha=0.3,
+                                   title_loc='center'):
     fig_size = get_fig_size(fig_size_shape)
     if xlabel == '':
         xlabel = x_data_label
@@ -222,7 +226,7 @@ def scatter_plot_from_pandas_frame(data_frame, x_data_label, y_data_label, title
     else:
         plot = data_frame.plot(x=x_data_label, y=y_data_label, style=plot_style, figsize=fig_size,
                                markersize=marker_size, legend=None, ax=ax)
-    plot.set_title(title)
+    plot.set_title(title, loc=title_loc)
     plot.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight,
                     size=setts.axis_case_size[fig_size_shape])
     plot.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight,
@@ -247,6 +251,12 @@ def scatter_plot_from_pandas_frame(data_frame, x_data_label, y_data_label, title
             plt.text(draw_labels_pos_dict[i_label][0], draw_labels_pos_dict[i_label][1], i_label,
                      fontweight='bold', alpha=0.5, horizontalalignment='center', verticalalignment='center'
                      )
+
+    # Draw vertical bands
+    if draw_vertical_bands_array_pos is not None:
+        for x_limits in draw_vertical_bands_array_pos:
+            ax.axvspan(x_limits[0], x_limits[1], alpha=draw_vertical_bands_array_alpha,
+                       color=draw_vertical_bands_array_color)
 
     # margin optimization
     if fig_size == (12, 4):
