@@ -1218,7 +1218,7 @@ class BPM:
                                                                            title_loc="right"
                                                                            ).get_figure()
 
-            ltools.check_and_create_folder(orbit_drift_fit_out_dir)
+            ltools.check_and_create_folder(orbit_drift_fit_out_dir, creation_info=False)
             all_data_inside_scan.savefig(orbit_drift_fit_out_dir + scan_name + "_scan_all_data.png")
 
             od_H_in_low_limit = ini_scan_points[BPM.__col_H_diff].mean()

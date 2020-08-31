@@ -229,7 +229,7 @@ config_dict = {
             conf_label_data_file_path: "4689_DOROS_raw_data_from_Timber.csv",
 
             conf_label_offset_time: [1449133477, 1449153809],
-            conf_label_offset_values: [[-83.85, -191.55, 2072.3, -339.3],[-74.8, -193.85, 2120.8, -343.55]],
+            conf_label_offset_values: [[-83.85, -191.55, 2072.3, -339.3], [-74.8, -193.85, 2120.8, -343.55]],
 
             conf_label_min_time: 1449134042,
             conf_label_max_time: 1449163025,
@@ -325,10 +325,8 @@ config_dict = {
         4689: {
             conf_label_data_file_path: "CMS_arc_Fill4689_pos_merged.csv",
             conf_label_offset_time: [1449133477, 1449153809],
-            # conf_label_offset_values: [[-1.48368, -1.23079, 1.41783, -2.2098],
-            #                            [-1.48368, -1.23079, 1.41783, -2.2098],
-            #                            [-1.48368, -1.23079, 1.41783, -2.2098],
-            #                            [-1.48368, -1.23079, 1.41783, -2.2098]],
+            conf_label_offset_values: [[2.2804070000000003, 0.09700449999999997, -4.053462, -1.1241844999999997],
+                                       [-2.469151272727275, -1.8924681363636366, -4.418165909090907, -2.768781363636364]],
 
             conf_label_min_time: 1449134042,
             conf_label_max_time: 1449163025,
@@ -339,7 +337,11 @@ config_dict = {
             conf_label_y_diff_range: [-20., 20.],
 
             # conf_label_deep_studies: True,
-            conf_label_compute_offsets: True
+
+            # conf_label_compute_offsets: True,
+            # conf_label_time_window_for_offsets: 600,  # s
+
+            # conf_label_compute_offsets_method: "all head-on"
         },
         7442: {
             conf_label_data_file_path: "CMS_arc_Fill7442_pos_merged.csv",
