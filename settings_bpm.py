@@ -26,7 +26,7 @@ conf_label_scans_names = "scans names"  # Scans name list. Will be used in plots
 conf_label_scans_time_windows = "scans times"  # Scans times limits.
 conf_label_exclusion_times = "times to exclude from results"  # Optimization scans, not useful times during VDM, etc
 conf_label_time_window_for_offsets = "time_window_for_offsets"
-conf_label_orbit_drift_plot_range = "time_window_for_offsets"
+conf_label_orbit_drift_plot_range = "orbit_drift_plot_range"
 
 l_min_plot = -100.
 l_max_plot = 100.
@@ -181,9 +181,8 @@ config_dict = {
         4266: {
             # conf_label_data_file_path: "DOROS_Fill4266_Timber.csv",
             conf_label_offset_time: [1440462850, 1440472132],
-            # conf_label_offset_values: [[-87.8, -157.85, -291.55, -457.7],
-            #                            [-84.05, -162.2, -281.85, -461.7]],
-            # conf_label_compute_offsets: True,
+            conf_label_offset_values: [[-87.8, -157.85, -291.55, -457.7],
+                                       [-84.05, -162.2, -281.85, -461.7]],
 
             conf_label_min_time: 1440462850,
             conf_label_max_time: 1440480981,
@@ -206,23 +205,23 @@ config_dict = {
                 "B1_H_L": -1, "B1_H_R": -1, "B2_H_R": -1
             },
 
-            # conf_label_data_file_path: "DOROS_Fill4266_Timber.csv",
+            conf_label_data_file_path: "DOROS_Fill4266_Timber.csv",
 
-            conf_label_data_file_path: "4266_P5_data_exper.csv",
-            conf_label_special_input_col_names: {"time": "timestamp",
-                                                 "pc H.B1.L [um]": "B1_H_L",
-                                                 "pc V.B1.L [um]": "B1_V_L",
-                                                 "pc H.B2.L [um]": "B2_H_L",
-                                                 "pc V.B2.L [um]": "B2_V_L",
-                                                 "pc H.B1.R [um]": "B1_H_R",
-                                                 "pc V.B1.R [um]": "B1_V_R",
-                                                 "pc H.B2.R [um]": "B2_H_R",
-                                                 "pc V.B2.R [um]": "B2_V_R"},
-
-            conf_label_unit_position_factor_to_um: 1.,
-            conf_label_timestamp_in_ms: True,
-            conf_label_compute_offsets: True,
-            conf_label_time_window_for_offsets: 600,  #s
+            # conf_label_data_file_path: "4266_P5_data_exper.csv",
+            # conf_label_special_input_col_names: {"time": "timestamp",
+            #                                      "pc H.B1.L [um]": "B1_H_L",
+            #                                      "pc V.B1.L [um]": "B1_V_L",
+            #                                      "pc H.B2.L [um]": "B2_H_L",
+            #                                      "pc V.B2.L [um]": "B2_V_L",
+            #                                      "pc H.B1.R [um]": "B1_H_R",
+            #                                      "pc V.B1.R [um]": "B1_V_R",
+            #                                      "pc H.B2.R [um]": "B2_H_R",
+            #                                      "pc V.B2.R [um]": "B2_V_R"},
+            #
+            # conf_label_unit_position_factor_to_um: 1.,
+            # conf_label_timestamp_in_ms: True,
+            # conf_label_compute_offsets: True,
+            # conf_label_time_window_for_offsets: 600,  #s
 
             # conf_label_deep_studies: True,
 

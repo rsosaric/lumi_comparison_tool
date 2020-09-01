@@ -107,8 +107,8 @@ class BPM:
     __col_correction_y = 'correction_y'
 
     def __init__(self, name: str, fill: int, data_file_name: str = None,
-                 get_only_data: bool = False, apply_all_available_corrections=True, compute_orbit_drift=True,
-                 nominal_data=None) -> None:
+                 get_only_data: bool = False, apply_all_available_corrections=True, compute_orbit_drift=False,
+                 nominal_data=None, get_orbit_drift_plots=False) -> None:
         self.name = name
 
         if self.name not in BPM.__allowed_detectors:
@@ -339,7 +339,7 @@ class BPM:
                     ltools.color_print("\n ** WARNING ** : Orbit drifts not computed \n", 'yellow')
                     orbit_drift_computed = False
 
-                if not get_only_data:
+                if not get_only_data or get_orbit_drift_plots:
                     self.plot_detector_data_diff_with_nominal(extra_name_suffix="_H_V_computed_orbit_drift",
                                                               cols_to_plot=[BPM.__col_H_diff, BPM.__col_V_diff],
                                                               data_to_use=self.__data_in_zero_beam_position,
@@ -1219,6 +1219,15 @@ class BPM:
             od_V_in_low_limit = ini_scan_points[BPM.__col_V_diff].mean()
             od_V_in_middle = middle_scan_points[BPM.__col_V_diff].mean()
             od_V_in_top_limit = end_scan_points[BPM.__col_V_diff].mean()
+
+            n_middle_scan_points_H = len(middle_scan_points[BPM.__col_H_diff])
+            n_middle_scan_points_V = len(middle_scan_points[BPM.__col_V_diff])
+
+            if "L" in scan_name and (n_middle_scan_points_H == 0 or n_middle_scan_points_V == 0):
+                if n_middle_scan_points_H == 0:
+                    od_H_in_middle = (od_H_in_low_limit + od_H_in_top_limit)/2
+                if n_middle_scan_points_V == 0:
+                    od_V_in_middle = (od_V_in_low_limit + od_V_in_top_limit)/2
 
             self.__orbit_drifts_per_scan[scan_name] = {
                 "TimeWindows": [limit_times[0], scan_middle_time, limit_times[1]],

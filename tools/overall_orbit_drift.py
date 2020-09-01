@@ -15,7 +15,8 @@ def get_orbit_drifts(dets_labels: list, fill: int) -> None:
 
     nominal_detector = BPM("Nominal", fill=fill, get_only_data=True)
     for det_name in dets_labels:
-        detectors.append(BPM(det_name, fill=fill, nominal_data=nominal_detector, get_only_data=True))
+        detectors.append(BPM(det_name, fill=fill, nominal_data=nominal_detector, get_only_data=True,
+                             compute_orbit_drift=True, get_orbit_drift_plots=True))
 
     plot_orbit_drift_result(detectors, output_folder)
 

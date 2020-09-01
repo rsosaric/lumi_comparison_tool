@@ -2,7 +2,7 @@ from tools.beammonitor import BPM
 # import pandas as pd
 
 
-def compare_bpms(dets_labels: list, fill: int) -> None:
+def compare_bpms(dets_labels: list, fill: int, compute_od: bool) -> None:
     detectors = []
     get_only_nominal_data = True
 
@@ -21,5 +21,5 @@ def compare_bpms(dets_labels: list, fill: int) -> None:
         if n_det == 0:
             detectors.append(BPM(det_name, fill=fill, get_only_data=get_only_nominal_data))
         else:
-            detectors.append(BPM(det_name, fill=fill, nominal_data=detectors[0]))
+            detectors.append(BPM(det_name, fill=fill, nominal_data=detectors[0], compute_orbit_drift=compute_od))
         n_det += 1
