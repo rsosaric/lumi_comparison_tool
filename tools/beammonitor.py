@@ -203,7 +203,10 @@ class BPM:
         else:
             self.__scan_info_available = False
 
-        self.__y_range_orbit_drift = [setts.l_diff_orbit_drift_min_plot, setts.l_diff_orbit_drift_max_plot]
+        if setts.conf_label_orbit_drift_plot_range in self.__settings_list:
+            self.__y_range_orbit_drift = self.__settings[setts.conf_label_orbit_drift_plot_range]
+        else:
+            self.__y_range_orbit_drift = [setts.l_diff_orbit_drift_min_plot, setts.l_diff_orbit_drift_max_plot]
 
         if setts.conf_label_y_range in list(setts.config_dict[self.name][fill]):
             self.__y_range = setts.config_dict[self.name][fill][setts.conf_label_y_range]
@@ -289,7 +292,7 @@ class BPM:
         if not self.__is_nominal:
             assert self.__zero_time == nominal_data.zero_time
 
-        self.__in_data_def_format = self.covert_cols_to_default_format(in_data)
+        self.__in_data_def_format = self.convert_cols_to_default_format(in_data)
 
         self.__in_data_def_format = self.compute_extra_raw_avg_cols(self.__in_data_def_format)
 
@@ -504,18 +507,6 @@ class BPM:
                 # ltools.save_columns_from_pandas_to_file(data_to_save, self.__output_dir +
                 #                                         "plotted_data_all.csv")
 
-    @property
-    def name(self):
-        return self.__name
-
-    @name.setter
-    def name(self, name):
-        self.__name = name
-
-    @property
-    def data(self):
-        return self.__in_data_def_format
-
     def fill_col_names(self):
         self.__ref_col_lscale_names = self.get_col_names(correction_suffix=BPM.__ref_col_lscale_suffix_label)
         self.__ref_col_lscale_names_LR = self.get_col_names(correction_suffix=BPM.__ref_col_lscale_suffix_label,
@@ -679,7 +670,7 @@ class BPM:
         # print(self.__scans_info_for_plotting)
         ltools.color_print("\n ====>>> Scan info loaded from settings \n", "blue")
 
-    def covert_cols_to_default_format(self, in_data: pd.DataFrame, rescale: bool = True):
+    def convert_cols_to_default_format(self, in_data: pd.DataFrame, rescale: bool = True):
         data_in_unified_format = in_data
         fill = self.__fill
 
@@ -1837,6 +1828,18 @@ class BPM:
         plotting.save_plots(self.__sns_plots, self.__output_dir, save_pickle=setts.save_figures_as_pickle)
 
     @property
+    def name(self):
+        return self.__name
+
+    @name.setter
+    def name(self, name):
+        self.__name = name
+
+    @property
+    def data(self):
+        return self.__in_data_def_format
+
+    @property
     def apply_lscale(self):
         return self.__apply_lscale
 
@@ -1851,6 +1854,46 @@ class BPM:
     @property
     def zero_time(self):
         return self.__zero_time
+
+    @property
+    def orbit_drifts_per_scan(self):
+        return self.__orbit_drifts_per_scan
+
+    @property
+    def scans_info_dict(self):
+        return self.__scans_info_dict
+
+    @property
+    def ref_col_names(self):
+        return self.__ref_col_names
+
+    @property
+    def col_time_min(self):
+        return self.__col_time_min
+
+    @property
+    def distance_unit(self):
+        return self.__distance_unit
+
+    @property
+    def col_H_diff(self):
+        return self.__col_H_diff
+
+    @property
+    def col_V_diff(self):
+        return self.__col_V_diff
+
+    @property
+    def fill(self):
+        return self.__fill
+
+    @property
+    def data_in_zero_beam_position(self):
+        return self.__data_in_zero_beam_position
+
+    @property
+    def y_range_orbit_drift(self):
+        return self.__y_range_orbit_drift
 
 
 def get_base_name_from_DOROS_LR(full_name: str):
