@@ -10,7 +10,9 @@ conf_label_special_time_intervals = "special_time_intervals"
 conf_label_y_range = "y_range"
 conf_label_y_diff_range = "y_diff_range"
 conf_label_y_diff_smaller_range = "y_diff_range_smaller"
-conf_label_length_scale = "length_scale"
+conf_label_length_scale = "length_scale"  # [x,y] corrections
+conf_label_length_scale_per_beam_epsilon = "length_scale per_beam_epsilon"  # [[B1_x, B2_x],[B1_y, B2_y]]
+conf_label_apply_length_scale_per_beam_epsilon_from_file = "length_scale per_beam_epsilon loaded from file"
 conf_label_beam_deflection = "beam_deflection"
 conf_label_beam_deflection_gfactor = "beam_deflection_gfactor"  # geometrical factor for beam_deflection correction
 conf_label_special_col_sign = "special col sign"  # it can be used to invert input data column sign or scale it
@@ -27,6 +29,11 @@ conf_label_scans_time_windows = "scans times"  # Scans times limits.
 conf_label_exclusion_times = "times to exclude from results"  # Optimization scans, not useful times during VDM, etc
 conf_label_time_window_for_offsets = "time_window_for_offsets"
 conf_label_orbit_drift_plot_range = "orbit_drift_plot_range"
+conf_compute_length_scale_epsilon_fits = "compute_length_scale_epsilon_fits"  # per scan
+conf_label_scans_with_inverted_beam_sign = "list of scans where the corrections like deflection or orbit drift " \
+                                           "needs an opposite sign"
+
+debugging = False
 
 l_min_plot = -100.
 l_max_plot = 100.
@@ -107,13 +114,15 @@ config_dict = {
         },
         4954: {
             conf_label_data_file_path: "vdm_Nominal_Fill4954_n02.csv",
-            conf_label_special_time_intervals: [[5, 80]],
+            # conf_label_special_time_intervals: [[5, 80]],
             conf_label_length_scale: [0.9899, 0.9950],
+            # conf_label_length_scale: [1.0, 1.0],
 
             conf_label_beam_deflection: "beamData/extra_corrections/deflectioncorrection4954.csv",
             conf_label_beam_deflection_gfactor: [2.65, 2.76],  # [x, y]
 
             conf_label_scans_names: ["X1", "Y1", "Y2", "X2", "I1X", "I1Y", "I2X", "I2Y", "L1X", "L1Y", "X3", "Y3"],
+            # conf_label_scans_with_inverted_beam_sign: ["L1X", "L1Y"],
             conf_label_scans_time_windows: [[1464336285, 1464337268], [1464337522, 1464338508],
                                             [1464338769, 1464339757], [1464339948, 1464340930],
                                             [1464341247, 1464342231], [1464342677, 1464343658],
@@ -179,7 +188,7 @@ config_dict = {
 
     "DOROS": {
         4266: {
-            # conf_label_data_file_path: "DOROS_Fill4266_Timber.csv",
+            conf_label_data_file_path: "DOROS_Fill4266_Timber.csv",
             conf_label_offset_time: [1440462850, 1440472132],
             conf_label_offset_values: [[-87.8, -157.85, -291.55, -457.7],
                                        [-84.05, -162.2, -281.85, -461.7]],
@@ -190,6 +199,7 @@ config_dict = {
             # conf_label_special_time_intervals: [[5, 95], [5, 27], [28, 50]],
 
             conf_label_length_scale: [0.9941, 0.9943],
+            conf_label_apply_length_scale_per_beam_epsilon_from_file: True,
             # conf_label_beam_deflection: "beamData/extra_corrections/deflectioncorrection4266.csv",
             # conf_label_beam_deflection_gfactor: [2.65, 2.76],  # [x, y]
 
@@ -198,14 +208,14 @@ config_dict = {
 
             conf_label_y_range: [-650., 650.],
             # conf_label_y_diff_range: [-8., 8.],
-            conf_label_y_diff_range: [-15., 15.],
-            conf_label_y_diff_smaller_range: [-5, 5],
+            conf_label_y_diff_range: [-18., 18.],
+            conf_label_y_diff_smaller_range: [-8, 8],
 
             conf_label_special_col_sign: {
                 "B1_H_L": -1, "B1_H_R": -1, "B2_H_R": -1
             },
 
-            conf_label_data_file_path: "DOROS_Fill4266_Timber.csv",
+            conf_compute_length_scale_epsilon_fits: True,
 
             # conf_label_data_file_path: "4266_P5_data_exper.csv",
             # conf_label_special_input_col_names: {"time": "timestamp",
@@ -263,20 +273,21 @@ config_dict = {
             conf_label_zero_time: 1464336193,
 
             conf_label_length_scale: [1.0315, 1.0314],
-            # conf_label_beam_deflection: "beamData/extra_corrections/deflectioncorrection4954.csv",
-            # conf_label_beam_deflection_gfactor: [2.65, 2.76],  # [x, y]
+            conf_label_apply_length_scale_per_beam_epsilon_from_file: True,
+            # conf_label_length_scale_per_beam_epsilon: [[-0.0044, 0.0118], [-0.0017, 0.0095]],
 
             # conf_label_orbit_drift: "beamData/extra_corrections/orbitdriftcorrection4954average.csv",
             conf_label_orbit_drift: "beamData/extra_corrections/orbitdriftcorrection4954doros.csv",
 
             # conf_label_zero_time: 1464335770,
 
-            conf_label_special_time_intervals: [[0, 80], [0, 20]],
+            # conf_label_special_time_intervals: [[0, 80], [0, 20]],
 
             conf_label_y_range: [-600., 600.],
             # conf_label_y_diff_range: [-30., 30.]
-            conf_label_y_diff_range: [-8., 8.],
-            conf_label_y_diff_smaller_range: [-5, 5]
+            conf_label_y_diff_range: [-10., 14.],
+            conf_label_y_diff_smaller_range: [-5.5, 5.5],
+            conf_compute_length_scale_epsilon_fits: True
 
         },
         7442: {

@@ -2,12 +2,13 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import settings as setts
 import tools.lumi_tools as ltools
-from statsmodels.graphics.api import abline_plot
+# from statsmodels.graphics.api import abline_plot
 import seaborn as sns
 import numpy as np
 import pandas as pd
 import pickle as pck
-import plotly.express as px
+from lmfit import Model
+# import plotly.express as px
 
 plt.rcParams.update({'figure.max_open_warning': 0})
 
@@ -283,7 +284,7 @@ def scatter_plot_from_pandas_frame(data_frame, x_data_label, y_data_label, title
 def plot_from_fit(x, y, fitted_slope, fitted_slope_err, fitted_intercept, fitted_f,
                   energy_year_label, chi2=None,
                   xlabel='', ylabel='', y_err=[],
-                  markersize=5):
+                  markersize=5, add_linearity_special_text=False):
     fig_size_shape = 'sq'
     fig, ax = plt.subplots(figsize=(8, 8))
     if len(y_err) > 0:
@@ -306,22 +307,93 @@ def plot_from_fit(x, y, fitted_slope, fitted_slope_err, fitted_intercept, fitted
                    experiment=setts.experiment, work_status=setts.work_status)
 
     # Adding fitting info
-    plt.text(setts.pos_by_fill_fit_info[0], setts.pos_by_fill_fit_info[1],
-             r"slope[hz/" + r"$\mu$" + "b]: " + str(float("{0:.4f}".format(fitted_slope))) +
-             r' $\pm$ ' + str(float("{0:.4f}".format(fitted_slope_err))),
-             ha='left',
-             fontsize=setts.leg_font_size, fontweight='bold', transform=ax.transAxes)
-    if chi2:
-        plt.text(setts.pos_by_fill_fit_chi2_info[0], setts.pos_by_fill_fit_chi2_info[1],
-                 r"$\chi^2/dof$ = " + str(float("{0:.2f}".format(chi2))),
+    if add_linearity_special_text:
+        plt.text(setts.pos_by_fill_fit_info[0], setts.pos_by_fill_fit_info[1],
+                 r"slope[hz/" + r"$\mu$" + "b]: " + str(float("{0:.4f}".format(fitted_slope))) +
+                 r' $\pm$ ' + str(float("{0:.4f}".format(fitted_slope_err))),
                  ha='left',
                  fontsize=setts.leg_font_size, fontweight='bold', transform=ax.transAxes)
+        if chi2:
+            plt.text(setts.pos_by_fill_fit_chi2_info[0], setts.pos_by_fill_fit_chi2_info[1],
+                     r"$\chi^2/dof$ = " + str(float("{0:.2f}".format(chi2))),
+                     ha='left',
+                     fontsize=setts.leg_font_size, fontweight='bold', transform=ax.transAxes)
 
     if fig_size_shape == 'sq':
         plt.subplots_adjust(left=0.18, right=0.95, top=0.92, bottom=0.1)
 
     return fig
 
+
+def plot_from_lmfit(fitted_model, xlabel='', ylabel='', title='', title_loc='center'):
+    # fig_size_shape = 'sq'
+    # fig_size = get_fig_size(fig_size_shape)
+    # fig, ax = plt.subplots(figsize=fig_size)
+
+    fig, gs = fitted_model.plot(xlabel=xlabel, ylabel=ylabel)
+    ax_list = fig.axes
+    residuals_ax = ax_list[0]
+    main_plot_ax = ax_list[1]
+
+    slope = str(float("{0:.4f}".format(fitted_model.params['a'].value)))
+    # slope_err = str(float("{0:.4f}".format(fitted_model.params['a'].stderr)))
+    intercept = str(float("{0:.4f}".format(fitted_model.params['b'].value)))
+    # intercept_err = str(float("{0:.4f}".format(fitted_model.params['b'].stderr)))
+    chi2 = str(float("{0:.4f}".format(fitted_model.redchi)))
+
+    slope_summary_text = "slope: " + slope  # + r' $\pm$ ' + slope_err
+    intercept_summary_text = "intercept: " + intercept  # + r' $\pm$ ' + intercept_err
+    chi2_summary_text = r"$\chi^2/dof$: " + chi2
+    fit_summary_text = slope_summary_text + "\n" + \
+                       intercept_summary_text + "\n" + \
+                       chi2_summary_text
+
+    # Adding fit results
+    main_plot_ax.text(0.69, 0.22, fit_summary_text,
+                      verticalalignment='top', horizontalalignment='left',
+                      transform=main_plot_ax.transAxes, color='green', fontsize=12)
+
+    main_plot_ax.set_title("")
+    residuals_ax.set_title("")
+    residuals_ax.set_title(title, loc=title_loc)
+
+    residuals_ax.set_ylim(-4, 4)
+
+    return fig
+
+
+def plot_scatter_from_dict(in_dict: dict, new_xticks,
+                           xlabel='', ylabel='',
+                           markersize=5,
+                           ymin=None, ymax=None,
+                           fig_size_shape='sq',
+                           title="",
+                           title_loc="center"):
+    fig_size = get_fig_size(fig_size_shape)
+    fig, ax = plt.subplots(figsize=fig_size)
+
+    for plot_name in list(in_dict):
+        y = np.array(in_dict[plot_name])
+        x = np.array([i for i in range(len(y))])
+        plt.xticks(x, new_xticks)
+        plt.plot(x, y, 'o', label=plot_name)
+
+    plt.legend()
+    ax.set_title(title, loc=title_loc)
+    ax.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight,
+                  size=setts.axis_case_size[fig_size_shape])
+    ax.set_ylabel(ylabel, weight=setts.axis_weight,
+                  size=setts.axis_case_size[fig_size_shape])
+    plt.xticks(fontsize=setts.axis_thicks_case_size[fig_size_shape])
+    plt.yticks(fontsize=setts.axis_thicks_case_size[fig_size_shape])
+
+    if ymin is not None and ymax is not None:
+        plt.ylim(ymin, ymax)
+
+    if fig_size_shape == 'sq':
+        plt.subplots_adjust(left=0.18, right=0.95, top=0.92, bottom=0.1)
+
+    return fig
 
 def plot_scatter_and_errors(data_frame, y_data_label, x_data_label, err_y_data_label,
                             energy_year_label,

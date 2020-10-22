@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 # import json
 import numpy as np
 import tools.lumi_tools as ltools
+from lmfit import Model
 
 bpm_col_b1h = "B1_H"
 bpm_col_b1v = "B1_V"
@@ -46,6 +47,8 @@ class BPM:
     __col_b2vL = bpm_col_b2vL
     __col_H_diff = "H_diff"
     __col_V_diff = "V_diff"
+    __col_H_sum = "H_sum"
+    __col_V_sum = "V_sum"
 
     __col_time = bpm_col_time
     __col_time_min = bpm_col_time_min
@@ -60,6 +63,8 @@ class BPM:
     __scale_time = 0.016666667
     __cols_b1_names = (__col_b1h, __col_b1v)
     __cols_b2_names = (__col_b2h, __col_b2v)
+    __cols_H_names = (__col_b1h, __col_b2h)
+    __cols_V_names = (__col_b1v, __col_b2v)
     __cols_b1_names_LR = (__col_b1hL, __col_b1vL, __col_b1hR, __col_b1vR)
     __cols_b2_names_LR = (__col_b2hL, __col_b2vL, __col_b2hR, __col_b2vR)
 
@@ -110,13 +115,14 @@ class BPM:
                  get_only_data: bool = False, apply_all_available_corrections=True, compute_orbit_drift=False,
                  nominal_data=None, get_orbit_drift_plots=False) -> None:
         self.name = name
-
+        self.__debugging = setts.debugging
         if self.name not in BPM.__allowed_detectors:
             raise AssertionError("Detector " + self.name + " no implemented")
         if self.name not in list(BPM.__col_names_to_read):
             raise AssertionError("Detector " + self.name + " data reading setting not available")
 
         self.__output_dir = "plots_bpm/" + str(fill) + "/" + self.name + "/"
+        self.__output_per_scan_studies = "per_scan_studies/"
         self.__plt_plots = {}
         self.__sns_plots = {}
         self.__nominal_data = None
@@ -128,8 +134,16 @@ class BPM:
         self.__do_deep_studies = False
         self.__offsets_time_split = []
         self.__scans_info_dict = {}
+        self.__scans_timestamp_limits_dict = {}
         self.__scans_info_for_plotting = {}
+        self.__scans_with_inverted_beam_sign = []
         self.__orbit_drifts_per_scan = {}
+        self.__data_per_scan_dict = {}
+        self.__data_per_scan_nominal_dict = {}
+        self.__lscale_per_beam_epsilon_dict = {}
+        self.__epsilon_x_in_plotting_structure_dict = {}
+        self.__epsilon_y_in_plotting_structure_dict = {}
+        self.__loaded_epsilon_correction_dict = {}
 
         if self.name == BPM.__nominal_name:
             self.__is_nominal = True
@@ -177,11 +191,20 @@ class BPM:
         self.__ref_col_deflection_and_lscale_diff_names_b2_LR = []
         self.__ref_col_deflection_and_orbit_and_lscale_diff_names = []
         self.__ref_col_deflection_and_orbit_and_lscale_diff_names_LR = []
+        self.__nominal_suffix_for_final_result = ""
+        self.__data_suffix_for_final_result = ""
 
         self.fill_col_names()
 
         self.__settings = setts.config_dict[self.name][fill]
         self.__settings_list = list(self.__settings)
+
+        if self.__is_nominal:
+            self.__nominal_settings = self.__settings
+            self.__nominal_settings_list = self.__settings_list
+        else:
+            self.__nominal_settings = self.__nominal_det.settings
+            self.__nominal_settings_list = self.__nominal_det.settings_list
 
         if fill:
             self.__fill = fill
@@ -198,7 +221,7 @@ class BPM:
         self.__y_diff_range = None
 
         if all(item in list(setts.config_dict[BPM.__nominal_name][self.__fill]) for item in
-                [setts.conf_label_scans_time_windows, setts.conf_label_scans_names]):
+               [setts.conf_label_scans_time_windows, setts.conf_label_scans_names]):
             self.__scan_info_available = True
         else:
             self.__scan_info_available = False
@@ -327,6 +350,11 @@ class BPM:
             self.get_cols_diff(in_data=self.__processed_data,
                                base_col_names=self.__base_cols)
             self.__ref_col_diff_names_final_result = self.__ref_col_diff_names
+            self.__ref_col_diff_names_final_result_b1 = self.get_col_names(is_diff=True, only_b1=True)
+            self.__ref_col_diff_names_final_result_b2 = self.get_col_names(is_diff=True, only_b2=True)
+            self.__ref_col_diff_names_final_result_H = self.get_col_names(is_diff=True, only_H=True)
+            self.__ref_col_diff_names_final_result_V = self.get_col_names(is_diff=True, only_V=True)
+
             self.add_time_min_col(self.__processed_data)
 
             if compute_orbit_drift:
@@ -368,6 +396,15 @@ class BPM:
             self.__interpolation_to_nominal_time = self.__in_data_def_format
             self.__processed_data = self.__in_data_def_format
 
+        #  ### getting initial diffs
+
+        # Getting H differences
+        self.__processed_data[BPM.__col_H_diff + "_ini"] = self.__processed_data[BPM.__col_b2h] - \
+                                                           self.__processed_data[BPM.__col_b1h]
+        # Getting V differences
+        self.__processed_data[BPM.__col_V_diff + "_ini"] = self.__processed_data[BPM.__col_b2v] - \
+                                                           self.__processed_data[BPM.__col_b1v]
+
         if apply_all_available_corrections:
             self.apply_corrections(basic_cols=self.__base_cols,
                                    apply_lscale=self.__apply_lscale,
@@ -397,7 +434,26 @@ class BPM:
                 self.plot_detector_data_diff_with_nominal(extra_name_suffix="_final",
                                                           cols_to_plot=self.__ref_col_diff_names_final_result,
                                                           data_to_use=self.__processed_data,
-                                                          legend_labels=self.__ref_col_names)
+                                                          legend_labels=self.__ref_col_names,
+                                                          plot_scan_info=self.__scan_info_available,
+                                                          plot_scan_limits_lines=self.__scan_info_available
+                                                          )
+                self.plot_detector_data_diff_with_nominal(extra_name_suffix="_final_b1",
+                                                          cols_to_plot=self.__ref_col_diff_names_final_result_b1,
+                                                          data_to_use=self.__processed_data,
+                                                          legend_labels=self.__cols_b1_names)
+                self.plot_detector_data_diff_with_nominal(extra_name_suffix="_final_b2",
+                                                          cols_to_plot=self.__ref_col_diff_names_final_result_b2,
+                                                          data_to_use=self.__processed_data,
+                                                          legend_labels=self.__cols_b2_names)
+                self.plot_detector_data_diff_with_nominal(extra_name_suffix="_per_beam_final_H",
+                                                          cols_to_plot=self.__ref_col_diff_names_final_result_H,
+                                                          data_to_use=self.__processed_data,
+                                                          legend_labels=self.__cols_H_names)
+                self.plot_detector_data_diff_with_nominal(extra_name_suffix="_per_beam_final_V",
+                                                          cols_to_plot=self.__ref_col_diff_names_final_result_V,
+                                                          data_to_use=self.__processed_data,
+                                                          legend_labels=self.__cols_V_names)
                 if self.__do_deep_studies:
                     self.plot_detector_data_diff_with_nominal(cols_to_plot=self.__ref_col_diff_names_LR,
                                                               data_to_use=self.__processed_data,
@@ -472,8 +528,19 @@ class BPM:
                                                               data_to_use=self.__processed_data,
                                                               legend_labels=["H", "V"],
                                                               use_smaller_y_range=True,
+                                                              plot_scan_info=self.__scan_info_available,
+                                                              plot_scan_limits_lines=self.__scan_info_available,
                                                               y_label="B2 - B1" +
                                                                       " [" + BPM.__distance_unit + "]")
+                    self.plot_detector_data_diff_with_nominal(extra_name_suffix="_H_V_sum_final",
+                                                              cols_to_plot=[BPM.__col_H_sum, BPM.__col_V_sum],
+                                                              data_to_use=self.__processed_data,
+                                                              legend_labels=["H", "V"],
+                                                              y_label="B2 + B1" +
+                                                                      " [" + BPM.__distance_unit + "]")
+
+                # per scan studies
+                self.do_per_scan_studies()
 
             self.save_plots()
 
@@ -628,14 +695,14 @@ class BPM:
             mod_top_limit = scans_times[i][1]
 
             if i < len(names) - 1:
-                delta_top = (scans_times[i+1][0] - scans_times[i][1])/2
+                delta_top = (scans_times[i + 1][0] - scans_times[i][1]) / 2
             else:
                 delta_top = setts.delta_scan_time_window
 
             if i == 0:
                 delta_low = setts.delta_scan_time_window
             else:
-                delta_low = (scans_times[i][0] - scans_times[i-1][1]) / 2
+                delta_low = (scans_times[i][0] - scans_times[i - 1][1]) / 2
 
             # Check if modified times are inside excluded regions
             for excluded_range in self.__times_to_exclude:
@@ -664,11 +731,19 @@ class BPM:
                                                 "mod_time_range": [mod_low_limit, mod_top_limit],
                                                 "mean_time": int((scans_times[i][0] + scans_times[i][1]) / 2),
                                                 "mean_time_minutes": (times_i_min[0] + times_i_min[1]) / 2}
+            self.__scans_timestamp_limits_dict[names[i]] = scans_times[i]
 
             self.__scans_info_for_plotting[names[i]] = (times_i_min[0] + times_i_min[1]) / 2
 
         # print(self.__scans_info_for_plotting)
         ltools.color_print("\n ====>>> Scan info loaded from settings \n", "blue")
+
+        # Reading info about special beam sign for specific scans
+        if setts.conf_label_scans_with_inverted_beam_sign in self.__nominal_settings:
+            self.__scans_with_inverted_beam_sign = \
+                self.__nominal_settings[setts.conf_label_scans_with_inverted_beam_sign]
+            ltools.color_print(" ====>>> Special sign is set for scans " + str(self.__scans_with_inverted_beam_sign)
+                               + "\n", "blue")
 
     def convert_cols_to_default_format(self, in_data: pd.DataFrame, rescale: bool = True):
         data_in_unified_format = in_data
@@ -749,7 +824,8 @@ class BPM:
         if mode == "only after optimization":
             mode_only_short_after_opt = True
             if setts.conf_label_offset_time not in self.__settings_list:
-                raise AssertionError("The optimization times must be defined for using the _only after optimization_ method")
+                raise AssertionError(
+                    "The optimization times must be defined for using the _only after optimization_ method")
         elif mode == "all head-on":
             mode_all_head_on = True
 
@@ -786,7 +862,7 @@ class BPM:
 
         offsets_limits = []
         for i_time in self.__offsets_time_split:
-            offsets_limits.append([i_time, i_time+time_window_for_offsets])
+            offsets_limits.append([i_time, i_time + time_window_for_offsets])
 
         plot_data_for_offsets = plotting.scatter_plot_from_pandas_frame(data_for_offsets,
                                                                         x_data_label=BPM.__col_time,
@@ -866,7 +942,8 @@ class BPM:
                                      & (diffs_df[BPM.__col_time] < self.__offsets_time_split[index + 1])])
                 time_id = 0
                 for i_df in diffs_df_split_time_list:
-                    self.__plt_plots["offsets_histos_" + str(self.__offsets_time_split[time_id])] = i_df.hist(bins=50)[0][
+                    self.__plt_plots["offsets_histos_" + str(self.__offsets_time_split[time_id])] = \
+                    i_df.hist(bins=50)[0][
                         0].get_figure()
                     for col_name in raw_col_names:
                         self.__offsets[col_name].append(i_df[col_name].mean())
@@ -911,8 +988,6 @@ class BPM:
 
         ltools.color_print("\n (OUTPUT FILE) Computed offsets saved in " +
                            self.__output_dir + self.name + "_offsets.txt \n", "yellow")
-
-
 
     def get_offsets_from_config(self):
         offsets_values = setts.config_dict[self.name][self.__fill][setts.conf_label_offset_values]
@@ -1073,9 +1148,15 @@ class BPM:
             in_data[col_name_data + BPM.__ref_col_diff_suffix_label + col_name_nominal] = \
                 in_data[col_name_data] - input_nominal_data[col_name_nominal]
 
+    def get_single_diff_name(self, base_col_name: str, correction_suffix: str = '',
+                             nominal_correction_suffix: str = ''):
+        result_name = base_col_name + correction_suffix + BPM.__ref_col_diff_suffix_label + \
+                      base_col_name + nominal_correction_suffix
+        return result_name
+
     def get_col_names(self, correction_suffix: str = '', is_diff: bool = False,
                       nominal_correction_suffix: str = '', include_LR: bool = False,
-                      only_b1: bool = False, only_b2: bool = False):
+                      only_b1: bool = False, only_b2: bool = False, only_H: bool = False, only_V: bool = False):
 
         result_col_names = []
         cols_names_nominal = {}
@@ -1085,6 +1166,10 @@ class BPM:
                 base_cols = BPM.__cols_b1_names_LR
             elif only_b2:
                 base_cols = BPM.__cols_b2_names_LR
+            elif only_H:
+                base_cols = BPM.__cols_H_names
+            elif only_V:
+                base_cols = BPM.__cols_V_names
             else:
                 base_cols = BPM.__ref_col_names_LR
         else:
@@ -1092,6 +1177,10 @@ class BPM:
                 base_cols = BPM.__cols_b1_names
             elif only_b2:
                 base_cols = BPM.__cols_b2_names
+            elif only_H:
+                base_cols = BPM.__cols_H_names
+            elif only_V:
+                base_cols = BPM.__cols_V_names
             else:
                 base_cols = BPM.__ref_col_names
 
@@ -1107,6 +1196,12 @@ class BPM:
             result_col_names.append(result_name)
 
         return result_col_names
+
+    def get_final_col_name_data(self, col_name: str):
+        return col_name + self.__data_suffix_for_final_result
+
+    def get_final_col_name_nominal(self, col_name: str):
+        return col_name + self.__nominal_suffix_for_final_result
 
     def get_interpolation_to_nominal_time(self):
         in_data = self.__in_data_def_format
@@ -1134,13 +1229,16 @@ class BPM:
         zero_pos_window = setts.zero_position_window
 
         nominal_in_zero: pd.DataFrame = self.__nominal_data[(self.__nominal_data[BPM.__col_b1h] < zero_pos_window) &
-                                                            (self.__nominal_data[BPM.__col_b1h] > -1*zero_pos_window) &
+                                                            (self.__nominal_data[
+                                                                 BPM.__col_b1h] > -1 * zero_pos_window) &
                                                             (self.__nominal_data[BPM.__col_b1v] < zero_pos_window) &
-                                                            (self.__nominal_data[BPM.__col_b1v] > -1*zero_pos_window) &
+                                                            (self.__nominal_data[
+                                                                 BPM.__col_b1v] > -1 * zero_pos_window) &
                                                             (self.__nominal_data[BPM.__col_b2h] < zero_pos_window) &
-                                                            (self.__nominal_data[BPM.__col_b2h] > -1*zero_pos_window) &
+                                                            (self.__nominal_data[
+                                                                 BPM.__col_b2h] > -1 * zero_pos_window) &
                                                             (self.__nominal_data[BPM.__col_b2v] < zero_pos_window) &
-                                                            (self.__nominal_data[BPM.__col_b2v] > -1*zero_pos_window)
+                                                            (self.__nominal_data[BPM.__col_b2v] > -1 * zero_pos_window)
                                                             ].copy()
 
         for time_range in self.__times_to_exclude:
@@ -1177,18 +1275,22 @@ class BPM:
             orbit_drift_fit_out_dir = self.__output_dir + "/orbit_drift_special_plots/"
 
             data_inside_mod_time = \
-                self.__data_in_zero_beam_position[(self.__data_in_zero_beam_position[BPM.__col_time] >= mod_limit_times[0]) &
-                                                  (self.__data_in_zero_beam_position[BPM.__col_time] <= mod_limit_times[1])].copy()
+                self.__data_in_zero_beam_position[
+                    (self.__data_in_zero_beam_position[BPM.__col_time] >= mod_limit_times[0]) &
+                    (self.__data_in_zero_beam_position[BPM.__col_time] <= mod_limit_times[1])].copy()
 
             ini_scan_time_window = [ini_scan_mod_time, ini_scan_time + time_window]
             end_scan_time_window = [end_scan_time - time_window, end_scan_mod_time]
             middle_scan_time_window = [scan_middle_time - time_window, scan_middle_time + time_window]
             ini_scan_points = data_inside_mod_time[(data_inside_mod_time[BPM.__col_time] >= ini_scan_time_window[0]) &
-                                                   (data_inside_mod_time[BPM.__col_time] <= ini_scan_time_window[1])].copy()
+                                                   (data_inside_mod_time[BPM.__col_time] <= ini_scan_time_window[
+                                                       1])].copy()
             end_scan_points = data_inside_mod_time[(data_inside_mod_time[BPM.__col_time] >= end_scan_time_window[0]) &
-                                                   (data_inside_mod_time[BPM.__col_time] <= end_scan_time_window[1])].copy()
-            middle_scan_points = data_inside_mod_time[(data_inside_mod_time[BPM.__col_time] >= middle_scan_time_window[0]) &
-                                                      (data_inside_mod_time[BPM.__col_time] <= middle_scan_time_window[1])].copy()
+                                                   (data_inside_mod_time[BPM.__col_time] <= end_scan_time_window[
+                                                       1])].copy()
+            middle_scan_points = data_inside_mod_time[
+                (data_inside_mod_time[BPM.__col_time] >= middle_scan_time_window[0]) &
+                (data_inside_mod_time[BPM.__col_time] <= middle_scan_time_window[1])].copy()
 
             region_bands = [ini_scan_time_window, middle_scan_time_window, end_scan_time_window]
             all_data_inside_scan = plotting.scatter_plot_from_pandas_frame(data_inside_mod_time,
@@ -1225,9 +1327,9 @@ class BPM:
 
             if "L" in scan_name and (n_middle_scan_points_H == 0 or n_middle_scan_points_V == 0):
                 if n_middle_scan_points_H == 0:
-                    od_H_in_middle = (od_H_in_low_limit + od_H_in_top_limit)/2
+                    od_H_in_middle = (od_H_in_low_limit + od_H_in_top_limit) / 2
                 if n_middle_scan_points_V == 0:
-                    od_V_in_middle = (od_V_in_low_limit + od_V_in_top_limit)/2
+                    od_V_in_middle = (od_V_in_low_limit + od_V_in_top_limit) / 2
 
             self.__orbit_drifts_per_scan[scan_name] = {
                 "TimeWindows": [limit_times[0], scan_middle_time, limit_times[1]],
@@ -1262,12 +1364,40 @@ class BPM:
                            self.__output_dir + "OrbitDrifts_" + self.name + ".json \n", "yellow")
 
     def apply_length_scale_correction(self, base_cols: list, data_to_use=None):
-        print("Applying length scale correction ...")
+        print("Applying length scale correction to cols: " + str(base_cols))
         if data_to_use is None:
             data_to_use = self.__processed_data
         # print(list(data_to_use))
+
+        per_scan_correction_is_needed = False
+
         x_correction = setts.config_dict[self.name][self.__fill][setts.conf_label_length_scale][0]
         y_correction = setts.config_dict[self.name][self.__fill][setts.conf_label_length_scale][1]
+
+        # Loading overall correction lenght scale per beam residual correction
+        m_b1_x = 0.0
+        m_b2_x = 0.0
+        m_b1_y = 0.0
+        m_b2_y = 0.0
+        if setts.conf_label_length_scale_per_beam_epsilon in self.__settings_list:
+            per_beam_correction = self.__settings[setts.conf_label_length_scale_per_beam_epsilon]
+            m_b1_x = per_beam_correction[0][0]
+            m_b2_x = per_beam_correction[0][1]
+            m_b1_y = per_beam_correction[1][0]
+            m_b2_y = per_beam_correction[1][1]
+
+        # Loading overall correction lenght scale per beam residual correction
+        elif setts.conf_label_apply_length_scale_per_beam_epsilon_from_file in self.__settings_list:
+            if self.__settings[setts.conf_label_apply_length_scale_per_beam_epsilon_from_file]:
+                if ltools.check_file_existence(self.__output_dir + self.__output_per_scan_studies +
+                                               "lscale_per_beam_epsilon.json"):
+                    self.read_length_scale_per_beam_epsilon_file()
+                    per_scan_correction_is_needed = True
+                else:
+                    ltools.color_print("--->>> lscale per beam epsilon is enable but not file found. "
+                                       "The file will be produce and then it would be needed to rerun and check "
+                                       "that this message it is not printed again", "red")
+
         h_correction = x_correction
         v_correction = y_correction
 
@@ -1276,19 +1406,69 @@ class BPM:
         for i_col_name in base_cols:
             corrected_cols_dict[i_col_name] = []
 
-        for index in range(0, len(data_to_use)):
-            for i_col_name in base_cols:
-                if is_H(i_col_name):
-                    correction = h_correction
-                elif is_V(i_col_name):
-                    correction = v_correction
-                else:
-                    raise AssertionError()
-                corrected_cols_dict[i_col_name].append(data_to_use[i_col_name][index] * correction)
+        if not per_scan_correction_is_needed:
+            for index in range(0, len(data_to_use)):
+                for i_col_name in base_cols:
+                    if is_H(i_col_name):
+                        correction = h_correction
+                        if is_B1(i_col_name):
+                            epsilon = m_b1_x
+                        else:
+                            epsilon = m_b2_x
+                    elif is_V(i_col_name):
+                        correction = v_correction
+                        if is_B1(i_col_name):
+                            epsilon = m_b1_y
+                        else:
+                            epsilon = m_b2_y
+                    else:
+                        raise AssertionError()
+                    correction -= epsilon
+                    corrected_cols_dict[i_col_name].append(data_to_use[i_col_name][index] * correction)
+        else:
+            for index in range(0, len(data_to_use)):
+                for i_col_name in base_cols:
+                    data_time = data_to_use[BPM.__col_time][index]
+                    scan_name = self.get_scan_name_from_timestamp(data_time)
+                    correction = self.get_lscale_correction_value_per_scan(i_col_name, scan_name,
+                                                                           h_correction, v_correction)
+                    corrected_cols_dict[i_col_name].append(data_to_use[i_col_name][index] * correction)
 
         for i_col_name in base_cols:
             data_to_use[i_col_name + BPM.__ref_col_lscale_suffix_label] = \
                 np.array(corrected_cols_dict[i_col_name])
+
+    def read_length_scale_per_beam_epsilon_file(self):
+        file_location = self.__output_dir + self.__output_per_scan_studies + "lscale_per_beam_epsilon.json"
+        self.__loaded_epsilon_correction_dict = ltools.load_json_as_dict(file_location)
+        # print(self.__loaded_epsilon_correction_dict)
+        ltools.color_print("--->>> lscale_per_beam_epsilon.json file for per beam lscale correction has been loaded",
+                           color="blue")
+
+    def get_lscale_correction_value_per_scan(self, i_col_name, scan_name, h_correction, v_correction):
+        base_col_name = get_base_name(i_col_name)
+        if scan_name != "":
+            if (is_H(i_col_name) and "X" in scan_name) or (is_V(i_col_name) and "Y" in scan_name):
+                epsilon = self.__loaded_epsilon_correction_dict[scan_name][base_col_name]
+            # elif is_H(i_col_name) and "Y" in scan_name:
+            #     epsilon = self.__loaded_epsilon_correction_dict[scan_name.replace("Y", "X")][base_col_name]
+            # elif is_V(i_col_name) and "X" in scan_name:
+            #     epsilon = self.__loaded_epsilon_correction_dict[scan_name.replace("X", "Y")][base_col_name]
+            else:
+                epsilon = 0.0
+        else:
+            epsilon = 0.0
+
+        if is_H(i_col_name):
+            correction = h_correction
+        elif is_V(i_col_name):
+            correction = v_correction
+        else:
+            raise AssertionError()
+
+        correction -= epsilon
+
+        return correction
 
     def read_deflection_correction_input(self):
         reading_cols_dict = {
@@ -1341,6 +1521,26 @@ class BPM:
         orbit_drift_correction_data.reset_index(drop=True, inplace=True)
         return orbit_drift_correction_data
 
+    def get_beam_sign_for_column_name(self, col_name, scan_name=""):
+        if not self.__is_nominal:
+            sign_b1 = -1
+            sign_b2 = 1
+        else:
+            sign_b1 = 1
+            sign_b2 = -1
+
+        if scan_name in self.__scans_with_inverted_beam_sign:
+            print("Inverting sign for scan_name")
+            sign_b1 *= -1
+            sign_b2 *= -1
+
+        if is_B1(col_name):
+            col_sign = sign_b1
+        else:
+            col_sign = sign_b2
+
+        return col_sign
+
     def apply_per_time_range_addition_correction(self, basic_cols, mode, data_to_use=None):
         if mode == "orbit drift":
             print("Applying orbit drift correction ...")
@@ -1358,12 +1558,12 @@ class BPM:
         else:
             raise AssertionError("Mode not implemented!!")
 
-        if not self.__is_nominal:
-            sign_b1 = -1
-            sign_b2 = 1
-        else:
-            sign_b1 = 1
-            sign_b2 = -1
+        # if not self.__is_nominal:
+        #     sign_b1 = -1
+        #     sign_b2 = 1
+        # else:
+        #     sign_b1 = 1
+        #     sign_b2 = -1
 
         x_gfactor = correction_gfactors[0]
         y_gfactor = correction_gfactors[1]
@@ -1383,6 +1583,7 @@ class BPM:
         for data_index in range(0, len(data_to_use)):
             data_time = data_to_use[BPM.__col_time][data_index]
             available_correction = False
+            scan_name = self.get_scan_name_from_timestamp(data_time)
             # print(data_time, ini_time, end_time)
             if data_time < ini_time or data_time > end_time:
                 # print("Looking for correct index")
@@ -1401,7 +1602,6 @@ class BPM:
             for i_col in basic_cols:
                 uncorrected_val = data_to_use[i_col][data_index]
                 if not available_correction:
-                    # print("Not correction found")
                     correction = default_correction
                 else:
                     if is_H(i_col):
@@ -1414,10 +1614,11 @@ class BPM:
                         raise AssertionError()
                     correction = \
                         correction_data[correction_direction_label][correction_time_index] * beam_factor * gfactor
-                    if is_B1(i_col):
-                        correction *= sign_b1
-                    else:
-                        correction *= sign_b2
+                    # if is_B1(i_col):
+                    #     correction *= sign_b1
+                    # else:
+                    #     correction *= sign_b2
+                    correction *= self.get_beam_sign_for_column_name(i_col, scan_name)
 
                 corrected_cols_dict[i_col].append(uncorrected_val + correction)
 
@@ -1517,24 +1718,34 @@ class BPM:
                                    nominal_correction_suffix=nominal_correction_suffix)
 
         # Get final result column names
-        nominal_suffix_for_final_result = ""
-        data_suffix_for_final_result = ""
 
         if not self.__is_nominal:
             # Nominal
             if self.__deflection_applied_in_nominal:
-                nominal_suffix_for_final_result += BPM.__ref_col_deflection_suffix_label
+                self.__nominal_suffix_for_final_result += BPM.__ref_col_deflection_suffix_label
             if self.__lscale_applied_in_nominal:
-                nominal_suffix_for_final_result += BPM.__ref_col_lscale_suffix_label
+                self.__nominal_suffix_for_final_result += BPM.__ref_col_lscale_suffix_label
             # Data
             if apply_orbit_drift:
-                data_suffix_for_final_result += BPM.__ref_col_orbit_drift_suffix_label
+                self.__data_suffix_for_final_result += BPM.__ref_col_orbit_drift_suffix_label
             if apply_lscale:
-                data_suffix_for_final_result += BPM.__ref_col_lscale_suffix_label
+                self.__data_suffix_for_final_result += BPM.__ref_col_lscale_suffix_label
 
             self.__ref_col_diff_names_final_result = self.get_col_names(
-                correction_suffix=data_suffix_for_final_result,
-                nominal_correction_suffix=nominal_suffix_for_final_result, is_diff=True)
+                correction_suffix=self.__data_suffix_for_final_result,
+                nominal_correction_suffix=self.__nominal_suffix_for_final_result, is_diff=True)
+            self.__ref_col_diff_names_final_result_b1 = self.get_col_names(
+                correction_suffix=self.__data_suffix_for_final_result,
+                nominal_correction_suffix=self.__nominal_suffix_for_final_result, is_diff=True, only_b1=True)
+            self.__ref_col_diff_names_final_result_b2 = self.get_col_names(
+                correction_suffix=self.__data_suffix_for_final_result,
+                nominal_correction_suffix=self.__nominal_suffix_for_final_result, is_diff=True, only_b2=True)
+            self.__ref_col_diff_names_final_result_H = self.get_col_names(
+                correction_suffix=self.__data_suffix_for_final_result,
+                nominal_correction_suffix=self.__nominal_suffix_for_final_result, is_diff=True, only_H=True)
+            self.__ref_col_diff_names_final_result_V = self.get_col_names(
+                correction_suffix=self.__data_suffix_for_final_result,
+                nominal_correction_suffix=self.__nominal_suffix_for_final_result, is_diff=True, only_V=True)
 
     def get_final_V_H_diff_cols(self):
         if len(self.__ref_col_diff_names_final_result) > 0:
@@ -1560,12 +1771,225 @@ class BPM:
         data_to_use[BPM.__col_V_diff] = data_to_use[matching_to_basename_dict[BPM.__col_b2v]] - \
                                         data_to_use[matching_to_basename_dict[BPM.__col_b1v]]
 
+        # Getting H differences
+        data_to_use[BPM.__col_H_sum] = data_to_use[matching_to_basename_dict[BPM.__col_b2h]] + \
+                                       data_to_use[matching_to_basename_dict[BPM.__col_b1h]]
+        # Getting V differences
+        data_to_use[BPM.__col_V_sum] = data_to_use[matching_to_basename_dict[BPM.__col_b2v]] + \
+                                       data_to_use[matching_to_basename_dict[BPM.__col_b1v]]
+
+    def get_scan_name_from_timestamp(self, timestamp):
+        scan_name = ""
+        all_scans = list(self.__scans_timestamp_limits_dict)
+        for i_scan in all_scans:
+            i_limits = self.__scans_timestamp_limits_dict[i_scan]
+            if i_limits[0] <= timestamp <= i_limits[1]:
+                scan_name = i_scan
+                break
+        return scan_name
+
+    def do_per_scan_studies(self):
+        if self.check_for_boolean_setting(setts.conf_compute_length_scale_epsilon_fits):
+            scan_names = list(self.__scans_timestamp_limits_dict)
+
+            self.__data_per_scan_dict = ltools.split_pandas_dataset_from_col_values_ranges(
+                self.__processed_data, BPM.__col_time, self.__scans_timestamp_limits_dict)
+
+            self.__data_per_scan_nominal_dict = ltools.split_pandas_dataset_from_col_values_ranges(
+                self.__nominal_data, BPM.__col_time, self.__scans_timestamp_limits_dict)
+
+            ltools.check_and_create_folder(self.__output_dir + self.__output_per_scan_studies, creation_info=False)
+
+            lin_model = Model(ltools.lin_func)
+
+            for scan_name in scan_names:
+                self.__lscale_per_beam_epsilon_dict[scan_name] = {}
+                # result plots
+                scan_title_label = "(scan " + scan_name + ") "
+                fill_and_scan_label = str(self.__fill) + "(scan " + scan_name + ")"
+                scan_data = self.__data_per_scan_dict[scan_name]
+                scan_nominal = self.__data_per_scan_nominal_dict[scan_name]
+
+                ltools.check_and_create_folder(self.__output_dir + self.__output_per_scan_studies + scan_name + "/",
+                                               creation_info=False)
+                self.plot_detector_data_diff_with_nominal(extra_name_suffix="_" + scan_name + "_final",
+                                                          extra_name_prefix=self.__output_per_scan_studies +
+                                                                            scan_name + "/",
+                                                          cols_to_plot=self.__ref_col_diff_names_final_result,
+                                                          data_to_use=scan_data,
+                                                          canvas_square_shape=True,
+                                                          marker_size=3.0,
+                                                          leg_marker_scale=4,
+                                                          extra_title=scan_title_label,
+                                                          legend_labels=self.__ref_col_names)
+                self.plot_detector_data_diff_with_nominal(extra_name_suffix="_" + scan_name + "_no_corrections",
+                                                          extra_name_prefix=self.__output_per_scan_studies +
+                                                                            scan_name + "/",
+                                                          cols_to_plot=self.__ref_col_diff_names,
+                                                          data_to_use=scan_data,
+                                                          canvas_square_shape=True,
+                                                          marker_size=3.0,
+                                                          leg_marker_scale=4,
+                                                          extra_title=scan_title_label)
+
+                self.plot_detector_data_diff_with_nominal(extra_name_suffix="_" + scan_name + "_H_V_final",
+                                                          extra_name_prefix=self.__output_per_scan_studies +
+                                                                            scan_name + "/",
+                                                          cols_to_plot=[BPM.__col_H_diff, BPM.__col_V_diff],
+                                                          data_to_use=scan_data,
+                                                          legend_labels=["H", "V"],
+                                                          canvas_square_shape=True,
+                                                          marker_size=3.0,
+                                                          leg_marker_scale=4,
+                                                          # automatic_y_range=True,
+                                                          use_smaller_y_range=True,
+                                                          extra_title=scan_title_label,
+                                                          y_label="B2 - B1" +
+                                                                  " [" + BPM.__distance_unit + "]")
+                # self.plot_detector_data_diff_with_nominal(extra_name_suffix="_" + scan_name + "_H_V_no_corrections",
+                #                                           extra_name_prefix=self.__output_per_scan_studies +
+                #                                                             scan_name + "/",
+                #                                           cols_to_plot=[BPM.__col_H_diff + "_ini",
+                #                                                         BPM.__col_V_diff + "_ini"],
+                #                                           data_to_use=scan_data,
+                #                                           legend_labels=["H", "V"],
+                #                                           canvas_square_shape=True,
+                #                                           marker_size=3.0,
+                #                                           leg_marker_scale=4,
+                #                                           yrange=[-40, 40],
+                #                                           extra_title=scan_title_label,
+                #                                           y_label="B2 - B1" +
+                #                                                   " [" + BPM.__distance_unit + "]")
+
+                self.plot_detector_data_diff_with_nominal(extra_name_suffix="_" + scan_name + "_H_V_sum_final",
+                                                          extra_name_prefix=self.__output_per_scan_studies +
+                                                                            scan_name + "/",
+                                                          cols_to_plot=[BPM.__col_H_sum, BPM.__col_V_sum],
+                                                          data_to_use=scan_data,
+                                                          legend_labels=["H", "V"],
+                                                          canvas_square_shape=True,
+                                                          marker_size=3.0,
+                                                          leg_marker_scale=4,
+                                                          extra_title=scan_title_label,
+                                                          y_label="B2 + B1" +
+                                                                  " [" + BPM.__distance_unit + "]")
+                self.plot_detector_data_diff_with_nominal(extra_name_suffix="_" + scan_name + "_per_beam_final_H",
+                                                          extra_name_prefix=self.__output_per_scan_studies +
+                                                                            scan_name + "/",
+                                                          cols_to_plot=self.__ref_col_diff_names_final_result_H,
+                                                          data_to_use=scan_data,
+                                                          canvas_square_shape=True,
+                                                          marker_size=3.0,
+                                                          leg_marker_scale=4,
+                                                          extra_title=scan_title_label,
+                                                          legend_labels=self.__cols_H_names)
+                self.plot_detector_data_diff_with_nominal(extra_name_suffix="_" + scan_name + "_per_beam_final_V",
+                                                          extra_name_prefix=self.__output_per_scan_studies +
+                                                                            scan_name + "/",
+                                                          cols_to_plot=self.__ref_col_diff_names_final_result_V,
+                                                          data_to_use=scan_data,
+                                                          canvas_square_shape=True,
+                                                          marker_size=3.0,
+                                                          leg_marker_scale=4,
+                                                          extra_title=scan_title_label,
+                                                          legend_labels=self.__cols_V_names)
+
+                # if self.apply_lscale:
+                #     self.plot_detector_data_diff_with_nominal(extra_name_suffix="_scale_corr",
+                #                                               cols_to_plot=self.__ref_col_lscale_diff_names,
+                #                                               cols_to_plot=self.__ref_col_deflection_and_lscale_diff_names,
+                #                                               data_to_use=scan_data,
+                #                                               canvas_square_shape=True,
+                #                                               marker_size=3.0,
+                #                                               leg_marker_scale=4,
+                #                                               extra_title=scan_title_label,
+                #                                               legend_labels=self.__ref_col_names)
+                #     if self.__apply_deflection:
+                #         self.plot_detector_data_diff_with_nominal(extra_name_suffix="_deflection_lscale_corr",
+                #                                                   extra_name_prefix=self.__output_per_scan_studies +
+                #                                                                     scan_name + "/",
+                #                                                   cols_to_plot=self.__ref_col_deflection_and_lscale_diff_names,
+                #                                                   data_to_use=scan_data,
+                #                                                   canvas_square_shape=True,
+                #                                                   marker_size=3.0,
+                #                                                   leg_marker_scale=4,
+                #                                                   extra_title=scan_title_label,
+                #                                                   legend_labels=self.__ref_col_names)
+                #     if self.__apply_orbit_drift:
+                #         self.plot_detector_data_diff_with_nominal(extra_name_suffix="_orbit_drift",
+                #                                                   cols_to_plot=self.__ref_col_orbit_drift_diff_names,
+                #                                                   data_to_use=self.__processed_data,
+                #                                                   legend_labels=self.__ref_col_names)
+
+
+                # length scale epsilon fitting
+                for i_col in BPM.__ref_col_names:
+                    if self.check_if_scan_fit_is_meaningful_for_col_name(i_col, scan_name):
+                        i_col_corrected_data = self.get_final_col_name_data(i_col)
+                        i_col_corrected_nominal = self.get_final_col_name_nominal(i_col)
+                        x = scan_nominal[i_col_corrected_nominal]
+                        y = scan_data[i_col_corrected_data]
+
+                        result_fit = lin_model.fit(y, x=x, a=1, b=1)
+
+                        slope = result_fit.params['a'].value
+                        # slope_err = result_fit.params['a'].stderr
+                        # intercept = result_fit.params['b'].value
+                        # intercept_err = result_fit.params['b'].stderr
+                        # chi2 = result_fit.redchi
+
+                        plot_name = self.__output_per_scan_studies + scan_name + "/" + i_col + \
+                                    "_data_vs_nominal_linear_fit"
+                        self.__plt_plots[plot_name] = plotting.plot_from_lmfit(fitted_model=result_fit,
+                                                                               xlabel="Nominal " + i_col,
+                                                                               ylabel=self.name + " " + i_col,
+                                                                               title=fill_and_scan_label,
+                                                                               title_loc="right")
+
+                        # saving results into dict
+                        self.__lscale_per_beam_epsilon_dict[scan_name][i_col] = slope - 1
+
+            # Saving dict into json file:
+            output_json_path = self.__output_dir + self.__output_per_scan_studies + "lscale_per_beam_epsilon.json"
+            if not ltools.check_file_existence(output_json_path):
+                ltools.color_print("\n ===>> Producing lscale_per_beam_epsilon.json because such file was not found",
+                                   "yellow")
+                ltools.save_dict_as_json(self.__lscale_per_beam_epsilon_dict, output_json_path)
+                self.plot_per_beam_epsilon_fit_results(self.__output_per_scan_studies,
+                                                       extra_file_suffix="_original")
+            else:
+                ltools.color_print("\n ===>> lscale_per_beam_epsilon.json not saved because such file was found. "
+                                   "Please delete it if you want to produce a new file ;)",
+                                   "green")
+                self.plot_per_beam_epsilon_fit_results(self.__output_per_scan_studies)
+
+    def check_if_scan_fit_is_meaningful_for_col_name(self, col_name, scan_name):
+        # known_scan_labels_for_x = ["X1", "X2", "X3", "X4", "X5",
+        #                            "L1X", "L2X"]
+        # known_scan_labels_for_y = ["Y1", "Y2", "Y3", "Y4", "Y5",
+        #                            "L1Y", "L2Y"]
+        signature_label_x = "X"
+        signature_label_y = "Y"
+
+        is_meaningful = False
+        if signature_label_x in scan_name:
+            if is_H(col_name):
+                is_meaningful = True
+        elif signature_label_y in scan_name:
+            if is_V(col_name):
+                is_meaningful = True
+        else:
+            raise AssertionError("Scan direction not found!")
+
+        return is_meaningful
+
     def plot_detector_all_data(self, save_data_to_file=True):
         plot_name = self.name + "_all_data"
         cols_to_plot = self.__cols_after_renaming
         cols_to_plot.remove(BPM.__col_time)
 
-        ltools.color_print("plotting " + plot_name + "...", "green")
+        if self.__debugging:
+            ltools.color_print("plotting " + plot_name + "...", "green")
 
         ylabel = "beam position" + " [" + BPM.__distance_unit + "]"
 
@@ -1577,14 +2001,14 @@ class BPM:
                                                                               plot_style='-',
                                                                               label_cms_status=False
                                                                               ).get_figure()
-        self.__plt_plots[plot_name+"_min"] = plotting.scatter_plot_from_pandas_frame(self.__in_data_def_format,
-                                                                              x_data_label=BPM.__col_time_min,
-                                                                              y_data_label=cols_to_plot,
-                                                                              xlabel="time",
-                                                                              ylabel=ylabel, ncol_legend=4,
-                                                                              plot_style='-',
-                                                                              label_cms_status=False
-                                                                              ).get_figure()
+        self.__plt_plots[plot_name + "_min"] = plotting.scatter_plot_from_pandas_frame(self.__in_data_def_format,
+                                                                                       x_data_label=BPM.__col_time_min,
+                                                                                       y_data_label=cols_to_plot,
+                                                                                       xlabel="time",
+                                                                                       ylabel=ylabel, ncol_legend=4,
+                                                                                       plot_style='-',
+                                                                                       label_cms_status=False
+                                                                                       ).get_figure()
 
     def plot_detector_data(self, xrange=None, extra_name_suffix="", cols_to_plot=None,
                            data_to_use=None, plot_scan_info=False, plot_scan_limits_lines=False,
@@ -1606,7 +2030,8 @@ class BPM:
         if data_to_use is None:
             data_to_use = self.__in_data_def_format
 
-        ltools.color_print("plotting " + plot_name + "...", "green")
+        if self.__debugging:
+            ltools.color_print("plotting " + plot_name + "...", "green")
 
         ymin = self.__y_range[0]
         ymax = self.__y_range[1]
@@ -1673,12 +2098,15 @@ class BPM:
                                                show_also_info_in=[BPM.__col_time],
                                                xlabel=xlabel, ylabel=ylabel)
 
-    def plot_detector_data_diff_with_nominal(self, xrange=None, yrange=None, extra_name_suffix="",
+    def plot_detector_data_diff_with_nominal(self, xrange=None, yrange=None,
+                                             extra_name_suffix="", extra_name_prefix="",
+                                             extra_title="",
                                              cols_to_plot=None, data_to_use=None, legend_labels=None,
                                              y_label=None, use_smaller_y_range=False, canvas_square_shape=False,
+                                             automatic_y_range=False,
                                              marker_size=1.0, leg_marker_scale=7, plot_scan_info=False,
                                              plot_scan_limits_lines=False, scans_limits_to_use="time_range_minutes"):
-        plot_name = self.name + "_data_diff_with_nominal" + extra_name_suffix
+        plot_name = extra_name_prefix + self.name + "_data_diff_with_nominal" + extra_name_suffix
         x_min = None
         x_max = None
         if xrange:
@@ -1696,10 +2124,14 @@ class BPM:
         if data_to_use is None:
             data_to_use = self.__processed_data
 
-        ltools.color_print("plotting " + plot_name, 'green')
-        print("     using columns: " + str(cols_to_plot))
+        if self.__debugging:
+            ltools.color_print("plotting " + plot_name, 'green')
+            print("     using columns: " + str(cols_to_plot))
 
-        if yrange is None:
+        if automatic_y_range:
+            ymin = None
+            ymax = None
+        elif yrange is None:
             if use_smaller_y_range:
                 ymin = self.__y_diff_smaller_range[0]
                 ymax = self.__y_diff_smaller_range[1]
@@ -1733,7 +2165,7 @@ class BPM:
 
         if not plot_scan_limits_lines:
             draw_lines_scans_limits = None
-
+        title_text = extra_title + "Fill" + str(self.__fill)
         self.__plt_plots[plot_name] = plotting.scatter_plot_from_pandas_frame(data_to_use,
                                                                               x_data_label=BPM.__col_time_min,
                                                                               y_data_label=list(cols_to_plot),
@@ -1751,9 +2183,72 @@ class BPM:
                                                                               marker_size=marker_size,
                                                                               draw_labels_pos_dict=draw_labels_pos_dict,
                                                                               draw_vertical_line_pos=draw_lines_scans_limits,
-                                                                              title="Fill" + str(self.__fill),
+                                                                              title=title_text,
                                                                               title_loc="right"
                                                                               ).get_figure()
+
+    def prepare_epsilon_fit_results_for_plotting(self):
+        input_dict = self.__lscale_per_beam_epsilon_dict
+        scan_names = list(input_dict)
+        scan_names_x = ltools.filter_string_list_with_substring(scan_names, "X")
+        scan_names_y = ltools.filter_string_list_with_substring(scan_names, "Y")
+        assert len(scan_names) == len(scan_names_x) + len(scan_names_y)
+
+        for i_col in BPM.__ref_col_names:
+            if is_H(i_col):
+                scan_names_to_loop = scan_names_x
+                dict_to_fill = self.__epsilon_x_in_plotting_structure_dict
+            elif is_V(i_col):
+                scan_names_to_loop = scan_names_y
+                dict_to_fill = self.__epsilon_y_in_plotting_structure_dict
+            else:
+                raise AssertionError("Something wrong with columns looping")
+
+            i_beam = get_beam_name(i_col)
+            dict_to_fill[i_beam] = []
+            for i_scan in scan_names_to_loop:
+                dict_to_fill[i_beam].append(input_dict[i_scan][i_col])
+
+    def plot_per_beam_epsilon_fit_results(self, output_folder, extra_file_suffix=""):
+        input_dict = self.__lscale_per_beam_epsilon_dict
+        if len(input_dict) == 0:
+            ltools.color_print("self.__lscale_per_beam_epsilon_dict is empty")
+            raise AssertionError("self.__lscale_per_beam_epsilon_dict is empty")
+        self.prepare_epsilon_fit_results_for_plotting()
+        plots_base_name = "epsilon_fit_values_by_scans"
+        plot_name_x = output_folder + "x_" + plots_base_name + extra_file_suffix
+        plot_name_y = output_folder + "y_" + plots_base_name + extra_file_suffix
+        scan_names = list(input_dict)
+        scan_names_x = ltools.filter_string_list_with_substring(scan_names, "X")
+        scan_names_y = ltools.filter_string_list_with_substring(scan_names, "Y")
+        top_right_text = "Fill" + str(self.__fill)
+
+        if extra_file_suffix == "_original":
+            slope_min = -0.2
+            slope_max = 0.2
+        else:
+            slope_min = -0.01
+            slope_max = 0.01
+
+        self.__plt_plots[plot_name_x] = plotting.plot_scatter_from_dict(self.__epsilon_x_in_plotting_structure_dict,
+                                                                        xlabel="Scans for X",
+                                                                        ylabel=self.name + "/Nominal slope residual",
+                                                                        new_xticks=scan_names_x,
+                                                                        title=top_right_text,
+                                                                        title_loc='right',
+                                                                        ymin=slope_min,
+                                                                        ymax=slope_max
+                                                                        )
+        self.__plt_plots[plot_name_y] = plotting.plot_scatter_from_dict(self.__epsilon_y_in_plotting_structure_dict,
+                                                                        xlabel="Scans for Y",
+                                                                        ylabel=self.name + "/Nominal slope residual",
+                                                                        new_xticks=scan_names_y,
+                                                                        title=top_right_text,
+                                                                        title_loc='right',
+                                                                        ymin=slope_min,
+                                                                        ymax=slope_max
+                                                                        )
+
 
     def plot_orbit_drift_result(self):
         data_frame = self.__data_in_zero_beam_position
@@ -1831,6 +2326,12 @@ class BPM:
 
         self.__plt_plots[plot_file_name] = fig
 
+    def check_for_boolean_setting(self, setting_label_name):
+        settled = False
+        if setting_label_name in self.__settings_list:
+            settled = self.__settings[setting_label_name]
+        return settled
+
     def save_plots(self):
         ltools.color_print('\n\n Saving plots:', "green")
         plotting.save_plots(self.__plt_plots, self.__output_dir, save_pickle=setts.save_figures_as_pickle)
@@ -1904,6 +2405,14 @@ class BPM:
     def y_range_orbit_drift(self):
         return self.__y_range_orbit_drift
 
+    @property
+    def settings(self):
+        return self.__settings
+
+    @property
+    def settings_list(self):
+        return self.__settings_list
+
 
 def get_base_name_from_DOROS_LR(full_name: str):
     if "_L" in full_name:
@@ -1913,6 +2422,25 @@ def get_base_name_from_DOROS_LR(full_name: str):
     else:
         return full_name
 
+
+def get_base_name(full_name: str):
+    base_names = ["B1_H", "B1_V", "B2_H", "B2_V"]
+    output_name = ""
+    for base_name in base_names:
+        if base_name in full_name:
+            output_name = base_name
+            break
+    return output_name
+
+
+def get_beam_name(full_name: str):
+    base_names = ["B1", "B2"]
+    beam_name = ""
+    for base_name in base_names:
+        if base_name in full_name:
+            beam_name = base_name
+            break
+    return beam_name
 
 def check_string(input_string: str, to_check: str):
     if to_check in input_string:

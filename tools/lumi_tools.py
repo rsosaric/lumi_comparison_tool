@@ -6,6 +6,7 @@ from statsmodels.stats.weightstats import DescrStatsW
 import statsmodels.api as sm
 import pandas as pd
 from termcolor import colored
+import json
 
 
 def get_year_and_energy(fill):
@@ -47,6 +48,14 @@ def check_and_create_folder(folder_path, creation_info=True):
     except:
         if creation_info:
             print(folder_path + ' Already exists -->> Content will be overwritten.')
+
+
+def check_folder_existence(folder_path):
+    return os.path.exists(folder_path)
+
+
+def check_file_existence(file_path):
+    return os.path.isfile(file_path)
 
 
 def get_lumi_unit_from_csv(file_path):
@@ -120,6 +129,20 @@ def get_w_stats(vals_array, w_array, min_val=None, max_val=None):
     w_stats = DescrStatsW(comb_df["values"], weights=comb_df["weights"])
 
     return w_stats
+
+
+def get_w_mean_error(vals_array, w_array, mean):
+    ws = 0.0
+    diff_sum = 0.0
+    assert (len(vals_array) == len(w_array))
+    n = len(vals_array)
+    for i in range(0, n):
+        ws += w_array[i]
+        diff_sum += (w_array[i]**2)*(vals_array[i] - mean)**2
+
+    normalization_factor = n/((n - 1)*(ws**2))
+
+    return normalization_factor*diff_sum
 
 
 def get_linear_model_from_pd_cols(data: pd.DataFrame, x_col_name: str, y_col_name: str) -> sm.OLS:
@@ -201,3 +224,35 @@ def save_columns_from_pandas_to_file(data, cols, path):
 
 def color_print(text: str, color: str):
     print(colored(text, color))
+
+
+def split_pandas_dataset_from_col_values_ranges(dataset, ref_col, ranges_dict) -> dict:
+    split_dataset_dict = {}
+    for range_label in list(ranges_dict):
+        min_limit = ranges_dict[range_label][0]
+        max_limit = ranges_dict[range_label][1]
+        split_dataset_dict[range_label] = dataset[(dataset[ref_col] >= min_limit) &
+                                                  (dataset[ref_col] <= max_limit)].copy()
+    return split_dataset_dict
+
+
+def lin_func(x, a, b):
+    return a * x + b
+
+
+def save_dict_as_json(out_dict: dict, output_path: str):
+    with open(output_path, 'w') as fp:
+        json.dump(out_dict, fp)
+
+
+def load_json_as_dict(path_to_json):
+    with open(path_to_json) as json_file:
+        return json.load(json_file)
+
+
+def filter_string_list_with_substring(string_list: list, substring: str):
+    output_list = []
+    for i_item in string_list:
+        if substring in i_item:
+            output_list.append(i_item)
+    return output_list

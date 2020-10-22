@@ -1,10 +1,12 @@
 from tools.detectorsratio import DetectorsRatio as Ratios
 from tools.luminometer import Luminometer as L
+from scipy.stats.distributions import chi2 as func_chi2
 import tools.plotting_tools as plotting
 import tools.lumi_tools as ltools
 import settings as setts
 import numpy as np
 import pandas as pd
+import math
 import json
 from scipy.optimize import curve_fit
 from lmfit import Model
@@ -22,7 +24,7 @@ class LinearityAnalysis:
     __conversion_fb_to_ub = 1000000000.0 / setts.xLS
     __linearity_lumi_conversion = __conversion_fb_to_ub
 
-    def __init__(self, dets_file_labels: list, input_dir: str, lumi_type: str) -> None:
+    def __init__(self, dets_file_labels: list, input_dir: str, lumi_type: str = 'rec') -> None:
 
         self.__label_col_fill = "fill"
         self.__label_col_slopes = "slopes"
@@ -30,7 +32,9 @@ class LinearityAnalysis:
         self.__label_col_slopes_chi2 = "chi2 on the slope"
         self.__label_col_nls_slopes = "by nls slopes"
         self.__label_col_nls_slopes_err = "by nls err on the slope"
-        self.__label_col_nls_slopes_chi2 = "by nls chi2 on the slope"
+        self.__label_col_nls_slopes_rel_err = "by nls relative err on the slope"
+        self.__label_col_nls_slopes_redchi2 = "by nls reduced chi2 on the slope"
+        self.__label_col_nls_slopes_pvalue = "by nls chi2 pvalue on the slope"
         self.__label_col_fill_lumi = "lumi in fill"
         self.__label_col_accumulated_lumi = "accumulated lumi up to fill"
         self.__label_col_total_w = "total weight"
@@ -76,7 +80,7 @@ class LinearityAnalysis:
 
         print('\n Initializing ' + ratios.label_ratio + ' Linearity Analysis')
         self.__plt_plots = {}
-        self.__output_dir = ratios.output_dir + 'linearity_analysis/'
+        self.__output_dir = ratios.output_dir + setts.linearity_analysis_output_dir
         self.__by_fill_fits_dir = self.__output_dir + '/by_fill_fits/'
         # Check and load NBX information
         if ratios.nbx_data is None:
@@ -126,6 +130,8 @@ class LinearityAnalysis:
         self.__by_fill_slopes_err = []
         self.__by_fill_nls_slopes = []
         self.__by_fill_nls_slopes_err = []
+        self.__by_fill_nls_slopes_redchi2 = []
+        self.__by_fill_nls_slopes_pvalue = []
         self.__by_fill_slopes_mean = None
         self.__by_fill_slopes_stdv = None
         self.__by_fill_nls_slopes_mean = None
@@ -138,12 +144,13 @@ class LinearityAnalysis:
         self.__by_fill_nls_slopes_stdv_errw = None
         self.__by_fill_nls_slopes_mean_totalw = None
         self.__by_fill_nls_slopes_stdv_totalw = None
+        self.__by_fill_nls_slopes_err_totalw = None
         self.__all_data_fitted_slope = None
         self.__all_data_fitted_slope_err = None
         self.__all_data_fitted_slope_chi2 = None
         self.__excluded_fills_in_running = []
         self.__good_fills = []
-        self.__average_points_in_summary = setts.points_in_summary_lin_year[self.__year,self.__energy]
+        self.__average_points_in_summary = setts.points_in_summary_lin_year[self.__year, self.__energy]
         self.__data_avg_summary = pd.DataFrame()
 
         self.__by_run_data = {}
@@ -182,7 +189,7 @@ class LinearityAnalysis:
 
             self.__by_fill_means[fill] = {self.__label_mean_by_fill: mean_ratio,
                                           self.__label_by_nls_mean_by_fill: mean_by_nls_ratio}
-
+            # Processing fill data previous the fitting  ===============================================================
             # remove outliers
             if setts.remove_outliers_in_lin_by_fill:
                 min_ratio_val = mean_ratio - setts.allowed_ratio_stdv_factor * stdv_ratio
@@ -203,7 +210,7 @@ class LinearityAnalysis:
                 self.__excluded_fills_in_running.append(fill)
                 exclude_fill = True
 
-            # Fitting
+            # Fitting  ======================================================================================
             if not exclude_fill:
                 fitted_data_ini = len(self.__by_fill_slopes)
                 self.fill_fitting(fill)
@@ -219,6 +226,7 @@ class LinearityAnalysis:
             else:
                 print("     -->> Fill " + str(fill) + " not included in final results.")
 
+        # Filling fitting summary dataframe =================================================================
         if len(good_fills) == len(self.__by_fill_lumi) and len(good_fills) == len(self.__by_fill_slopes):
             self.__good_fills = good_fills
             self.__by_fill_df[self.__label_col_fill] = good_fills
@@ -228,6 +236,8 @@ class LinearityAnalysis:
             self.__by_fill_df[self.__label_col_slopes_err] = self.__by_fill_slopes_err
             self.__by_fill_df[self.__label_col_nls_slopes] = self.__by_fill_nls_slopes
             self.__by_fill_df[self.__label_col_nls_slopes_err] = self.__by_fill_nls_slopes_err
+            self.__by_fill_df[self.__label_col_nls_slopes_redchi2] = self.__by_fill_nls_slopes_redchi2
+            self.__by_fill_df[self.__label_col_nls_slopes_pvalue] = self.__by_fill_nls_slopes_pvalue
 
             self.__by_fill_df.replace([np.inf, -np.inf], np.nan, inplace=True)
             self.__by_fill_df.dropna(inplace=True)
@@ -239,10 +249,48 @@ class LinearityAnalysis:
             raise AssertionError("ERROR in create_by_fill_data(): lengths of good_fills, by_fill_slopes and "
                                  "by_fill_lumi do not match! ")
 
-        self.__by_fill_df_all = self.__by_fill_df
+        # Overall fit quality analysis (by nls fits) =================================================================
+        # fit error #
+        temp_mean_slope = self.__by_fill_df[self.__label_col_nls_slopes].mean()
+        self.__by_fill_df[self.__label_col_nls_slopes_rel_err] \
+            = abs(self.__by_fill_df[self.__label_col_nls_slopes_err])/abs(temp_mean_slope)
+
+        mean_of_errors = self.__by_fill_df[self.__label_col_nls_slopes_err].mean()
+        stdv_of_errors = self.__by_fill_df[self.__label_col_nls_slopes_err].std()
+        mean_of_rel_errors = self.__by_fill_df[self.__label_col_nls_slopes_rel_err].mean()
+        stdv_of_rel_errors = self.__by_fill_df[self.__label_col_nls_slopes_rel_err].std()
+        min_rel_err = np.min(self.__by_fill_df[self.__label_col_nls_slopes_rel_err])
+        max_rel_err = np.max(self.__by_fill_df[self.__label_col_nls_slopes_rel_err])
+        ltools.color_print("\n === Fit quality analysis ===", "blue")
+        print("*-> Mean of the fitted slope errors (relative errors): " + str(float("{0:.3f}".format(mean_of_errors))) +
+              " (" + str(float("{0:.3f}".format(mean_of_rel_errors))) + ")")
+        print("*-> Stdv of the fitted slope errors (relative errors): " + str(float("{0:.3f}".format(stdv_of_errors))) +
+              " (" + str(float("{0:.3f}".format(stdv_of_rel_errors))) + ")")
+        mean_of_redchi2s = self.__by_fill_df[self.__label_col_nls_slopes_redchi2].mean()
+        stdv_of_redchi2s = self.__by_fill_df[self.__label_col_nls_slopes_redchi2].std()
+        min_redchi2 = np.min(self.__by_fill_df[self.__label_col_nls_slopes_redchi2])
+        max_redchi2 = np.max(self.__by_fill_df[self.__label_col_nls_slopes_redchi2])
+        print("*-> Mean of the fitted slope chi2s: " + str(float("{0:.3f}".format(mean_of_redchi2s))))
+        print("*-> Stdv of the fitted slope chi2s: " + str(float("{0:.3f}".format(stdv_of_redchi2s))))
+
+        # Setting thresholds
+        redchi2_good_limit = mean_of_redchi2s + stdv_of_redchi2s
+        rel_errors_good_limit = mean_of_rel_errors + stdv_of_rel_errors
+
+        self.__by_fill_df_all = self.__by_fill_df.copy()
+        all_slopes_n = len(self.__by_fill_df)
+
+        # drop slopes with bad fit quality
+        self.__by_fill_df = self.__by_fill_df[
+            (self.__by_fill_df[self.__label_col_nls_slopes_rel_err] <= rel_errors_good_limit) &
+            (self.__by_fill_df[self.__label_col_nls_slopes_redchi2] <= redchi2_good_limit)
+            ].copy()
+        after_excl_slopes_n = len(self.__by_fill_df)
+        print(str((all_slopes_n - after_excl_slopes_n) * 100 / all_slopes_n) +
+              " % of the fills have been excluded because they had very bad fit quality.")
 
         # drop slopes outside the range in settings
-        all_slopes_n = len(self.__by_fill_df)
+        temp_slopes_n = len(self.__by_fill_df)
         if self.__min_allowed_slope is not None and self.__max_allowed_slope is not None:
             self.__by_fill_df = self.__by_fill_df[
                 (self.__by_fill_df[self.__label_col_slopes] >= self.__min_allowed_slope) &
@@ -251,9 +299,10 @@ class LinearityAnalysis:
                 (self.__by_fill_df[self.__label_col_nls_slopes] <= self.__max_allowed_slope)]
             after_excl_slopes_n = len(self.__by_fill_df)
             self.__by_fill_df.reset_index(drop=True, inplace=True)
-            print(str((all_slopes_n - after_excl_slopes_n) * 100 / all_slopes_n) +
-                  " % of the fills have been excluded because they had slopes ouside the allowed range.")
-            print("PLEASE CHECK IF THIS NUMBER IS BIG!")
+            print(str((temp_slopes_n - after_excl_slopes_n) * 100 / temp_slopes_n) +
+                  " % of the fills have been excluded because they had slopes outside the allowed range.")
+
+        ltools.color_print("PLEASE CHECK IF THESE NUMBERS ARE BIG!", "yellow")
 
         self.__by_fill_slopes_mean = self.__by_fill_df[self.__label_col_slopes].mean()
         self.__by_fill_slopes_stdv = self.__by_fill_df[self.__label_col_slopes].std()
@@ -283,6 +332,7 @@ class LinearityAnalysis:
         self.__by_fill_nls_slopes_stdv_errw = errw_nls_stats.std
         self.__by_fill_nls_slopes_mean_totalw = totalw_nls_stats.mean
         self.__by_fill_nls_slopes_stdv_totalw = totalw_nls_stats.std
+        self.__by_fill_nls_slopes_err_totalw = self.__by_fill_nls_slopes_stdv_totalw/math.sqrt(len(self.__by_fill_df))
 
         slope_hist = plotting.hist_from_array(self.__by_fill_df[self.__label_col_slopes],
                                               nbins=setts.nbins_linearity,
@@ -353,8 +403,7 @@ class LinearityAnalysis:
                                                                 col_label=self.__label_col_nls_slopes,
                                                                 nbins=setts.nbins_linearity,
                                                                 xlabel="slope [hz/" + r'$\mu$' + "b]",
-                                                                ylabel="Integrated luminosity [$" +
-                                                                       self.__ratios.lumi_unit + "^{-1}$]",
+                                                                ylabel="events weighted by lumi and fit error",
                                                                 xmin=self.__min_allowed_slope,
                                                                 xmax=self.__max_allowed_slope,
                                                                 mean=self.__by_fill_nls_slopes_mean_totalw,
@@ -386,8 +435,44 @@ class LinearityAnalysis:
                                                              energy_year_label=self.__year_energy_label,
                                                              fig_size_shape="sq")
 
+        slope_err_hist_nls = plotting.hist_from_pandas_frame(data_frame=self.__by_fill_df_all,
+                                                             col_label=self.__label_col_nls_slopes_err,
+                                                             nbins=200,
+                                                             xlabel="slope error [hz/" + r'$\mu$' + "b]",
+                                                             ylabel="Counts",
+                                                             mean=mean_of_errors,
+                                                             stdv=stdv_of_errors,
+                                                             energy_year_label=self.__year_energy_label,
+                                                             mean_float_format="{0:.4f}")
+
+        slope_rel_err_hist_nls = plotting.hist_from_pandas_frame(data_frame=self.__by_fill_df_all,
+                                                                 col_label=self.__label_col_nls_slopes_rel_err,
+                                                                 nbins=200,
+                                                                 xlabel="slope error [hz/" + r'$\mu$' + "b]",
+                                                                 ylabel="Counts",
+                                                                 mean=mean_of_rel_errors,
+                                                                 stdv=stdv_of_rel_errors,
+                                                                 xmin=min_rel_err, xmax=max_rel_err,
+                                                                 energy_year_label=self.__year_energy_label,
+                                                                 mean_float_format="{0:.4f}")
+
+        slope_redchi2_hist_nls = plotting.hist_from_pandas_frame(data_frame=self.__by_fill_df_all,
+                                                                 col_label=self.__label_col_nls_slopes_redchi2,
+                                                                 nbins=200,
+                                                                 xlabel="chi2/dof",
+                                                                 ylabel="Counts",
+                                                                 mean=mean_of_redchi2s,
+                                                                 stdv=stdv_of_redchi2s,
+                                                                 xmin=min_redchi2, xmax=max_redchi2,
+                                                                 energy_year_label=self.__year_energy_label,
+                                                                 mean_float_format="{0:.4f}")
+
         self.__plt_plots['slope_hist'] = slope_hist
         self.__plt_plots['slope_hist_nls'] = slope_hist_nls
+
+        self.__plt_plots['slope_err_hist_nls'] = slope_err_hist_nls[0][0].get_figure()
+        self.__plt_plots['slope_rel_err_hist_nls'] = slope_rel_err_hist_nls[0][0].get_figure()
+        self.__plt_plots['slope_redchi2_hist_nls'] = slope_redchi2_hist_nls[0][0].get_figure()
 
         self.__plt_plots['slope_hist_lw'] = slope_hist_lw[0][0].get_figure()
         self.__plt_plots['slope_hist_nls_lw'] = slope_hist_nls_lw[0][0].get_figure()
@@ -475,7 +560,8 @@ class LinearityAnalysis:
                                          xlabel="SBIL [hz/" + r'$\mu$' + "b]",
                                          ylabel=self.__label_ratio + " ratios in " +
                                                 str(self.__nls) + ' LS',
-                                         energy_year_label=self.__year_energy_label)
+                                         energy_year_label=self.__year_energy_label,
+                                         add_linearity_special_text=True)
 
         nls_fig.savefig(self.__output_dir + "all_by_nls_data_fit")
         plt.close(nls_fig)
@@ -532,13 +618,18 @@ class LinearityAnalysis:
             nls_slope = result_nls_fit.params['a'].value
             nls_slope_err = result_nls_fit.params['a'].stderr
             nls_intercept = result_nls_fit.params['b'].value
+            # reduced chi2 = chi2/dof, more info here: https://lmfit.github.io/lmfit-py/fitting.html
             nls_chi2 = result_nls_fit.redchi
+            nls_full_chi2 = result_nls_fit.chisqr
+            nls_dof = result_nls_fit.nfree
+            p_value = func_chi2(nls_full_chi2, nls_dof)
 
             fig = plotting.plot_from_fit(x, y, fitted_slope=slope, fitted_intercept=intercept,
                                          fitted_slope_err=slope_err, chi2=chi2,
                                          fitted_f=lin_func, xlabel="SBIL [hz/" + r'$\mu$' + "b]",
                                          ylabel=self.__label_ratio + " ratio",
-                                         energy_year_label=self.__year_energy_label)
+                                         energy_year_label=self.__year_energy_label,
+                                         add_linearity_special_text=True)
 
             nls_fig = plotting.plot_from_fit(x_nls, y_nls, y_err=ey_nls,
                                              fitted_slope=nls_slope, chi2=nls_chi2,
@@ -548,7 +639,8 @@ class LinearityAnalysis:
                                              xlabel="SBIL [hz/" + r'$\mu$' + "b]",
                                              ylabel=self.__label_ratio + " ratios in " +
                                                     str(self.__nls) + ' LS',
-                                             energy_year_label=self.__year_energy_label)
+                                             energy_year_label=self.__year_energy_label,
+                                             add_linearity_special_text=True)
 
             fig.savefig(self.__by_fill_fits_dir + str(fill))
             nls_fig.savefig(self.__by_fill_fits_dir + str(fill) + "_nls")
@@ -559,6 +651,8 @@ class LinearityAnalysis:
             self.__by_fill_slopes_err.append(slope_err)
             self.__by_fill_nls_slopes.append(nls_slope)
             self.__by_fill_nls_slopes_err.append(nls_slope_err)
+            self.__by_fill_nls_slopes_redchi2.append(nls_chi2)
+            self.__by_fill_nls_slopes_pvalue.append(p_value)
         else:
             print("** WARNING: Not enough points to fit: fill->" + str(fill) + ", data_size->" + str(len(x_nls)))
 
@@ -587,12 +681,20 @@ class LinearityAnalysis:
             temp_err_slope_list.append(data_to_use[self.__label_col_nls_slopes_err][i])
             if npoints_counter >= number_of_fills_per_point or i >= number_of_fills - 1:
                 stats = ltools.get_w_stats(temp_slope_list, 1/np.array(temp_err_slope_list))
+                special_error_from_weighted_mean = ltools.get_w_mean_error(temp_slope_list,
+                                                                           1/np.array(temp_err_slope_list),
+                                                                           stats.mean)
+                # print(special_error_from_weighted_mean)
                 # print(stats.mean, stats.std_mean, stats.std, stats.sum_weights)
                 avg_slopes.append(stats.mean)
+                # avg_err_slopes.append(stats.std/math.sqrt(len(temp_slope_list)))
                 avg_err_slopes.append(stats.std)
+                # avg_err_slopes.append(special_error_from_weighted_mean)
                 fill_marker.append(data_to_use[self.__label_col_fill][i])
                 lumi_marker.append(data_to_use[self.__label_col_accumulated_lumi][i])
                 npoints_counter = 0
+                temp_slope_list = []
+                temp_err_slope_list = []
 
         self.__data_avg_summary[self.__label_col_nls_slopes] = np.array(avg_slopes)
         self.__data_avg_summary[self.__label_col_nls_slopes_err] = np.array(avg_err_slopes)
@@ -691,6 +793,7 @@ class LinearityAnalysis:
             'slope_stdv_hist_nls_lw': self.__by_fill_nls_slopes_stdv_lw,
             'slope_stdv_hist_nls_errw': self.__by_fill_nls_slopes_stdv_errw,
             'slope_stdv_hist_nls_totalw': self.__by_fill_nls_slopes_stdv_totalw,
+            'slope_err_hist_nls_totalw': self.__by_fill_nls_slopes_err_totalw,
             # slope from all data fitting
             'all_data_fitted_slope': self.__all_data_fitted_slope,
             'all_data_fitted_slope_err': self.__all_data_fitted_slope_err,
@@ -711,8 +814,8 @@ class LinearityAnalysis:
 
 class Stats:
     def __init__(self, array: pd.DataFrame) -> None:
-        self.__mean = array.mean()
-        self.__stdv = array.std()
+        self.__mean = array.mean(numeric_only=True)
+        self.__stdv = array.std(numeric_only=True)
 
     @property
     def mean(self):

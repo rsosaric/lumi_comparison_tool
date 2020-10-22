@@ -41,7 +41,7 @@ pos_by_fill_fit_info = (0.40, 0.96)
 pos_by_fill_fit_chi2_info = (0.60, 0.90)
 
 # legends position for ratio vs X(time, date, lumi) plots
-leg_vs_plots_pos = 9  # -> 9 for 'center top'
+leg_vs_plots_pos = 9  # -> 9 for 'center top', 1: 'upper right'
 leg_vs_plots_text_s = 12
 leg_vs_plots_marker_scale = 7  # -> marker_in_legend/...in_plot scale
 
@@ -162,8 +162,9 @@ min_num_data_to_fit = 5
 # plots_formats = ('pdf', 'png')
 plots_formats = 'png'
 # plots_formats = 'pdf'
-dpi_png_plots = 600
+dpi_png_plots = 300
 default_output_dir = 'plots/'
+linearity_analysis_output_dir = 'linearity_analysis/'
 
 # -*-*-*-*-*-*-*-*-*-*-*- > > > Data structure and format < < < -*-*-*-*-*-*-*-*-*-*-*-
 
