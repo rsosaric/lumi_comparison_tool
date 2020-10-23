@@ -13,6 +13,8 @@ conf_label_y_diff_smaller_range = "y_diff_range_smaller"
 conf_label_length_scale = "length_scale"  # [x,y] corrections
 conf_label_length_scale_per_beam_epsilon = "length_scale per_beam_epsilon"  # [[B1_x, B2_x],[B1_y, B2_y]]
 conf_label_apply_length_scale_per_beam_epsilon_from_file = "length_scale per_beam_epsilon loaded from file"
+conf_limits_for_length_scale_per_beam_epsilon = "limits_for_length_scale_per_beam_epsilon"  # [min, max]
+conf_exclusion_from_length_scale_per_beam_epsilon = "conf_exclusion_from_length_scale_per_beam_epsilon"  # {scan:beam,.}
 conf_label_beam_deflection = "beam_deflection"
 conf_label_beam_deflection_gfactor = "beam_deflection_gfactor"  # geometrical factor for beam_deflection correction
 conf_label_special_col_sign = "special col sign"  # it can be used to invert input data column sign or scale it
@@ -200,6 +202,11 @@ config_dict = {
 
             conf_label_length_scale: [0.9941, 0.9943],
             conf_label_apply_length_scale_per_beam_epsilon_from_file: True,
+            conf_exclusion_from_length_scale_per_beam_epsilon: {"L1X": ["B1", "B2"], "L1Y": ["B1", "B2"],
+                                                                "L2X": ["B1", "B2"],
+                                                                "X3": ["B2"], "Y3": ["B2"],
+                                                                "X4": ["B1"], "Y4": ["B1"]},
+            conf_limits_for_length_scale_per_beam_epsilon: [-0.03, 0.03],
             # conf_label_beam_deflection: "beamData/extra_corrections/deflectioncorrection4266.csv",
             # conf_label_beam_deflection_gfactor: [2.65, 2.76],  # [x, y]
 
@@ -274,6 +281,9 @@ config_dict = {
 
             conf_label_length_scale: [1.0315, 1.0314],
             conf_label_apply_length_scale_per_beam_epsilon_from_file: True,
+            conf_exclusion_from_length_scale_per_beam_epsilon: {"I1X": ["B1"], "I2X": ["B2"],
+                                                                "I1Y": ["B1"], "I2Y": ["B2"]},
+            conf_limits_for_length_scale_per_beam_epsilon: [-0.03, 0.03],
             # conf_label_length_scale_per_beam_epsilon: [[-0.0044, 0.0118], [-0.0017, 0.0095]],
 
             # conf_label_orbit_drift: "beamData/extra_corrections/orbitdriftcorrection4954average.csv",

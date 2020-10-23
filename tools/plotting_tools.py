@@ -368,17 +368,22 @@ def plot_scatter_from_dict(in_dict: dict, new_xticks,
                            ymin=None, ymax=None,
                            fig_size_shape='sq',
                            title="",
-                           title_loc="center"):
+                           title_loc="center",
+                           summary_text="",
+                           h_line_1=None, h_line_1_err=None,
+                           h_line_2=None, h_line_2_err=None):
     fig_size = get_fig_size(fig_size_shape)
     fig, ax = plt.subplots(figsize=fig_size)
+    plot_names = list(in_dict)
 
-    for plot_name in list(in_dict):
+    temp_x = x = np.array([i for i in range(len(in_dict[plot_names[0]]))])
+    for plot_name in plot_names:
         y = np.array(in_dict[plot_name])
         x = np.array([i for i in range(len(y))])
         plt.xticks(x, new_xticks)
         plt.plot(x, y, 'o', label=plot_name)
 
-    plt.legend()
+    plt.legend(loc='upper left')
     ax.set_title(title, loc=title_loc)
     ax.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight,
                   size=setts.axis_case_size[fig_size_shape])
@@ -386,6 +391,20 @@ def plot_scatter_from_dict(in_dict: dict, new_xticks,
                   size=setts.axis_case_size[fig_size_shape])
     plt.xticks(fontsize=setts.axis_thicks_case_size[fig_size_shape])
     plt.yticks(fontsize=setts.axis_thicks_case_size[fig_size_shape])
+
+    # Adding summary results
+    ax.text(0.50, 0.98, summary_text,
+            verticalalignment='top', horizontalalignment='left',
+            transform=ax.transAxes, color='green', fontsize=12)
+
+    if h_line_1:
+        if h_line_1_err:
+            ax.fill_between(temp_x, h_line_1-h_line_1_err, h_line_1+h_line_1_err, color='blue', alpha=0.2)
+        ax.axhline(c='blue', y=h_line_1, alpha=0.6, ls='--')
+    if h_line_2:
+        if h_line_2_err:
+            ax.fill_between(temp_x, h_line_2-h_line_2_err, h_line_2+h_line_2_err, color='red', alpha=0.2)
+        ax.axhline(c='red', y=h_line_2, alpha=0.6, ls='--')
 
     if ymin is not None and ymax is not None:
         plt.ylim(ymin, ymax)

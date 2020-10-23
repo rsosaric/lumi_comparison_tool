@@ -141,8 +141,28 @@ class BPM:
         self.__data_per_scan_dict = {}
         self.__data_per_scan_nominal_dict = {}
         self.__lscale_per_beam_epsilon_dict = {}
+        self.__lscale_per_beam_lscale_slope_dict = {}
+        # computed mean values
+        self.__lscale_per_beam_slope_b1_x = None
+        self.__lscale_per_beam_slope_b1_y = None
+        self.__lscale_per_beam_slope_b2_x = None
+        self.__lscale_per_beam_slope_b2_y = None
+        self.__lscale_per_beam_epsilon_b1_x = None
+        self.__lscale_per_beam_epsilon_b1_y = None
+        self.__lscale_per_beam_epsilon_b2_x = None
+        self.__lscale_per_beam_epsilon_b2_y = None
+        self.__lscale_per_beam_slope_b1_x_err = None
+        self.__lscale_per_beam_slope_b1_y_err = None
+        self.__lscale_per_beam_slope_b2_x_err = None
+        self.__lscale_per_beam_slope_b2_y_err = None
+        self.__lscale_per_beam_epsilon_b1_x_err = None
+        self.__lscale_per_beam_epsilon_b1_y_err = None
+        self.__lscale_per_beam_epsilon_b2_x_err = None
+        self.__lscale_per_beam_epsilon_b2_y_err = None
         self.__epsilon_x_in_plotting_structure_dict = {}
         self.__epsilon_y_in_plotting_structure_dict = {}
+        self.__slope_x_in_plotting_structure_dict = {}
+        self.__slope_y_in_plotting_structure_dict = {}
         self.__loaded_epsilon_correction_dict = {}
 
         if self.name == BPM.__nominal_name:
@@ -396,14 +416,15 @@ class BPM:
             self.__interpolation_to_nominal_time = self.__in_data_def_format
             self.__processed_data = self.__in_data_def_format
 
-        #  ### getting initial diffs
-
-        # Getting H differences
-        self.__processed_data[BPM.__col_H_diff + "_ini"] = self.__processed_data[BPM.__col_b2h] - \
-                                                           self.__processed_data[BPM.__col_b1h]
-        # Getting V differences
-        self.__processed_data[BPM.__col_V_diff + "_ini"] = self.__processed_data[BPM.__col_b2v] - \
-                                                           self.__processed_data[BPM.__col_b1v]
+        # #  ### getting initial diffs
+        # # Getting H differences
+        # self.__processed_data[BPM.__col_H_diff + "_ini"] = \
+        #     self.__processed_data[self.get_single_diff_name(BPM.__col_b2h)] - \
+        #     self.__processed_data[self.get_single_diff_name(BPM.__col_b1h)]
+        # # Getting V differences
+        # self.__processed_data[BPM.__col_V_diff + "_ini"] = \
+        #     self.__processed_data[self.get_single_diff_name(BPM.__col_b2v)] - \
+        #     self.__processed_data[self.get_single_diff_name(BPM.__col_b1v)]
 
         if apply_all_available_corrections:
             self.apply_corrections(basic_cols=self.__base_cols,
@@ -1804,6 +1825,8 @@ class BPM:
 
             for scan_name in scan_names:
                 self.__lscale_per_beam_epsilon_dict[scan_name] = {}
+                self.__lscale_per_beam_lscale_slope_dict[scan_name] = {}
+
                 # result plots
                 scan_title_label = "(scan " + scan_name + ") "
                 fill_and_scan_label = str(self.__fill) + "(scan " + scan_name + ")"
@@ -1947,14 +1970,18 @@ class BPM:
                                                                                title_loc="right")
 
                         # saving results into dict
+                        self.__lscale_per_beam_lscale_slope_dict[scan_name][i_col] = slope
                         self.__lscale_per_beam_epsilon_dict[scan_name][i_col] = slope - 1
+            self.process_epsilon_fit_results()
 
             # Saving dict into json file:
             output_json_path = self.__output_dir + self.__output_per_scan_studies + "lscale_per_beam_epsilon.json"
+            output_slope_json_path = self.__output_dir + self.__output_per_scan_studies + "lscale_per_beam_slope.json"
             if not ltools.check_file_existence(output_json_path):
                 ltools.color_print("\n ===>> Producing lscale_per_beam_epsilon.json because such file was not found",
                                    "yellow")
                 ltools.save_dict_as_json(self.__lscale_per_beam_epsilon_dict, output_json_path)
+                ltools.save_dict_as_json(self.__lscale_per_beam_lscale_slope_dict, output_slope_json_path)
                 self.plot_per_beam_epsilon_fit_results(self.__output_per_scan_studies,
                                                        extra_file_suffix="_original")
             else:
@@ -2187,34 +2214,103 @@ class BPM:
                                                                               title_loc="right"
                                                                               ).get_figure()
 
-    def prepare_epsilon_fit_results_for_plotting(self):
+    def process_epsilon_fit_results(self):
         input_dict = self.__lscale_per_beam_epsilon_dict
+        input_slope_dict = self.__lscale_per_beam_lscale_slope_dict
         scan_names = list(input_dict)
         scan_names_x = ltools.filter_string_list_with_substring(scan_names, "X")
         scan_names_y = ltools.filter_string_list_with_substring(scan_names, "Y")
         assert len(scan_names) == len(scan_names_x) + len(scan_names_y)
 
+        slopes_x_b1 = []
+        slopes_y_b1 = []
+        slopes_x_b2 = []
+        slopes_y_b2 = []
+
+        epsi_x_b1 = []
+        epsi_y_b1 = []
+        epsi_x_b2 = []
+        epsi_y_b2 = []
+
+        if setts.conf_exclusion_from_length_scale_per_beam_epsilon in self.__settings_list:
+            exclude_from_mean = self.__settings[setts.conf_exclusion_from_length_scale_per_beam_epsilon]
+        else:
+            exclude_from_mean = {}
+        scans_with_exclusions = list(exclude_from_mean)
+
         for i_col in BPM.__ref_col_names:
+            beam_name = get_beam_name(i_col)
             if is_H(i_col):
                 scan_names_to_loop = scan_names_x
                 dict_to_fill = self.__epsilon_x_in_plotting_structure_dict
+                slope_dict_to_fill = self.__slope_x_in_plotting_structure_dict
+                if is_B1(i_col):
+                    slopes_to_fill = slopes_x_b1
+                    epsi_to_fill = epsi_x_b1
+                else:
+                    slopes_to_fill = slopes_x_b2
+                    epsi_to_fill = epsi_x_b2
             elif is_V(i_col):
                 scan_names_to_loop = scan_names_y
+                if is_B1(i_col):
+                    slopes_to_fill = slopes_y_b1
+                    epsi_to_fill = epsi_y_b1
+                else:
+                    slopes_to_fill = slopes_y_b2
+                    epsi_to_fill = epsi_y_b2
                 dict_to_fill = self.__epsilon_y_in_plotting_structure_dict
+                slope_dict_to_fill = self.__slope_y_in_plotting_structure_dict
             else:
                 raise AssertionError("Something wrong with columns looping")
 
             i_beam = get_beam_name(i_col)
             dict_to_fill[i_beam] = []
+            slope_dict_to_fill[i_beam] = []
             for i_scan in scan_names_to_loop:
                 dict_to_fill[i_beam].append(input_dict[i_scan][i_col])
+                slope_dict_to_fill[i_beam].append(input_slope_dict[i_scan][i_col])
+                if i_scan not in scans_with_exclusions or beam_name not in exclude_from_mean[i_scan]:
+                    epsi_to_fill.append(input_dict[i_scan][i_col])
+                    slopes_to_fill.append(input_slope_dict[i_scan][i_col])
+                else:
+                    print(i_scan, i_col, "excluded from per beam length scale mean")
+
+        # print(slopes_x_b1, slopes_y_b1, slopes_x_b2, slopes_y_b2)
+        slopes_x_b1 = np.array(slopes_x_b1)
+        slopes_y_b1 = np.array(slopes_y_b1)
+        slopes_x_b2 = np.array(slopes_x_b2)
+        slopes_y_b2 = np.array(slopes_y_b2)
+
+        epsi_x_b1 = np.array(epsi_x_b1)
+        epsi_y_b1 = np.array(epsi_y_b1)
+        epsi_x_b2 = np.array(epsi_x_b2)
+        epsi_y_b2 = np.array(epsi_y_b2)
+
+        self.__lscale_per_beam_slope_b1_x = slopes_x_b1.mean()
+        self.__lscale_per_beam_slope_b1_y = slopes_y_b1.mean()
+        self.__lscale_per_beam_slope_b2_x = slopes_x_b2.mean()
+        self.__lscale_per_beam_slope_b2_y = slopes_y_b2.mean()
+
+        self.__lscale_per_beam_epsilon_b1_x = epsi_x_b1.mean()
+        self.__lscale_per_beam_epsilon_b1_y = epsi_y_b1.mean()
+        self.__lscale_per_beam_epsilon_b2_x = epsi_x_b2.mean()
+        self.__lscale_per_beam_epsilon_b2_y = epsi_y_b2.mean()
+
+        self.__lscale_per_beam_slope_b1_x_err = slopes_x_b1.std()/len(slopes_x_b1)
+        self.__lscale_per_beam_slope_b1_y_err = slopes_y_b1.std()/len(slopes_y_b1)
+        self.__lscale_per_beam_slope_b2_x_err = slopes_x_b2.std()/len(slopes_x_b2)
+        self.__lscale_per_beam_slope_b2_y_err = slopes_y_b2.std()/len(slopes_y_b2)
+
+        self.__lscale_per_beam_epsilon_b1_x_err = epsi_x_b1.std()/len(epsi_x_b1)
+        self.__lscale_per_beam_epsilon_b1_y_err = epsi_y_b1.std()/len(epsi_y_b1)
+        self.__lscale_per_beam_epsilon_b2_x_err = epsi_x_b2.std()/len(epsi_x_b2)
+        self.__lscale_per_beam_epsilon_b2_y_err = epsi_y_b2.std()/len(epsi_y_b2)
 
     def plot_per_beam_epsilon_fit_results(self, output_folder, extra_file_suffix=""):
         input_dict = self.__lscale_per_beam_epsilon_dict
         if len(input_dict) == 0:
             ltools.color_print("self.__lscale_per_beam_epsilon_dict is empty")
             raise AssertionError("self.__lscale_per_beam_epsilon_dict is empty")
-        self.prepare_epsilon_fit_results_for_plotting()
         plots_base_name = "epsilon_fit_values_by_scans"
         plot_name_x = output_folder + "x_" + plots_base_name + extra_file_suffix
         plot_name_y = output_folder + "y_" + plots_base_name + extra_file_suffix
@@ -2223,13 +2319,17 @@ class BPM:
         scan_names_y = ltools.filter_string_list_with_substring(scan_names, "Y")
         top_right_text = "Fill" + str(self.__fill)
 
-        if extra_file_suffix == "_original":
-            slope_min = -0.2
-            slope_max = 0.2
+        if setts.conf_limits_for_length_scale_per_beam_epsilon in self.__settings_list:
+            slope_min = self.__settings[setts.conf_limits_for_length_scale_per_beam_epsilon][0]
+            slope_max = self.__settings[setts.conf_limits_for_length_scale_per_beam_epsilon][1]
         else:
-            slope_min = -0.01
-            slope_max = 0.01
+            slope_min = -0.05
+            slope_max = 0.05
 
+        summary_text_x = "B1 mean (error): " + str(float("{0:.4f}".format(self.__lscale_per_beam_epsilon_b1_x))) + " (" \
+                         + str(float("{0:.4f}".format(self.__lscale_per_beam_epsilon_b1_x_err))) + ")\n" + \
+                         "B2 mean (error): " + str(float("{0:.4f}".format(self.__lscale_per_beam_epsilon_b2_x))) + " (" \
+                         + str(float("{0:.4f}".format(self.__lscale_per_beam_epsilon_b2_x_err))) + ")"
         self.__plt_plots[plot_name_x] = plotting.plot_scatter_from_dict(self.__epsilon_x_in_plotting_structure_dict,
                                                                         xlabel="Scans for X",
                                                                         ylabel=self.name + "/Nominal slope residual",
@@ -2237,8 +2337,17 @@ class BPM:
                                                                         title=top_right_text,
                                                                         title_loc='right',
                                                                         ymin=slope_min,
-                                                                        ymax=slope_max
+                                                                        ymax=slope_max,
+                                                                        summary_text=summary_text_x,
+                                                                        h_line_1=self.__lscale_per_beam_epsilon_b1_x,
+                                                                        h_line_1_err=self.__lscale_per_beam_epsilon_b1_x_err,
+                                                                        h_line_2=self.__lscale_per_beam_epsilon_b2_x,
+                                                                        h_line_2_err=self.__lscale_per_beam_epsilon_b2_x_err
                                                                         )
+        summary_text_y = "B1 mean (error): " + str(float("{0:.4f}".format(self.__lscale_per_beam_epsilon_b1_y))) + " (" \
+                         + str(float("{0:.4f}".format(self.__lscale_per_beam_epsilon_b1_y_err))) + ")\n" + \
+                         "B2 mean (error): " + str(float("{0:.4f}".format(self.__lscale_per_beam_epsilon_b2_y))) + " (" \
+                         + str(float("{0:.4f}".format(self.__lscale_per_beam_epsilon_b2_y_err))) + ")"
         self.__plt_plots[plot_name_y] = plotting.plot_scatter_from_dict(self.__epsilon_y_in_plotting_structure_dict,
                                                                         xlabel="Scans for Y",
                                                                         ylabel=self.name + "/Nominal slope residual",
@@ -2246,7 +2355,12 @@ class BPM:
                                                                         title=top_right_text,
                                                                         title_loc='right',
                                                                         ymin=slope_min,
-                                                                        ymax=slope_max
+                                                                        ymax=slope_max,
+                                                                        summary_text=summary_text_y,
+                                                                        h_line_1=self.__lscale_per_beam_epsilon_b1_y,
+                                                                        h_line_1_err=self.__lscale_per_beam_epsilon_b1_y_err,
+                                                                        h_line_2=self.__lscale_per_beam_epsilon_b2_y,
+                                                                        h_line_2_err=self.__lscale_per_beam_epsilon_b2_y_err
                                                                         )
 
 

@@ -8,3 +8,4 @@ plots_bpm/
 *.pyc
 *.txt
 *.DS_Store
+.DS_Store
