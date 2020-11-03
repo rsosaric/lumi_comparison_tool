@@ -1,11 +1,15 @@
-*.csv
+#*.csv
 ._*
 plots/
 plots_bpm/
+ramses_calibration_output/
 .idea/
 *.pdf
 *.png
 *.pyc
 *.txt
 *.DS_Store
-.DS_Store
+!beamData/**/*.png
+!beamData/**/*.txt
+#!beamData/*
+#!csv_input_files/*
