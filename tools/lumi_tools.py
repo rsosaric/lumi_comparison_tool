@@ -218,8 +218,11 @@ def get_weighted_average(values, w_for_values):
     return np.average(values, weights=w_for_values)
 
 
-def save_columns_from_pandas_to_file(data, cols, path):
-    data[cols].to_csv(path)
+def save_columns_from_pandas_to_file(data, cols, path, header=None):
+    if header:
+        data[cols].to_csv(path, header=header)
+    else:
+        data[cols].to_csv(path)
 
 
 def color_print(text: str, color: str):

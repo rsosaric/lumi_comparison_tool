@@ -215,7 +215,7 @@ config_dict = {
 
             conf_label_y_range: [-650., 650.],
             # conf_label_y_diff_range: [-8., 8.],
-            conf_label_y_diff_range: [-18., 18.],
+            conf_label_y_diff_range: [-10., 10.],
             conf_label_y_diff_smaller_range: [-8, 8],
 
             conf_label_special_col_sign: {
@@ -295,7 +295,7 @@ config_dict = {
 
             conf_label_y_range: [-600., 600.],
             # conf_label_y_diff_range: [-30., 30.]
-            conf_label_y_diff_range: [-10., 14.],
+            conf_label_y_diff_range: [-5., 8.],
             conf_label_y_diff_smaller_range: [-5.5, 5.5],
             conf_compute_length_scale_epsilon_fits: True
 

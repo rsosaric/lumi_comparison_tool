@@ -573,6 +573,7 @@ class BPM:
                 all_cols_to_save = timing_cols + data_cols
                 raw_data_cols = timing_cols + list(BPM.__ref_col_names) + self.__ref_col_diff_names
                 final_hysteresis_cols = timing_cols + [BPM.__col_H_diff, BPM.__col_V_diff]
+                final_per_beam_cols = timing_cols + self.__ref_col_diff_names_final_result
 
                 # make sure to store data only in studied range
                 ltools.color_print("\n\n (OUTPUT FILE) Saving data in " + self.__output_dir + "plotted_data.csv",
@@ -591,6 +592,8 @@ class BPM:
                                                         self.name + "_" + str(self.__fill) + "_only_offsets_data.csv")
                 ltools.save_columns_from_pandas_to_file(data_to_save, final_hysteresis_cols, self.__output_dir +
                                                         self.name + "_" + str(self.__fill) + "_hysteresis.csv")
+                ltools.save_columns_from_pandas_to_file(data_to_save, final_per_beam_cols, self.__output_dir +
+                                                        self.name + "_" + str(self.__fill) + "_per_beam_final_diffs.csv")
 
                 # ltools.save_columns_from_pandas_to_file(data_to_save, self.__output_dir +
                 #                                         "plotted_data_all.csv")
