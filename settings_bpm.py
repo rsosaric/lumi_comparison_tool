@@ -141,6 +141,30 @@ config_dict = {
 
             conf_label_y_range: [-600., 600.],
         },
+        6380: {
+            conf_label_data_file_path: "vdm_Nominal_Fill6380_n01.csv",
+            conf_label_length_scale: [0.9960, 0.9978],
+
+            conf_label_beam_deflection: "beamData/extra_corrections/deflectioncorrection6380.csv",
+            conf_label_beam_deflection_gfactor: [2.65, 2.76],  # [x, y]
+
+            # conf_label_scans_names: ["BIX1", "BIY1",  "BIX2", "BIY2", "X1", "Y1"],
+            conf_label_scans_names: ["BIX1", "BIY1", "BIX2", "BIY2", "X1", "Y1"],
+            # # conf_label_scans_with_inverted_beam_sign: ["L1X", "L1Y"],
+            conf_label_scans_time_windows: [[1510430481, 1510431482], [1510431686, 1510432693],
+                                            [1510433199, 1510434202], [1510434351, 1510435349],
+                                            [1510435906, 1510436503], [1510436695, 1510437294]],
+
+
+            # conf_label_optimization_scans_times: [1464336119, 1464348464, 1464350758],
+
+            conf_label_min_time: 1510429440,
+            conf_label_max_time: 1510437600,
+            conf_label_zero_time: 1510429320,
+            # conf_label_zero_time: 1464335770,
+
+            conf_label_y_range: [-600., 600.],
+        },
         7442: {
             conf_label_data_file_path: "vdm_Nominal_Fill7442_n03.csv",
             conf_label_special_time_intervals: [[75, 100], [110, 180], [180, 215]],
@@ -296,6 +320,36 @@ config_dict = {
             conf_label_y_range: [-600., 600.],
             # conf_label_y_diff_range: [-30., 30.]
             conf_label_y_diff_range: [-5., 8.],
+            conf_label_y_diff_smaller_range: [-5.5, 5.5],
+            conf_compute_length_scale_epsilon_fits: True
+
+        },
+        6380: {
+            conf_label_data_file_path: "DOROS_Fill6380_Timber.csv",
+            conf_label_offset_time: [1510429320, 1510433057, 1510435767],
+            # conf_label_compute_offsets: True,
+            conf_label_offset_values: [[230.1, -1421.5, 49.9, -1471.85], [231.05, -1422.1, 50.6, -1470.4],
+                                       [231.45, -1423.3, 55.15, -1467.05]],
+
+            conf_label_min_time: 1510429440,
+            conf_label_max_time: 1510437600,
+            conf_label_zero_time: 1510429320,
+
+            conf_label_length_scale: [0.968, 0.961],
+            conf_label_apply_length_scale_per_beam_epsilon_from_file: True,
+            # conf_exclusion_from_length_scale_per_beam_epsilon: {"I1X": ["B1"], "I2X": ["B2"],
+            #                                                     "I1Y": ["B1"], "I2Y": ["B2"]},
+            conf_limits_for_length_scale_per_beam_epsilon: [-0.03, 0.03],
+
+            conf_label_orbit_drift: "beamData/extra_corrections/orbitdriftcorrection6380.csv",
+
+            # conf_label_zero_time: 1464335770,
+
+            # conf_label_special_time_intervals: [[0, 80], [0, 20]],
+
+            conf_label_y_range: [-600., 600.],
+            # conf_label_y_diff_range: [-30., 30.]
+            conf_label_y_diff_range: [-8., 8.],
             conf_label_y_diff_smaller_range: [-5.5, 5.5],
             conf_compute_length_scale_epsilon_fits: True
 
