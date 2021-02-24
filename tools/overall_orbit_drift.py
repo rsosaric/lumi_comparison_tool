@@ -215,6 +215,7 @@ def plot_orbit_drift_result(detectors, out_dir, special_orbit_drifts=None, speci
                )
 
     plt.subplots_adjust(left=0.1, right=0.85, top=0.94, bottom=0.1)
+    ltools.check_and_create_folder(out_dir)
     plotting.save_py_fig_to_file(fig, out_dir + "OD_summary" + special_output_name + ".png",
                                  plot_dpi=def_setts.dpi_png_plots)
 

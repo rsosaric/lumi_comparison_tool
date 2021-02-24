@@ -146,7 +146,10 @@ config_dict = {
             conf_label_length_scale: [0.9960, 0.9978],
 
             conf_label_beam_deflection: "beamData/extra_corrections/deflectioncorrection6380.csv",
-            conf_label_beam_deflection_gfactor: [2.65, 2.76],  # [x, y]
+            # conf_label_beam_deflection_gfactor: [2.65, 2.76],  # [x, y]
+            conf_label_beam_deflection_gfactor: [11.2, 11.9],  # [x, y]
+            # conf_label_beam_deflection_gfactor: [1.12, 1.19],  # [x, y]
+            # conf_label_beam_deflection_gfactor: [1.0, 1.0],  # [x, y]
 
             # conf_label_scans_names: ["BIX1", "BIY1",  "BIX2", "BIY2", "X1", "Y1"],
             conf_label_scans_names: ["BIX1", "BIY1", "BIX2", "BIY2", "X1", "Y1"],
@@ -268,10 +271,12 @@ config_dict = {
 
         },
         4689: {
-            conf_label_data_file_path: "4689_DOROS_raw_data_from_Timber.csv",
+            # conf_label_data_file_path: "4689_DOROS_raw_data_from_Timber.csv",
 
             conf_label_offset_time: [1449133477, 1449153809],
-            conf_label_offset_values: [[-83.85, -191.55, 2072.3, -339.3], [-74.8, -193.85, 2120.8, -343.55]],
+            # conf_label_offset_values: [[-83.85, -191.55, 2072.3, -339.3], [-74.8, -193.85, 2120.8, -343.55]], # old data
+            conf_label_offset_values: [[-81.01149588552707, -193.85791069620035, 2066.2027116847285, -341.5840903084015],
+                                       [-71.60989928437785, -194.61368129254947, 2105.0381926685473, -343.634611367716]],
 
             conf_label_min_time: 1449134042,
             conf_label_max_time: 1449163025,
@@ -286,6 +291,25 @@ config_dict = {
             },
 
             conf_label_orbit_drift_plot_range: [-15., 40.],
+
+            conf_label_data_file_path: "4689_P5_data_exper.csv",
+            conf_label_special_input_col_names: {"time": "timestamp",
+                                                 "pc H.B1.L [um]": "B1_H_L",
+                                                 "pc V.B1.L [um]": "B1_V_L",
+                                                 "pc H.B2.L [um]": "B2_H_L",
+                                                 "pc V.B2.L [um]": "B2_V_L",
+                                                 "pc H.B1.R [um]": "B1_H_R",
+                                                 "pc V.B1.R [um]": "B1_V_R",
+                                                 "pc H.B2.R [um]": "B2_H_R",
+                                                 "pc V.B2.R [um]": "B2_V_R"},
+
+            conf_label_unit_position_factor_to_um: 1.,
+            conf_label_timestamp_in_ms: True,
+            # conf_label_compute_offsets: True,
+            # conf_label_time_window_for_offsets: 600,  #s
+
+
+
 
             # conf_label_deep_studies: True,
 
@@ -336,7 +360,7 @@ config_dict = {
             conf_label_zero_time: 1510429320,
 
             conf_label_length_scale: [0.968, 0.961],
-            conf_label_apply_length_scale_per_beam_epsilon_from_file: True,
+            conf_label_apply_length_scale_per_beam_epsilon_from_file: False,
             # conf_exclusion_from_length_scale_per_beam_epsilon: {"I1X": ["B1"], "I2X": ["B2"],
             #                                                     "I1Y": ["B1"], "I2Y": ["B2"]},
             conf_limits_for_length_scale_per_beam_epsilon: [-0.03, 0.03],

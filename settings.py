@@ -1,8 +1,8 @@
 # -*-*-*-*-*-*-*-*-*-*-*- > > > General settings < < < -*-*-*-*-*-*-*-*-*-*-*-
 show_live_plots = False
-work_status = 'Preliminary'
+# work_status = 'Preliminary'
 # work_status = 'Work in Progress'
-# work_status = ""
+work_status = ""
 experiment = 'CMS'
 csv_input_base_dir = 'csv_input_files/'
 clean_run = True  # Currently only used in best data comparison if [True]: all needed files will be produced even if they exist.

@@ -284,7 +284,8 @@ def scatter_plot_from_pandas_frame(data_frame, x_data_label, y_data_label, title
 def plot_from_fit(x, y, fitted_slope, fitted_slope_err, fitted_intercept, fitted_f,
                   energy_year_label, chi2=None,
                   xlabel='', ylabel='', y_err=[],
-                  markersize=5, add_linearity_special_text=False):
+                  markersize=5, add_linearity_special_text=False,
+                  ymin=None, ymax=None):
     fig_size_shape = 'sq'
     fig, ax = plt.subplots(figsize=(8, 8))
     if len(y_err) > 0:
@@ -318,6 +319,9 @@ def plot_from_fit(x, y, fitted_slope, fitted_slope_err, fitted_intercept, fitted
                      r"$\chi^2/dof$ = " + str(float("{0:.2f}".format(chi2))),
                      ha='left',
                      fontsize=setts.leg_font_size, fontweight='bold', transform=ax.transAxes)
+
+    if ymin is not None and ymax is not None:
+        plt.ylim(ymin, ymax)
 
     if fig_size_shape == 'sq':
         plt.subplots_adjust(left=0.18, right=0.95, top=0.92, bottom=0.1)

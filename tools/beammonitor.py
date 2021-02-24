@@ -427,6 +427,9 @@ class BPM:
         #     self.__processed_data[self.get_single_diff_name(BPM.__col_b1v)]
 
         if apply_all_available_corrections:
+            # self.run_gfactor_test(apply_lscale=self.__apply_lscale,
+            #                       apply_deflection=self.__apply_deflection,
+            #                       apply_orbit_drift=self.__apply_orbit_drift)
             self.apply_corrections(basic_cols=self.__base_cols,
                                    apply_lscale=self.__apply_lscale,
                                    apply_deflection=self.__apply_deflection,
@@ -1565,22 +1568,29 @@ class BPM:
 
         return col_sign
 
-    def apply_per_time_range_addition_correction(self, basic_cols, mode, data_to_use=None):
+    def apply_per_time_range_addition_correction(self, basic_cols, mode, data_to_use=None, correction_gfactors=None,
+                                                 extra_col_label=""):
+        corrected_suffix = ""
         if mode == "orbit drift":
             print("Applying orbit drift correction ...")
             correction_data = self.read_orbit_drift_correction_input()
             beam_factor = 0.5
-            correction_gfactors = [1, 1]
+            if correction_gfactors is None:
+                correction_gfactors = [1, 1]
             default_correction = 0.0
             corrected_suffix = BPM.__ref_col_orbit_drift_suffix_label
         elif mode == "deflection":
             print("Applying beam-beam deflection correction ...")
-            correction_data, correction_gfactors = self.read_deflection_correction_input()
+            correction_data, correction_gfactors_from_setts = self.read_deflection_correction_input()
+            if correction_gfactors is None:
+                correction_gfactors = correction_gfactors_from_setts
             beam_factor = 0.5
             default_correction = 0.0
             corrected_suffix = BPM.__ref_col_deflection_suffix_label
         else:
             raise AssertionError("Mode not implemented!!")
+
+        corrected_suffix += extra_col_label
 
         # if not self.__is_nominal:
         #     sign_b1 = -1
@@ -1649,6 +1659,146 @@ class BPM:
         for i_col_name in basic_cols:
             data_to_use[i_col_name + corrected_suffix] = \
                 np.array(corrected_cols_dict[i_col_name])
+
+    def run_gfactor_test(self, apply_lscale: bool = False, apply_deflection: bool = False,
+                         apply_orbit_drift: bool = False):
+        ltools.color_print("Running gfactor tests", "yellow")
+        xy_same_gfactors = [[0.00, 0.00], [0.25, 0.25], [0.50, 0.50], [0.75, 0.75], [1.00, 1.00], [1.25, 1.25],
+                            [1.50, 1.50]]
+        final_col_names_for_gfactor = {}
+        b1_col_names_for_gfactor = {}
+        b2_col_names_for_gfactor = {}
+        data_to_use = self.__processed_data
+        basic_cols = self.__base_cols
+
+        setts_gfactors = self.__settings[setts.conf_label_beam_deflection_gfactor]
+        xy_same_gfactors.append(setts_gfactors)
+
+        print(xy_same_gfactors)
+
+        for i_gfactor in xy_same_gfactors:
+            deflection_extra_label = "_" + str(i_gfactor)
+            print("Running over: " + deflection_extra_label)
+            full_deflection_label = BPM.__ref_col_deflection_suffix_label + deflection_extra_label
+            after_deflection_cols = [basename + full_deflection_label for basename in basic_cols]
+            after_orbit_drift_cols = [basename + BPM.__ref_col_orbit_drift_suffix_label for basename in basic_cols]
+            after_deflection_orbit_drift_cols = \
+                [basename + BPM.__ref_col_orbit_drift_suffix_label for basename in after_deflection_cols]
+            self.apply_per_time_range_addition_correction(mode="deflection",
+                                                          basic_cols=basic_cols,
+                                                          data_to_use=data_to_use,
+                                                          correction_gfactors=i_gfactor,
+                                                          extra_col_label=deflection_extra_label
+                                                          )
+
+            if not self.__is_nominal and (apply_deflection or self.__deflection_applied_in_nominal):
+                correction_suffix_data_for_deflection_diff = ""
+                correction_suffix_nominal_for_deflection_diff = ""
+                if apply_deflection:
+                    correction_suffix_data_for_deflection_diff = full_deflection_label
+                elif self.__deflection_applied_in_nominal:
+                    correction_suffix_nominal_for_deflection_diff = full_deflection_label
+
+                self.get_cols_diff(in_data=data_to_use,
+                                   base_col_names=basic_cols,
+                                   correction_suffix=correction_suffix_data_for_deflection_diff,
+                                   nominal_correction_suffix=correction_suffix_nominal_for_deflection_diff)
+
+            if apply_orbit_drift:
+                # Applying only to data
+                self.apply_per_time_range_addition_correction(mode="orbit drift",
+                                                              basic_cols=basic_cols, data_to_use=data_to_use)
+                self.get_cols_diff(in_data=data_to_use,
+                                   base_col_names=basic_cols,
+                                   correction_suffix=BPM.__ref_col_orbit_drift_suffix_label,
+                                   nominal_correction_suffix="")
+
+            if apply_lscale:
+                self.apply_length_scale_correction(base_cols=basic_cols, data_to_use=data_to_use)
+
+                # Getting basic lscale difference
+                if not self.__is_nominal:
+                    if self.__lscale_applied_in_nominal:
+                        lscale_nominal_suffix_for_diff = BPM.__ref_col_lscale_suffix_label
+                    else:
+                        lscale_nominal_suffix_for_diff = ""
+                    self.get_cols_diff(in_data=self.__processed_data,
+                                       base_col_names=basic_cols,
+                                       correction_suffix=BPM.__ref_col_lscale_suffix_label,
+                                       nominal_correction_suffix=lscale_nominal_suffix_for_diff)
+
+                if apply_deflection:
+                    self.apply_length_scale_correction(base_cols=after_deflection_cols, data_to_use=data_to_use)
+
+                if not self.__is_nominal and (self.apply_deflection or self.__deflection_applied_in_nominal):
+                    self.get_cols_diff(in_data=self.__processed_data,
+                                       base_col_names=basic_cols,
+                                       correction_suffix=BPM.__ref_col_lscale_suffix_label,
+                                       nominal_correction_suffix=full_deflection_label +
+                                                                 BPM.__ref_col_lscale_suffix_label)
+
+                if apply_orbit_drift:
+                    self.apply_length_scale_correction(base_cols=after_orbit_drift_cols, data_to_use=data_to_use)
+                    if not self.__is_nominal:
+                        self.get_cols_diff(in_data=self.__processed_data,
+                                           base_col_names=basic_cols,
+                                           correction_suffix=BPM.__ref_col_orbit_drift_suffix_label +
+                                                             BPM.__ref_col_lscale_suffix_label,
+                                           nominal_correction_suffix=BPM.__ref_col_lscale_suffix_label)
+
+                if apply_deflection and apply_orbit_drift:
+                    self.apply_length_scale_correction(base_cols=after_deflection_orbit_drift_cols, data_to_use=data_to_use)
+
+                if not self.__is_nominal:
+                    nominal_correction_suffix = ""
+                    data_correction_suffix = ""
+                    if self.__deflection_applied_in_nominal:
+                        nominal_correction_suffix += full_deflection_label
+                    if self.__lscale_applied_in_nominal:
+                        nominal_correction_suffix += BPM.__ref_col_lscale_suffix_label
+
+                    # this is the case for deflection only applied to Nominal
+                    if self.__apply_orbit_drift:
+                        data_correction_suffix += BPM.__ref_col_orbit_drift_suffix_label
+                    data_correction_suffix += BPM.__ref_col_lscale_suffix_label
+
+                    # Getting B1diff = B1doros x dorosLS - (B1nominal + deflection) x nominalLS
+                    self.get_cols_diff(in_data=self.__processed_data,
+                                       base_col_names=basic_cols,
+                                       correction_suffix=data_correction_suffix,
+                                       nominal_correction_suffix=nominal_correction_suffix)
+
+            # Get final result column names
+
+            if not self.__is_nominal:
+                nominal_suffix_for_final_result = self.__nominal_suffix_for_final_result
+                # Nominal
+                if self.__deflection_applied_in_nominal:
+                    nominal_suffix_for_final_result += full_deflection_label
+                if self.__lscale_applied_in_nominal:
+                    nominal_suffix_for_final_result += BPM.__ref_col_lscale_suffix_label
+                # Data
+                data_suffix_for_final_result = self.__data_suffix_for_final_result
+                if apply_orbit_drift:
+                    data_suffix_for_final_result += BPM.__ref_col_orbit_drift_suffix_label
+                if apply_lscale:
+                    data_suffix_for_final_result += BPM.__ref_col_lscale_suffix_label
+
+                final_col_names_for_gfactor[str(i_gfactor)] = self.get_col_names(
+                    correction_suffix=data_suffix_for_final_result,
+                    nominal_correction_suffix=nominal_suffix_for_final_result, is_diff=True)
+                b1_col_names_for_gfactor[str(i_gfactor)] = self.get_col_names(
+                    correction_suffix=data_suffix_for_final_result,
+                    nominal_correction_suffix=nominal_suffix_for_final_result, is_diff=True, only_b1=True)
+                b2_col_names_for_gfactor[str(i_gfactor)] = self.get_col_names(
+                    correction_suffix=data_suffix_for_final_result,
+                    nominal_correction_suffix=nominal_suffix_for_final_result, is_diff=True, only_b2=True)
+        print(final_col_names_for_gfactor)
+        print(b1_col_names_for_gfactor)
+        print(b2_col_names_for_gfactor)
+
+        ltools.color_print(">>>>> gfactor test finished. No further results will be produce in order to ensure that the test "
+                           "routine don't affect further results", "yellow")
 
     def apply_corrections(self, basic_cols: list, apply_lscale: bool = False, apply_deflection: bool = False,
                           apply_orbit_drift: bool = False):
@@ -2335,7 +2485,7 @@ class BPM:
                          + str(float("{0:.4f}".format(self.__lscale_per_beam_epsilon_b2_x_err))) + ")"
         self.__plt_plots[plot_name_x] = plotting.plot_scatter_from_dict(self.__epsilon_x_in_plotting_structure_dict,
                                                                         xlabel="Scans for X",
-                                                                        ylabel=self.name + "/Nominal slope residual",
+                                                                        ylabel=self.name + "/Nominal residual slope",
                                                                         new_xticks=scan_names_x,
                                                                         title=top_right_text,
                                                                         title_loc='right',
@@ -2353,7 +2503,7 @@ class BPM:
                          + str(float("{0:.4f}".format(self.__lscale_per_beam_epsilon_b2_y_err))) + ")"
         self.__plt_plots[plot_name_y] = plotting.plot_scatter_from_dict(self.__epsilon_y_in_plotting_structure_dict,
                                                                         xlabel="Scans for Y",
-                                                                        ylabel=self.name + "/Nominal slope residual",
+                                                                        ylabel=self.name + "/Nominal residual slope",
                                                                         new_xticks=scan_names_y,
                                                                         title=top_right_text,
                                                                         title_loc='right',

@@ -160,6 +160,7 @@ class LinearityAnalysis:
         self.create_by_run_data()
         self.create_by_fill_data()
         self.get_normalize_by_fill_data()
+        # self.by_nls_outlier_removal()
         self.fit_all_data()
         self.get_slope_average_per_intervals()
         # print(self.__by_fill_df)
@@ -517,6 +518,14 @@ class LinearityAnalysis:
     # do this in detectors ratios
     # def correct_by_run_instabilities(self):
 
+    def by_nls_outlier_removal(self):
+        mean_nls_err = self.__lin_data[self.__by_nls_label_ratio_err].mean()
+        std_nls_err = self.__lin_data[self.__by_nls_label_ratio_err].std()
+
+        self.__lin_data = self.__lin_data[
+            (self.__lin_data[self.__by_nls_label_ratio_err] >= mean_nls_err - std_nls_err) &
+            (self.__lin_data[self.__by_nls_label_ratio_err] <= mean_nls_err + std_nls_err)].copy()
+
     def fit_all_data(self) -> None:
         if len(self.__lin_data[self.__label_norm_by_nls_by_fill_ratio]) == 0:
             raise AssertionError("norm_by_nls_by_fill_ratio data is needed")
@@ -557,6 +566,7 @@ class LinearityAnalysis:
                                          fitted_slope_err=slope_err,
                                          fitted_intercept=intercept,
                                          fitted_f=lin_func,
+                                         ymin=0.85, ymax=1.15,
                                          xlabel="SBIL [hz/" + r'$\mu$' + "b]",
                                          ylabel=self.__label_ratio + " ratios in " +
                                                 str(self.__nls) + ' LS',
