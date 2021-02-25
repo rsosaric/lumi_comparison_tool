@@ -146,10 +146,10 @@ config_dict = {
             conf_label_length_scale: [0.9960, 0.9978],
 
             conf_label_beam_deflection: "beamData/extra_corrections/deflectioncorrection6380.csv",
-            # conf_label_beam_deflection_gfactor: [2.65, 2.76],  # [x, y]
-            conf_label_beam_deflection_gfactor: [11.2, 11.9],  # [x, y]
+            conf_label_beam_deflection_gfactor: [2.65, 2.76],  # [x, y]
+            #conf_label_beam_deflection_gfactor: [11.2, 11.9],  # [x, y]
             # conf_label_beam_deflection_gfactor: [1.12, 1.19],  # [x, y]
-            # conf_label_beam_deflection_gfactor: [1.0, 1.0],  # [x, y]
+            #conf_label_beam_deflection_gfactor: [1.0, 1.0],  # [x, y]
 
             # conf_label_scans_names: ["BIX1", "BIY1",  "BIX2", "BIY2", "X1", "Y1"],
             conf_label_scans_names: ["BIX1", "BIY1", "BIX2", "BIY2", "X1", "Y1"],
@@ -448,6 +448,24 @@ config_dict = {
 
             # conf_label_compute_offsets_method: "all head-on"
         },
+        6380: {
+            conf_label_data_file_path: "CMS_arc_Fill6380_pos_merged.csv",
+            conf_label_offset_time: [1510430017, 1510433057, 1510435767],
+            conf_label_offset_values: [[-0.604003, -0.0120755, -0.441755, 0.249511],[-2.13048, 0.94033, 2.3205, 0.117576],[-2.07025, 0.724818, 2.2617, 0.919952]],
+
+            conf_label_y_range: [-10., 10.],
+            conf_label_y_diff_range: [-8., 8.],
+
+            conf_label_length_scale: [0.968, 0.961],
+            conf_label_apply_length_scale_per_beam_epsilon_from_file: False,
+            conf_limits_for_length_scale_per_beam_epsilon: [-0.03, 0.03],
+            conf_label_orbit_drift: "beamData/extra_corrections/orbitdriftcorrection6380.csv",
+            
+            conf_label_min_time: 1510429440,
+            conf_label_max_time: 1510437600,
+            conf_label_zero_time: 1510429320,
+        },
+
         7442: {
             conf_label_data_file_path: "CMS_arc_Fill7442_pos_merged.csv",
             conf_label_offset_time: [1542135000, 1542139644, 1542141318, 1542145836, 1542148211],
