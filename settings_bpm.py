@@ -55,6 +55,9 @@ delta_pos_for_scan_labels = 0.15  # pos_y = min_y + min_y * delta_pos_for_scan_l
 
 save_figures_as_pickle = False
 
+scale_gfactor = 1.0  # This should be generally 1.0, but it can be used to study the correct gfactor by rescaling it
+# with this value: new_gfactor=gfactor*scale_gfactor
+
 col_pos_offset_array = {
     "B1_H": 0,
     "B1_V": 1,
@@ -235,7 +238,7 @@ config_dict = {
                                                                 "X4": ["B1"], "Y4": ["B1"]},
             conf_limits_for_length_scale_per_beam_epsilon: [-0.03, 0.03],
             # conf_label_beam_deflection: "beamData/extra_corrections/deflectioncorrection4266.csv",
-            # conf_label_beam_deflection_gfactor: [2.65, 2.76],  # [x, y]
+            conf_label_beam_deflection_gfactor: [2.65, 2.76],  # [x, y]
 
             # conf_label_orbit_drift: "beamData/extra_corrections/orbitdriftcorrection4266average.csv",
             conf_label_orbit_drift: "beamData/extra_corrections/orbitdriftcorrection4266doros.csv",

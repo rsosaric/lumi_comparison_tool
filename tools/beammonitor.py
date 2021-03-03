@@ -299,6 +299,11 @@ class BPM:
         self.__cols_to_read_from_file = list(self.__rename_col_dict)
         self.__cols_after_renaming = [self.__rename_col_dict[x] for x in self.__cols_to_read_from_file]
 
+        if setts.scale_gfactor != 1.0:
+            ltools.color_print("\n Info: Scaling gfactors by (" + str(setts.scale_gfactor) + "). Check if this is "
+                                                                                             "your intention ;) ",
+                               "yellow")
+
         in_data = pd.DataFrame()
         n_file = 0
         for file_path in self.__path_to_data:
@@ -1516,15 +1521,15 @@ class BPM:
         deflection_correction_data.dropna(inplace=True)
         deflection_correction_data.reset_index(drop=True, inplace=True)
 
-        # read correction geometrical factor from settings and set to 1. if not found
-        x_gfactor = 2.
-        y_gfactor = 2.
+        # read correction geometrical factor from settings and set to 2. if not found
+        x_gfactor = 1.
+        y_gfactor = 1.
         if setts.conf_label_beam_deflection_gfactor in self.__settings_list:
             gfactors = self.__settings[setts.conf_label_beam_deflection_gfactor]
-            x_gfactor = gfactors[0]
-            y_gfactor = gfactors[1]
+            x_gfactor = gfactors[0]*setts.scale_gfactor
+            y_gfactor = gfactors[1]*setts.scale_gfactor
         else:
-            print("WARNING: No geometrical factor was provided. Taking 2.0 as an estimated value")
+            print("WARNING: No geometrical factor was provided. Taking 1.0 as an estimated value")
 
         correction_gfactors = [x_gfactor, y_gfactor]
         return deflection_correction_data, correction_gfactors
@@ -1601,6 +1606,8 @@ class BPM:
 
         x_gfactor = correction_gfactors[0]
         y_gfactor = correction_gfactors[1]
+
+        print("gfactors applied: " + str([x_gfactor, y_gfactor]))
 
         if data_to_use is None:
             data_to_use = self.__processed_data
