@@ -1,4 +1,4 @@
-#Data tag : 19v3 , Norm tag: None
+#Data tag : 19v2 , Norm tag: None
 #run:fill,ls,time,beamstatus,E(GeV),delivered(hz/ub),recorded(hz/ub),avgpu,source
 254790:4243,90:90,1440134644,STABLE BEAMS,6500,773.757085740,0,18.2,RAMSES
 254790:4243,93:93,1440134714,STABLE BEAMS,6500,772.243916346,0,18.1,RAMSES

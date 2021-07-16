@@ -123,7 +123,7 @@ def hist_from_pandas_frame(data_frame, col_label, nbins, title='', xlabel='', yl
 
     if label_cms_status:
         add_extra_text(ratio_hist_ax, fig_size_shape, energy_year_label=energy_year_label,
-                       experiment=setts.experiment, work_status=setts.work_status)
+                       experiment=setts.experiment, work_status=setts.work_status, cms_label_pos=__cms_label_pos_sq)
 
     return ratio_hist
 
@@ -785,24 +785,35 @@ def snsplot_line_plot_from_pandas_cols(data_frame, x_data_label, y_data_label,
     return fig
 
 
-def add_extra_text(ax, plot_frame_ratio, energy_year_label='', experiment='', work_status=''):
+def add_extra_text(ax, plot_frame_ratio, energy_year_label='', experiment='', work_status='',
+                   cms_size=setts.experiment_font_size, cms_label_pos=__cms_label_pos_nsq,
+                   year_energy_size=setts.year_energy_font_size, year_energy_pos=None):
     if plot_frame_ratio == 'nsq':
-        plt.text(__year_energy_label_pos_nsq[0], __year_energy_label_pos_nsq[1], str(energy_year_label), ha='left',
-                 fontsize=setts.year_energy_font_size, fontweight='bold', transform=ax.transAxes)
-        plt.text(__cms_label_pos_nsq[0], __cms_label_pos_nsq[1], str(experiment), ha='left',
-                 fontsize=setts.experiment_font_size, fontweight='bold', transform=ax.transAxes)
-        plt.text(__cms_label_pos_nsq[0] + __delta_y_pos_nsq, __cms_label_pos_nsq[1], str(work_status), ha='left',
-                 fontsize=setts.experiment_font_size, fontweight='light', transform=ax.transAxes)
+        if year_energy_pos is None:
+            year_energy_pos = __year_energy_label_pos_nsq
+        plt.text(year_energy_pos[0], year_energy_pos[1], str(energy_year_label), ha='left',
+                 fontsize=year_energy_size,
+                 # fontweight='bold',
+                 transform=ax.transAxes)
+        plt.text(cms_label_pos[0], cms_label_pos[1], str(experiment), ha='left',
+                 fontsize=cms_size, fontweight='bold', transform=ax.transAxes)
+        plt.text(cms_label_pos[0] + __delta_y_pos_nsq, cms_label_pos[1], str(work_status), ha='left',
+                 fontsize=cms_size-2, fontweight='light', transform=ax.transAxes)
 
     elif plot_frame_ratio == 'sq':
-        plt.text(__year_energy_label_pos_sq[0], __year_energy_label_pos_sq[1], str(energy_year_label), ha='left',
-                 fontsize=setts.year_energy_font_size, fontweight='bold', transform=ax.transAxes)
-        plt.text(__cms_label_pos_sq[0], __cms_label_pos_sq[1], str(experiment), ha='left',
-                 fontsize=setts.experiment_font_size, fontweight='bold', transform=ax.transAxes)
-        plt.text(__cms_label_pos_sq[0] + __delta_y_pos_sq, __cms_label_pos_sq[1], str(work_status), ha='left',
-                 fontsize=setts.experiment_font_size, fontweight='light', transform=ax.transAxes)
+        if year_energy_pos is None:
+            year_energy_pos = __year_energy_label_pos_sq
+        plt.text(year_energy_pos[0], year_energy_pos[1], str(energy_year_label), ha='left',
+                 fontsize=year_energy_size,
+                 # fontweight='bold',
+                 transform=ax.transAxes)
+        plt.text(cms_label_pos[0], cms_label_pos[1], str(experiment), ha='left',
+                 fontsize=cms_size, fontweight='bold', transform=ax.transAxes)
+        plt.text(cms_label_pos[0] + __delta_y_pos_sq, cms_label_pos[1], str(work_status), ha='left',
+                 fontsize=cms_size, fontweight='light', transform=ax.transAxes)
     else:
         raise ValueError('frame ratio value not implemented')
+
 
 def plot_plt_scatter(x, y):
     fig, ax = plt.subplots()

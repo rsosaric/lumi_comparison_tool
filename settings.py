@@ -1,8 +1,8 @@
 # -*-*-*-*-*-*-*-*-*-*-*- > > > General settings < < < -*-*-*-*-*-*-*-*-*-*-*-
 show_live_plots = False
-# work_status = 'Preliminary'
+work_status = 'Preliminary'
 # work_status = 'Work in Progress'
-work_status = ""
+# work_status = ""
 experiment = 'CMS'
 csv_input_base_dir = 'csv_input_files/'
 clean_run = True  # Currently only used in best data comparison if [True]: all needed files will be produced even if they exist.
@@ -14,15 +14,15 @@ rows_to_skip_in_csv = 1
 rows_to_skip_at_the_end = 5
 # -*-*-*-*-*-*-*-*-*-*-*- > > > Plotting settings < < < -*-*-*-*-*-*-*-*-*-*-*-
 
-cms_label_pos_sq = (0.008, 1.02)
+cms_label_pos_sq = (0.008, 1.01)
 cms_label_pos_nsq = (0.008, 1.02)
-experiment_font_size = 12
-delta_y_pos_sq = 0.08
+experiment_font_size = 16
+delta_y_pos_sq = 0.1
 delta_y_pos_nsq = 0.045
 
-year_energy_label_pos_sq = (0.82, 1.01)
+year_energy_label_pos_sq = (0.80, 1.01)
 year_energy_label_pos_nsq = (0.87, 1.02)
-year_energy_font_size = 12
+year_energy_font_size = 14
 
 # canvas sizes
 fig_sizes = {
@@ -52,7 +52,7 @@ axis_labelpad_y = 8
 axis_weight = 'bold'
 
 axis_case_size = {
-    'sq': 14,
+    'sq': 15,
     'nsq': 14
 }
 axis_thicks_case_size = {
@@ -82,10 +82,10 @@ ratio_max = 1.05
 ratio_interval_reduction_factor = 0.0
 ratio_min_reduced = ratio_min + ratio_interval_reduction_factor
 ratio_max_reduced = ratio_max - ratio_interval_reduction_factor
-nbins = 200
-nbins_by_run = 150
+nbins = 100
+nbins_by_run = 100
 nbins_by_fill = 50
-nbins_linearity = 150
+nbins_linearity = 100
 nbins_sbil_histo = 50
 
 date_format = "%Y-%m-%d %H:%M"
@@ -148,8 +148,11 @@ limits_linearity_slopes_year = {
     (2016, 13): (-0.01, 0.01),
     (2017, 13): (-0.01, 0.01),
     (2017, 5): (-0.01, 0.01),
-    (2018, 13): (-0.05, 0.05)
+    (2018, 13): (-0.02, 0.02)
 }
+
+# lin_summary_slope_range = (-0.006, 0.006)
+lin_summary_slope_range = (-0.03, 0.03)
 
 # sbil range for plotting [ub]
 sbil_min = 0.0

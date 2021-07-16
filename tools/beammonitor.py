@@ -1311,6 +1311,18 @@ class BPM:
                     (self.__data_in_zero_beam_position[BPM.__col_time] >= mod_limit_times[0]) &
                     (self.__data_in_zero_beam_position[BPM.__col_time] <= mod_limit_times[1])].copy()
 
+            # data_inside_mod_time = \
+            #     self.__processed_data[
+            #         (self.__processed_data[BPM.__col_time] >= mod_limit_times[0]) &
+            #         (self.__processed_data[BPM.__col_time] <= mod_limit_times[1])].copy()
+            #
+            # # Getting H Raw differences
+            # data_inside_mod_time[BPM.__col_H_diff] = data_inside_mod_time[BPM.__col_b2h] - \
+            #                                                       data_inside_mod_time[BPM.__col_b1h]
+            # # Getting V Raw differences
+            # data_inside_mod_time[BPM.__col_V_diff] = data_inside_mod_time[BPM.__col_b2v] - \
+            #                                                       data_inside_mod_time[BPM.__col_b1v]
+
             ini_scan_time_window = [ini_scan_mod_time, ini_scan_time + time_window]
             end_scan_time_window = [end_scan_time - time_window, end_scan_mod_time]
             middle_scan_time_window = [scan_middle_time - time_window, scan_middle_time + time_window]
@@ -1325,6 +1337,7 @@ class BPM:
                 (data_inside_mod_time[BPM.__col_time] <= middle_scan_time_window[1])].copy()
 
             region_bands = [ini_scan_time_window, middle_scan_time_window, end_scan_time_window]
+            print(scan_name, len(data_inside_mod_time))
             all_data_inside_scan = plotting.scatter_plot_from_pandas_frame(data_inside_mod_time,
                                                                            x_data_label=BPM.__col_time,
                                                                            y_data_label=[BPM.__col_H_diff,

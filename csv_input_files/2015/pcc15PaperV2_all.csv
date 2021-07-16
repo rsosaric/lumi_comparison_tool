@@ -1,4 +1,4 @@
-#Data tag : 19v3 , Norm tag: None
+#Data tag : 19v2 , Norm tag: None
 #run:fill,ls,time,beamstatus,E(GeV),delivered(hz/ub),recorded(hz/ub),avgpu,source
 251244:3976,85:85,1436374824,STABLE BEAMS,6500,300.287290058,0,19.4,PXL
 251244:3976,86:86,1436374847,STABLE BEAMS,6500,300.433209755,0,19.4,PXL

@@ -145,6 +145,7 @@ class LinearityAnalysis:
         self.__by_fill_nls_slopes_mean_totalw = None
         self.__by_fill_nls_slopes_stdv_totalw = None
         self.__by_fill_nls_slopes_err_totalw = None
+        self.__by_fill_nls_slopes_err_lw = None
         self.__all_data_fitted_slope = None
         self.__all_data_fitted_slope_err = None
         self.__all_data_fitted_slope_chi2 = None
@@ -334,6 +335,7 @@ class LinearityAnalysis:
         self.__by_fill_nls_slopes_mean_totalw = totalw_nls_stats.mean
         self.__by_fill_nls_slopes_stdv_totalw = totalw_nls_stats.std
         self.__by_fill_nls_slopes_err_totalw = self.__by_fill_nls_slopes_stdv_totalw/math.sqrt(len(self.__by_fill_df))
+        self.__by_fill_nls_slopes_err_lw = self.__by_fill_nls_slopes_stdv_lw / math.sqrt(len(self.__by_fill_df))
 
         slope_hist = plotting.hist_from_array(self.__by_fill_df[self.__label_col_slopes],
                                               nbins=setts.nbins_linearity,
@@ -676,6 +678,8 @@ class LinearityAnalysis:
 
         avg_slopes = []
         avg_err_slopes = []
+        avg_mean_err_slopes = []
+        avg_special_err_slopes = []
         fill_marker = []
         lumi_marker = []
 
@@ -697,9 +701,9 @@ class LinearityAnalysis:
                 # print(special_error_from_weighted_mean)
                 # print(stats.mean, stats.std_mean, stats.std, stats.sum_weights)
                 avg_slopes.append(stats.mean)
-                # avg_err_slopes.append(stats.std/math.sqrt(len(temp_slope_list)))
+                avg_mean_err_slopes.append(stats.std/math.sqrt(len(temp_slope_list)))
                 avg_err_slopes.append(stats.std)
-                # avg_err_slopes.append(special_error_from_weighted_mean)
+                avg_special_err_slopes.append(special_error_from_weighted_mean)
                 fill_marker.append(data_to_use[self.__label_col_fill][i])
                 lumi_marker.append(data_to_use[self.__label_col_accumulated_lumi][i])
                 npoints_counter = 0
@@ -708,6 +712,9 @@ class LinearityAnalysis:
 
         self.__data_avg_summary[self.__label_col_nls_slopes] = np.array(avg_slopes)
         self.__data_avg_summary[self.__label_col_nls_slopes_err] = np.array(avg_err_slopes)
+        self.__data_avg_summary["slope error in lumi interval (mean stdv)"] = np.array(avg_err_slopes)
+        self.__data_avg_summary["slope error in lumi interval (mean error)"] = np.array(avg_mean_err_slopes)
+        self.__data_avg_summary["slope error in lumi interval (mean weighted error)"] = np.array(avg_special_err_slopes)
         self.__data_avg_summary[self.__label_col_fill] = np.array(fill_marker)
         self.__data_avg_summary[self.__label_col_accumulated_lumi] = np.array(lumi_marker)
 
@@ -804,6 +811,7 @@ class LinearityAnalysis:
             'slope_stdv_hist_nls_errw': self.__by_fill_nls_slopes_stdv_errw,
             'slope_stdv_hist_nls_totalw': self.__by_fill_nls_slopes_stdv_totalw,
             'slope_err_hist_nls_totalw': self.__by_fill_nls_slopes_err_totalw,
+            'slope_err_hist_nls_lw': self.__by_fill_nls_slopes_err_lw,
             # slope from all data fitting
             'all_data_fitted_slope': self.__all_data_fitted_slope,
             'all_data_fitted_slope_err': self.__all_data_fitted_slope_err,

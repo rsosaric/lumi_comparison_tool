@@ -7,6 +7,7 @@ from tools.linearityanalysis import LinearityAnalysis
 import matplotlib.pyplot as plt
 import tools.plotting_tools as plotting
 import matplotlib.colors as mcolors
+from matplotlib.ticker import AutoMinorLocator
 
 
 class LinearitySummary:
@@ -51,7 +52,7 @@ class LinearitySummary:
             self.__min_allowed_slope = None
             self.__max_allowed_slope = None
 
-        self.__energy_year_label = self.__energy + "(" + self.__year + ")"
+        self.__energy_year_label = self.__year + " (" + self.__energy.replace("TeV", " TeV") + ")"
 
         self.__plt_plots = {}
         self.plot_avg_for_all_pairs()
@@ -60,47 +61,54 @@ class LinearitySummary:
 
     def plot_avg_for_all_pairs(self, include_overall_fit=False, include_by_fill_slopes_mean=False):
         plot_name = "avg_slopes_for_all_pairs"
+        if include_by_fill_slopes_mean:
+            plot_name += "_with_by_fill_mean"
         fig_size_shape = "sq"
         fig_size = (8, 8)
         fig, ax = plt.subplots(figsize=fig_size)
         markersize = 5
         # ymin = self.__min_allowed_slope
         # ymax = self.__max_allowed_slope
-        ymin = -0.01
-        ymax = 0.01
+        ymin = setts.lin_summary_slope_range[0]
+        ymax = setts.lin_summary_slope_range[1]
         xlabel = "Integrated luminosity [$" + self.__lumi_unit + "^{-1}$]"
-        ylabel = "slope [hz/" + r'$\mu$' + "b]"
+        ylabel = "Slope [(hz/" + r'$\mu$' + "b)" + r'$^{-1}$' + "]"
         legend_labels = []
-        leg_text_s = setts.leg_vs_plots_text_s
+        leg_text_s = 18
         leg_marker_sc = 1.0
         legend_position = 1
+
+        legend_items = []
 
         colors = list(mcolors.TABLEAU_COLORS)
 
         i_color = 0
         for result in self.__results:
             label_ratio = result.label_ratio
-            legend_labels.append(label_ratio + " avg. per lumi. interval")
+            legend_labels.append(label_ratio)
             x = result.lumi_array_for_avg_slopes
             y = result.avg_slopes_array
             y_err = result.avg_slopes_err_array
-            plt.errorbar(x, y, yerr=y_err, markersize=markersize, fmt='o', color=colors[i_color],
-                         label=label_ratio + " avg. per lumi. interval")
-            i_color += 1
+            color = colors[i_color]
+            legend_items.append(ax.errorbar(x, y, yerr=y_err, markersize=markersize, fmt='o', color=color,
+                                            label=label_ratio,
+                                            capsize=2))
 
-        if include_by_fill_slopes_mean:
-            i_color = 0
-            for result in self.__results:
-                plot_name += "_with_by_fill_mean"
-                color = colors[i_color]
-                label_ratio = result.label_ratio
-                legend_labels.append(label_ratio + " per fill fit mean value")
+            if include_by_fill_slopes_mean:
+                legend_labels.append(" Mean " + r'$\pm$' + " err (" + label_ratio + ")")
                 max_lumi = result.lumi_array_for_avg_slopes[len(result.lumi_array_for_avg_slopes) - 1]
-                slope_value = result.slope_nls_totalw
+
+                slope_value = result.slope_overall_fit
+                # slope_value = result.slope_nls_totalw
+                slope_value = result.slope_nls_lw
+
                 # slope_err = result.slope_nls_totalw_stdv
-                slope_err = result.slope_nls_totalw_err
+                # slope_err = result.slope_nls_totalw_err
+                slope_err = result.slope_nls_lw_err
+                # slope_err = result.slope_overall_fit
+
                 n_x_points = 20
-                delta_lumi = max_lumi/(n_x_points - 1)
+                delta_lumi = max_lumi / (n_x_points - 1)
                 x = []
                 y = []
                 for i in range(0, n_x_points):
@@ -108,29 +116,56 @@ class LinearitySummary:
                     y.append(slope_value)
                 x = np.array(x)
                 y = np.array(y)
-                plt.fill_between(x, y - slope_err, y + slope_err, label='_nolegend_', color=color, alpha=0.2)
-                plt.plot(x, y, '--', label=label_ratio + " per fill fit mean value", color=color, alpha=0.8)
-                i_color += 1
+                legend_items.append(
+                    (
+                        ax.fill_between(x, y - slope_err, y + slope_err,
+                                        label='_nolegend_',
+                                        # color=color,
+                                        facecolor='w',
+                                        edgecolor=color,
+                                        alpha=0.5,
+                                        linewidth=0,
+                                        hatch='//'),
+                        ax.plot(x, y, linestyle=(0, (12, 4)), label=" Mean " + r'$\pm$' + " err (" + label_ratio + ")",
+                                color=color,
+                                alpha=0.8)[0]
+                    )
+                )
 
+            i_color += 1
+
+        # print(legend_items)
+        # print(legend_labels)
         # ax.legend(legend_labels, markerscale=leg_marker_sc, fontsize=leg_text_s, loc=legend_position)
-        plt.legend(markerscale=leg_marker_sc, fontsize=leg_text_s, loc=legend_position)
+        # plt.legend()
+        ax.legend(legend_items, legend_labels, markerscale=leg_marker_sc, fontsize=leg_text_s, loc=legend_position,
+                  frameon=False)
 
-        ax.set_xlabel(xlabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight,
-                      size=setts.axis_case_size[fig_size_shape])
-        ax.set_ylabel(ylabel, labelpad=setts.axis_labelpad, weight=setts.axis_weight,
-                      size=setts.axis_case_size[fig_size_shape])
-
-        plt.xticks(fontsize=setts.axis_thicks_case_size[fig_size_shape])
-        plt.yticks(fontsize=setts.axis_thicks_case_size[fig_size_shape])
+        ax.set_xlabel(xlabel,
+                      # labelpad=setts.axis_labelpad,
+                      # weight=setts.axis_weight,
+                      size=22)
+        ax.set_ylabel(ylabel,
+                      # labelpad=setts.axis_labelpad,
+                      # weight=setts.axis_weight,
+                      size=22)
+        ax.xaxis.set_minor_locator(AutoMinorLocator())
+        ax.yaxis.set_minor_locator(AutoMinorLocator())
+        ax.tick_params(which='major', length=7, direction='in', bottom=True, top=True, left=True, right=True)
+        ax.tick_params(which='minor', length=4, direction='in', bottom=True, top=True, left=True, right=True)
+        plt.xticks(fontsize=19)
+        plt.yticks(fontsize=19)
 
         if ymin is not None and ymax is not None:
             plt.ylim(ymin, ymax)
 
-        plt.subplots_adjust(left=0.18, right=0.97, top=0.95, bottom=0.1)
+        plt.subplots_adjust(left=0.19, right=0.97, top=0.95, bottom=0.1)
 
+        cms_label_pos = (0.008, 1.005)
         plotting.add_extra_text(ax, fig_size_shape, energy_year_label=self.__energy_year_label,
-                                experiment=setts.experiment, work_status=setts.work_status)
-
+                                experiment=setts.experiment, work_status=setts.work_status,
+                                cms_size=24, cms_label_pos=cms_label_pos,
+                                year_energy_size=19, year_energy_pos=(0.71, 1.01))
 
         self.__plt_plots[plot_name] = fig
 
@@ -157,7 +192,9 @@ class LinearityResults:
         self.__avg_slopes_df = pd.DataFrame()
         self.__slopes_values_dict = {}
         self.__slope_nls_totalw = None
+        self.__slope_nls_lw = None
         self.__slope_nls_totalw_err = None
+        self.__slope_nls_lw_err = None
         self.__slope_overall_fit = None
         self.__slope_overall_fit_err = None
 
@@ -184,8 +221,10 @@ class LinearityResults:
 
         # Filling important variables
         self.__slope_nls_totalw = self.__slopes_values_dict["slope_hist_nls_totalw"]
+        self.__slope_nls_lw = self.__slopes_values_dict["slope_hist_nls_lw"]
         self.__slope_nls_totalw_stdv = self.__slopes_values_dict["slope_stdv_hist_nls_totalw"]
         self.__slope_nls_totalw_err = self.__slopes_values_dict["slope_err_hist_nls_totalw"]
+        self.__slope_nls_lw_err = self.__slopes_values_dict["slope_err_hist_nls_lw"]
         self.__slope_overall_fit = self.__slopes_values_dict["all_data_fitted_slope"]
         self.__slope_overall_fit_err = self.__slopes_values_dict["all_data_fitted_slope_err"]
 
@@ -203,7 +242,8 @@ class LinearityResults:
 
     @property
     def avg_slopes_err_array(self):
-        return self.__avg_slopes_df["by nls err on the slope"]
+        # return self.__avg_slopes_df["by nls err on the slope"]
+        return self.__avg_slopes_df["slope error in lumi interval (mean error)"]
 
     @property
     def fill_array_for_avg_slopes(self):
@@ -218,12 +258,20 @@ class LinearityResults:
         return self.__slope_nls_totalw
 
     @property
+    def slope_nls_lw(self):
+        return self.__slope_nls_lw
+
+    @property
     def slope_nls_totalw_stdv(self):
         return self.__slope_nls_totalw_stdv
 
     @property
     def slope_nls_totalw_err(self):
         return self.__slope_nls_totalw_err
+
+    @property
+    def slope_nls_lw_err(self):
+        return self.__slope_nls_lw_err
 
     @property
     def slope_overall_fit(self):
